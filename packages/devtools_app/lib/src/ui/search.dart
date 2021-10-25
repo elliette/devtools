@@ -745,6 +745,48 @@ class _SearchField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textStyle = Theme.of(context).textTheme.subtitle1;
+    final seachFieldDecoration = decoration ??
+        InputDecoration(
+          filled: false,
+          contentPadding: const EdgeInsets.all(denseSpacing),
+          focusedBorder: OutlineInputBorder(borderSide: searchFocusBorderColor),
+          enabledBorder: OutlineInputBorder(borderSide: searchFocusBorderColor),
+          labelStyle: TextStyle(color: searchColor),
+          border: const OutlineInputBorder(),
+          labelText: label ?? 'Search',
+          suffix: (supportsNavigation || onClose != null)
+              ? _SearchFieldSuffix(
+                  controller: controller,
+                  supportsNavigation: supportsNavigation,
+                  onClose: onClose,
+                )
+              : null,
+        );
+
+    final phantomSearchField = TextField(
+      decoration: decoration ??
+          InputDecoration(
+            filled: true,
+            fillColor: Colors.pink,
+            contentPadding: const EdgeInsets.all(denseSpacing),
+            focusedBorder:
+                OutlineInputBorder(borderSide: searchFocusBorderColor),
+            enabledBorder:
+                OutlineInputBorder(borderSide: searchFocusBorderColor),
+            labelStyle: TextStyle(color: searchColor),
+            border: const OutlineInputBorder(),
+            labelText: label ?? 'Search',
+            suffix: (supportsNavigation || onClose != null)
+                ? _SearchFieldSuffix(
+                    controller: controller,
+                    supportsNavigation: supportsNavigation,
+                    onClose: onClose,
+                  )
+                : null,
+          ),
+      cursorColor: searchColor,
+    );
+
     final searchField = TextField(
       key: searchFieldKey,
       autofocus: true,
@@ -769,6 +811,7 @@ class _SearchField extends StatelessWidget {
       // snapshots will compare with the exact color.
       decoration: decoration ??
           InputDecoration(
+            filled: false,
             contentPadding: const EdgeInsets.all(denseSpacing),
             focusedBorder:
                 OutlineInputBorder(borderSide: searchFocusBorderColor),
@@ -792,7 +835,7 @@ class _SearchField extends StatelessWidget {
       searchFieldFocusNode.requestFocus();
     }
 
-    return searchField;
+    return Stack(children: [phantomSearchField, searchField]);
   }
 }
 
