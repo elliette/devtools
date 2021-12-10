@@ -30,8 +30,12 @@ mixin SearchControllerMixin<T extends DataSearchStateMixin> {
   double xPosition = 0.0;
 
   set search(String value) {
+    final previousSearchValue = _searchNotifier.value;
+    final shouldSearchPreviousMatches = previousSearchValue != null &&
+        previousSearchValue.isNotEmpty &&
+        value.caseInsensitiveContains(previousSearchValue);
     _searchNotifier.value = value;
-    refreshSearchMatches();
+    refreshSearchMatches(searchPreviousMatches: shouldSearchPreviousMatches);
   }
 
   String get search => _searchNotifier.value;
@@ -40,18 +44,31 @@ mixin SearchControllerMixin<T extends DataSearchStateMixin> {
 
   ValueListenable<List<T>> get searchMatches => _searchMatches;
 
-  void refreshSearchMatches() {
-    updateMatches(matchesForSearch(_searchNotifier.value));
+  void refreshSearchMatches({bool searchPreviousMatches = false}) {
+    final matches =
+        (_searchNotifier.value != null && _searchNotifier.value.isNotEmpty)
+            ? matchesForSearch(
+                _searchNotifier.value,
+                searchPreviousMatches: searchPreviousMatches,
+              )
+            : <T>[];
+    updateMatches(matches);
   }
 
   void updateMatches(List<T> matches) {
-    _searchMatches.value = matches;
+    for (final previousMatch in _searchMatches.value) {
+      previousMatch.isSearchMatch = false;
+    }
+    for (final newMatch in matches) {
+      newMatch.isSearchMatch = true;
+    }
     if (matches.isEmpty) {
       matchIndex.value = 0;
     }
     if (matches.isNotEmpty && matchIndex.value == 0) {
       matchIndex.value = 1;
     }
+    _searchMatches.value = matches;
     _updateActiveSearchMatch();
   }
 
@@ -93,7 +110,11 @@ mixin SearchControllerMixin<T extends DataSearchStateMixin> {
       ..isActiveSearchMatch = true;
   }
 
-  List<T> matchesForSearch(String search) => [];
+  List<T> matchesForSearch(
+    String search, {
+    bool searchPreviousMatches = false,
+  }) =>
+      [];
 
   void resetSearch() {
     _searchNotifier.value = '';
@@ -473,7 +494,7 @@ mixin AutoCompleteSearchControllerMixin on SearchControllerMixin {
   /// activeWord  is "cl"
   /// leftSide    is "controller."
   /// rightSide   is " + 1000 + myChart.tra"
-  static EditingParts activeEdtingParts(
+  static EditingParts activeEditingParts(
     String editing,
     TextSelection selection, {
     bool handleFields = false,
@@ -614,7 +635,7 @@ mixin SearchFieldMixin<T extends StatefulWidget> on State<T> {
   /// autocomplete overlay should be positioned relative to the input text.
   /// [supportClearField] if true clear TextField content if pop-up not visible. If
   /// pop-up is visible close the pop-up on first ESCAPE.
-  /// [keyEventsToPropogate] a set of key events that should be propogated to
+  /// [keyEventsToPropagate] a set of key events that should be propagated to
   /// other handlers
   Widget buildAutoCompleteSearchField({
     @required AutoCompleteSearchControllerMixin controller,
@@ -627,7 +648,7 @@ mixin SearchFieldMixin<T extends StatefulWidget> on State<T> {
     String label,
     OverlayXPositionBuilder overlayXPositionBuilder,
     bool supportClearField = false,
-    Set<LogicalKeyboardKey> keyEventsToPropogate = const {},
+    Set<LogicalKeyboardKey> keyEventsToPropagate = const {},
     VoidCallback onClose,
   }) {
     _onSelection = onSelection;
@@ -653,7 +674,7 @@ mixin SearchFieldMixin<T extends StatefulWidget> on State<T> {
       onSelection: onSelection,
       onHighlightDropdown: onHighlightDropdown,
       clearSearchField: clearSearchField,
-      keyEventsToPropogate: keyEventsToPropogate,
+      keyEventsToPropagate: keyEventsToPropagate,
       supportClearField: supportClearField,
       closeHandler: _closeHandler,
     );
@@ -848,7 +869,7 @@ class _AutoCompleteSearchField extends StatelessWidget {
     @required this.onSelection,
     @required this.onHighlightDropdown,
     @required this.clearSearchField,
-    this.keyEventsToPropogate = const {},
+    this.keyEventsToPropagate = const {},
     this.supportClearField = false,
     this.closeHandler,
   });
@@ -860,7 +881,7 @@ class _AutoCompleteSearchField extends StatelessWidget {
   final SelectAutoComplete onSelection;
   final HighlightAutoComplete onHighlightDropdown;
   final ClearSearchField clearSearchField;
-  final Set<LogicalKeyboardKey> keyEventsToPropogate;
+  final Set<LogicalKeyboardKey> keyEventsToPropagate;
   final bool supportClearField;
   final VoidCallback closeHandler;
 
@@ -903,7 +924,7 @@ class _AutoCompleteSearchField extends StatelessWidget {
           }
           return _determineKeyEventResult(
             key,
-            keyEventsToPropogate,
+            keyEventsToPropagate,
           );
         } else if (controller.autoCompleteOverlay != null) {
           if (key == enter || key == enterMac || key == tab || key == tabMac) {
@@ -934,18 +955,18 @@ class _AutoCompleteSearchField extends StatelessWidget {
               controller.selectTheSearch = true;
               controller.search = foundExact;
               onSelection(foundExact);
-              return _determineKeyEventResult(key, keyEventsToPropogate);
+              return _determineKeyEventResult(key, keyEventsToPropagate);
             }
           } else if (key == arrowDown || key == arrowUp) {
             highlightDropdown(controller, key == arrowDown);
-            return _determineKeyEventResult(key, keyEventsToPropogate);
+            return _determineKeyEventResult(key, keyEventsToPropagate);
           }
         }
 
         // We don't support tabs in the search input. Swallow to prevent a
         // change of focus.
         if (key == tab || key == tabMac) {
-          _determineKeyEventResult(key, keyEventsToPropogate);
+          _determineKeyEventResult(key, keyEventsToPropagate);
         }
       }
 
@@ -973,11 +994,11 @@ class _AutoCompleteSearchField extends StatelessWidget {
 
   KeyEventResult _determineKeyEventResult(
     int keyEventId,
-    Set<LogicalKeyboardKey> keyEventsToPropogate,
+    Set<LogicalKeyboardKey> keyEventsToPropagate,
   ) {
-    final shouldPropogateKeyEvent = keyEventsToPropogate
+    final shouldPropagateKeyEvent = keyEventsToPropagate
         .any((key) => key.keyId & LogicalKeyboardKey.valueMask == keyEventId);
-    return shouldPropogateKeyEvent
+    return shouldPropagateKeyEvent
         ? KeyEventResult.ignored
         : KeyEventResult.handled;
   }
@@ -1095,7 +1116,7 @@ mixin DataSearchStateMixin {
 }
 
 // This mixin is used to get around the type system where a type `T` needs to
-// both extend `TreeNode<T>` and mixin `SearchableDataMixin`.
+// both extend `TreeNode<T>` and mixin `DataSearchStateMixin`.
 mixin TreeDataSearchStateMixin<T extends TreeNode<T>>
     on TreeNode<T>, DataSearchStateMixin {}
 

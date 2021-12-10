@@ -2,12 +2,17 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
+import 'analytics/analytics.dart' as ga;
+import 'config_specific/launch_url/launch_url.dart';
+import 'globals.dart';
 import 'scaffold.dart';
 import 'theme.dart';
 import 'ui/icons.dart';
@@ -306,22 +311,26 @@ class SettingsOutlinedButton extends OutlinedIconButton {
 }
 
 class HelpButton extends StatelessWidget {
-  const HelpButton({@required this.onPressed});
+  const HelpButton({
+    @required this.onPressed,
+    @required this.gaScreen,
+    @required this.gaSelection,
+  });
 
   final VoidCallback onPressed;
 
+  final String gaScreen;
+
+  final String gaSelection;
+
   @override
   Widget build(BuildContext context) {
-    return TextButton(
+    return DevToolsIconButton(
+      iconData: Icons.help_outline,
       onPressed: onPressed,
-      child: Container(
-        height: defaultButtonHeight,
-        width: defaultButtonHeight,
-        child: Icon(
-          Icons.help_outline,
-          size: defaultIconSize,
-        ),
-      ),
+      tooltip: 'Help',
+      gaScreen: gaScreen,
+      gaSelection: gaSelection,
     );
   }
 }
@@ -604,16 +613,19 @@ class Badge extends StatelessWidget {
 class DevToolsTooltip extends StatelessWidget {
   const DevToolsTooltip({
     Key key,
-    @required this.tooltip,
+    this.message,
+    this.richMessage,
     @required this.child,
     this.waitDuration = tooltipWait,
     this.preferBelow = false,
     this.padding = const EdgeInsets.all(defaultSpacing),
     this.decoration,
     this.textStyle,
-  }) : super(key: key);
+  })  : assert((message == null) != (richMessage == null)),
+        super(key: key);
 
-  final String tooltip;
+  final String message;
+  final InlineSpan richMessage;
   final Widget child;
   final Duration waitDuration;
   final bool preferBelow;
@@ -623,18 +635,71 @@ class DevToolsTooltip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    TextStyle style = textStyle;
+    if (richMessage == null) {
+      style = TextStyle(
+        color: Theme.of(context).colorScheme.tooltipTextColor,
+        fontSize: defaultFontSize,
+      );
+    }
     return Tooltip(
-      message: tooltip,
+      message: message,
+      richMessage: richMessage,
       waitDuration: waitDuration,
       preferBelow: preferBelow,
       padding: padding,
-      textStyle: textStyle ??
-          TextStyle(
-            color: Theme.of(context).colorScheme.tooltipTextColor,
-            fontSize: defaultFontSize,
-          ),
+      textStyle: style,
       decoration: decoration,
       child: child,
+    );
+  }
+}
+
+class DevToolsIconButton extends StatelessWidget {
+  const DevToolsIconButton({
+    Key key,
+    this.iconData,
+    this.iconWidget,
+    @required this.onPressed,
+    @required this.tooltip,
+    @required this.gaScreen,
+    @required this.gaSelection,
+  })  : assert((iconData == null) != (iconWidget == null)),
+        super(key: key);
+
+  final IconData iconData;
+
+  final Widget iconWidget;
+
+  final VoidCallback onPressed;
+
+  final String tooltip;
+
+  final String gaScreen;
+
+  final String gaSelection;
+
+  @override
+  Widget build(BuildContext context) {
+    final icon = iconData != null
+        ? Icon(
+            iconData,
+            size: defaultIconSize,
+          )
+        : iconWidget;
+    return DevToolsTooltip(
+      message: tooltip,
+      child: TextButton(
+        onPressed: () {
+          ga.select(gaScreen, gaSelection);
+          onPressed();
+        },
+        child: Container(
+          height: defaultButtonHeight,
+          width: defaultButtonHeight,
+          child: icon,
+        ),
+      ),
     );
   }
 }
@@ -667,7 +732,7 @@ class ToolbarAction extends StatelessWidget {
     return tooltip == null
         ? button
         : DevToolsTooltip(
-            tooltip: tooltip,
+            message: tooltip,
             child: button,
           );
   }
@@ -686,6 +751,7 @@ class AreaPaneHeader extends StatelessWidget implements PreferredSizeWidget {
     this.needsBottomBorder = true,
     this.needsLeftBorder = false,
     this.leftActions = const [],
+    this.scrollableCenterActions = const [],
     this.rightActions = const [],
     this.leftPadding = defaultSpacing,
     this.rightPadding = densePadding,
@@ -699,6 +765,7 @@ class AreaPaneHeader extends StatelessWidget implements PreferredSizeWidget {
   final bool needsLeftBorder;
   final List<Widget> leftActions;
   final List<Widget> rightActions;
+  final List<Widget> scrollableCenterActions;
   final double leftPadding;
   final double rightPadding;
   final bool tall;
@@ -728,13 +795,35 @@ class AreaPaneHeader extends StatelessWidget implements PreferredSizeWidget {
               style: theme.textTheme.subtitle2,
               child: title,
             ),
-            ...leftActions,
-            if (rightActions.isNotEmpty) const Spacer(),
-            ...rightActions,
+            ..._buildActions(),
           ],
         ),
       ),
     );
+  }
+
+  List<Widget> _buildActions() {
+    return [
+      if (scrollableCenterActions.isEmpty)
+        Expanded(
+          child: Row(
+            children: leftActions,
+          ),
+        ),
+      if (scrollableCenterActions.isNotEmpty) ...[
+        ...leftActions,
+        Expanded(
+          // TODO(kenz): make this look more scrollable when there are too many
+          // actions. Either with a faded overlay over the end of the list or
+          // with a scrollbar.
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            children: scrollableCenterActions,
+          ),
+        )
+      ],
+      ...rightActions,
+    ];
   }
 
   @override
@@ -821,7 +910,7 @@ class FilterButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return DevToolsTooltip(
-      tooltip: 'Filter',
+      message: 'Filter',
       // TODO(kenz): this SizedBox wrapper should be unnecessary once
       // https://github.com/flutter/flutter/issues/79894 is fixed.
       child: SizedBox(
@@ -1305,6 +1394,71 @@ class FormattedJson extends StatelessWidget {
   }
 }
 
+class MoreInfoLink extends StatelessWidget {
+  const MoreInfoLink({
+    Key key,
+    @required this.url,
+    @required this.gaScreenName,
+    @required this.gaSelectedItemDescription,
+  }) : super(key: key);
+
+  final String url;
+
+  final String gaScreenName;
+
+  final String gaSelectedItemDescription;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return InkWell(
+      onTap: () => _onLinkTap(context),
+      borderRadius: BorderRadius.circular(defaultBorderRadius),
+      child: Padding(
+        padding: const EdgeInsets.all(denseSpacing),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            Text(
+              'More info',
+              style: theme.linkTextStyle,
+            ),
+            const SizedBox(width: densePadding),
+            Icon(
+              Icons.launch,
+              size: tooltipIconSize,
+              color: theme.colorScheme.toggleButtonsTitle,
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _onLinkTap(BuildContext context) {
+    launchUrl(url, context);
+    ga.select(gaScreenName, gaSelectedItemDescription);
+  }
+}
+
+class LinkTextSpan extends TextSpan {
+  LinkTextSpan({
+    @required Link link,
+    @required BuildContext context,
+    TextStyle style,
+    VoidCallback onTap,
+  }) : super(
+          text: link.display,
+          style: style ?? Theme.of(context).linkTextStyle,
+          recognizer: TapGestureRecognizer()
+            ..onTap = () async {
+              if (onTap != null) onTap();
+              await launchUrl(link.url, context);
+            },
+        );
+}
+
 class Link {
   const Link({this.display, this.url});
 
@@ -1320,7 +1474,7 @@ Widget maybeWrapWithTooltip({
 }) {
   if (tooltip != null) {
     return DevToolsTooltip(
-      tooltip: tooltip,
+      message: tooltip,
       padding: tooltipPadding,
       child: child,
     );
@@ -1524,10 +1678,107 @@ class CheckboxSetting extends StatelessWidget {
     );
     if (tooltip != null && tooltip.isNotEmpty) {
       return DevToolsTooltip(
-        tooltip: tooltip,
+        message: tooltip,
         child: content,
       );
     }
     return content;
+  }
+}
+
+class PubWarningText extends StatelessWidget {
+  const PubWarningText({Key key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isFlutterApp = serviceManager.connectedApp.isFlutterAppNow;
+    final sdkName = isFlutterApp ? 'Flutter' : 'Dart';
+    final minSdkVersion = isFlutterApp ? '2.8.0' : '2.15.0';
+    return SelectableText.rich(
+      TextSpan(
+        text: 'Warning: you should no longer be launching DevTools from'
+            ' pub.\n\n',
+        style: theme.subtleTextStyle
+            .copyWith(color: theme.colorScheme.errorTextColor),
+        children: [
+          TextSpan(
+            text: 'DevTools version 2.8.0 will be the last version to '
+                'be shipped on pub. As of $sdkName\nversion >= '
+                '$minSdkVersion, DevTools should be launched by running '
+                'the ',
+            style: theme.subtleTextStyle,
+          ),
+          TextSpan(
+            text: '`dart devtools`',
+            style: theme.subtleFixedFontStyle,
+          ),
+          TextSpan(
+            text: '\ncommand.',
+            style: theme.subtleTextStyle,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class BlinkingIcon extends StatefulWidget {
+  const BlinkingIcon({
+    Key key,
+    @required this.icon,
+    @required this.color,
+    @required this.size,
+  }) : super(key: key);
+
+  final IconData icon;
+
+  final Color color;
+
+  final double size;
+
+  @override
+  _BlinkingIconState createState() => _BlinkingIconState();
+}
+
+class _BlinkingIconState extends State<BlinkingIcon> {
+  Timer timer;
+
+  bool showFirst;
+
+  @override
+  void initState() {
+    super.initState();
+    showFirst = true;
+    timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() {
+        showFirst = !showFirst;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    timer.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedCrossFade(
+      duration: const Duration(seconds: 1),
+      firstChild: _icon(),
+      secondChild: _icon(color: widget.color),
+      crossFadeState:
+          showFirst ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+    );
+  }
+
+  Widget _icon({Color color}) {
+    return Icon(
+      widget.icon,
+      size: widget.size,
+      color: color,
+    );
   }
 }

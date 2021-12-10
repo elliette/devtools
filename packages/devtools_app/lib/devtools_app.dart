@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+export 'src/analytics/analytics.dart';
 export 'src/analytics/analytics_controller.dart';
 export 'src/app_size/app_size_controller.dart';
 export 'src/auto_dispose.dart';
@@ -16,8 +17,11 @@ export 'src/debugger/program_explorer_controller.dart';
 export 'src/debugger/span_parser.dart';
 export 'src/debugger/syntax_highlighter.dart';
 export 'src/error_badge_manager.dart';
+export 'src/extension_points/extensions_base.dart';
+export 'src/extension_points/extensions_external.dart';
 export 'src/globals.dart';
 export 'src/http/http_request_data.dart';
+export 'src/inspector/diagnostics.dart';
 export 'src/inspector/diagnostics_node.dart';
 export 'src/inspector/inspector_controller.dart';
 export 'src/inspector/inspector_service.dart';
@@ -40,8 +44,10 @@ export 'src/routing.dart';
 export 'src/screen.dart';
 export 'src/service_extensions.dart';
 export 'src/service_manager.dart';
+export 'src/split.dart';
 export 'src/theme.dart';
 export 'src/trace_event.dart';
+export 'src/trees.dart';
 export 'src/ui/icons.dart';
 export 'src/ui/search.dart';
 export 'src/utils.dart';

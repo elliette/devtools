@@ -21,7 +21,6 @@ import '../screen.dart';
 import '../service_extensions.dart';
 import '../split.dart';
 import '../theme.dart';
-import '../ui/colors.dart';
 import '../ui/icons.dart';
 import '../ui/service_extension_widgets.dart';
 import '../ui/vm_flag_widgets.dart';
@@ -169,7 +168,7 @@ class PerformanceScreenBodyState extends State<PerformanceScreenBody>
             axis: Axis.vertical,
             initialFractions: const [0.7, 0.3],
             children: [
-              TimelineFlameChartContainer(
+              TimelineAnalysisContainer(
                 processing: processing,
                 processingProgress: processingProgress,
               ),
@@ -298,7 +297,7 @@ class _SecondaryControls extends StatelessWidget {
     @required this.controller,
   }) : super(key: key);
 
-  static const minScreenWidthForTextBeforeScaling = 1050.0;
+  static const minScreenWidthForTextBeforeScaling = 1075.0;
 
   final PerformanceController controller;
 
@@ -367,7 +366,8 @@ class EnhanceTracingButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textStyle = Theme.of(context).subtleTextStyle;
+    final theme = Theme.of(context);
+    final textStyle = theme.subtleTextStyle;
     return ServiceExtensionCheckboxGroupButton(
       title: 'Enhance Tracing',
       icon: Icons.auto_awesome,
@@ -387,7 +387,8 @@ class EnhanceTracingButton extends StatelessWidget {
           children: [
             TextSpan(
               text: 'frame times may be negatively affected',
-              style: textStyle.copyWith(color: rasterJankColor),
+              style:
+                  textStyle.copyWith(color: theme.colorScheme.errorTextColor),
             ),
             TextSpan(
               text: '.',
