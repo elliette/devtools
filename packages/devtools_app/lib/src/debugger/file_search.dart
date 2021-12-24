@@ -58,6 +58,8 @@ class FileSearchFieldState extends State<FileSearchField>
 
   @override
   Widget build(BuildContext context) {
+    print('BUILDING FILE SEARCH');
+
     return buildAutoCompleteSearchField(
       controller: autoCompleteController,
       searchFieldKey: fileSearchFieldKey,

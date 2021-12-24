@@ -653,6 +653,10 @@ mixin SearchFieldMixin<T extends StatefulWidget> on State<T> {
   }) {
     _onSelection = onSelection;
 
+    final autoCompleteValue = controller.searchAutoComplete.value.isNotEmpty
+        ? controller.searchAutoComplete.value[0].text
+        : '';
+
     final searchField = _SearchField(
       controller: controller,
       searchFieldKey: searchFieldKey,
@@ -664,8 +668,10 @@ mixin SearchFieldMixin<T extends StatefulWidget> on State<T> {
       label: label,
       overlayXPositionBuilder: overlayXPositionBuilder,
       onClose: onClose,
+      autoCompleteValue: autoCompleteValue,
     );
 
+    print('BUILDING AUTOCOMPLETE SEARCH FIELD');
     return _AutoCompleteSearchField(
       controller: controller,
       searchField: searchField,
@@ -748,6 +754,7 @@ class _SearchField extends StatelessWidget {
     this.decoration,
     this.onClose,
     this.overlayXPositionBuilder,
+    this.autoCompleteValue,
   });
 
   final SearchControllerMixin controller;
@@ -762,11 +769,12 @@ class _SearchField extends StatelessWidget {
   final InputDecoration decoration;
   final VoidCallback onClose;
   final OverlayXPositionBuilder overlayXPositionBuilder;
+  final String autoCompleteValue;
 
   @override
   Widget build(BuildContext context) {
     final textStyle = Theme.of(context).textTheme.subtitle1;
-    final seachFieldDecoration = decoration ??
+    final searchFieldDecoration = decoration ??
         InputDecoration(
           filled: false,
           contentPadding: const EdgeInsets.all(denseSpacing),
@@ -783,30 +791,6 @@ class _SearchField extends StatelessWidget {
                 )
               : null,
         );
-
-    final phantomSearchField = TextField(
-      decoration: decoration ??
-          InputDecoration(
-            filled: true,
-            fillColor: Colors.pink,
-            contentPadding: const EdgeInsets.all(denseSpacing),
-            focusedBorder:
-                OutlineInputBorder(borderSide: searchFocusBorderColor),
-            enabledBorder:
-                OutlineInputBorder(borderSide: searchFocusBorderColor),
-            labelStyle: TextStyle(color: searchColor),
-            border: const OutlineInputBorder(),
-            labelText: label ?? 'Search',
-            suffix: (supportsNavigation || onClose != null)
-                ? _SearchFieldSuffix(
-                    controller: controller,
-                    supportsNavigation: supportsNavigation,
-                    onClose: onClose,
-                  )
-                : null,
-          ),
-      cursorColor: searchColor,
-    );
 
     final searchField = TextField(
       key: searchFieldKey,
@@ -830,25 +814,7 @@ class _SearchField extends StatelessWidget {
       // Guarantee that the TextField on all platforms renders in the same
       // color for border, label text, and cursor. Primarly, so golden screen
       // snapshots will compare with the exact color.
-      decoration: decoration ??
-          InputDecoration(
-            filled: false,
-            contentPadding: const EdgeInsets.all(denseSpacing),
-            focusedBorder:
-                OutlineInputBorder(borderSide: searchFocusBorderColor),
-            enabledBorder:
-                OutlineInputBorder(borderSide: searchFocusBorderColor),
-            labelStyle: TextStyle(color: searchColor),
-            border: const OutlineInputBorder(),
-            labelText: label ?? 'Search',
-            suffix: (supportsNavigation || onClose != null)
-                ? _SearchFieldSuffix(
-                    controller: controller,
-                    supportsNavigation: supportsNavigation,
-                    onClose: onClose,
-                  )
-                : null,
-          ),
+      decoration: searchFieldDecoration,
       cursorColor: searchColor,
     );
 
@@ -856,7 +822,19 @@ class _SearchField extends StatelessWidget {
       searchFieldFocusNode.requestFocus();
     }
 
-    return Stack(children: [phantomSearchField, searchField]);
+    if (autoCompleteValue.isNotEmpty) {
+      final phantomSearchFieldDecoration = searchFieldDecoration.copyWith(
+          filled: true, fillColor: Colors.pink, labelText: autoCompleteValue);
+
+      final phantomSearchField = TextField(
+        decoration: phantomSearchFieldDecoration,
+        cursorColor: searchColor,
+      );
+
+      return Stack(children: [phantomSearchField, searchField]);
+    }
+
+    return searchField;
   }
 }
 
