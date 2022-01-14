@@ -27,7 +27,7 @@ void main() {
   }
 
   group('File search', () {
-    setUp(() {
+    setUp(() async {
       when(debuggerController.sortedScripts)
           .thenReturn(ValueNotifier(mockScriptRefs));
     });
@@ -76,16 +76,17 @@ void main() {
         ),
         equals(
           [
-            // Exact matches:
-            'zoo:animals/cats/meow.dart',
-            'zoo:animals/cats/purr.dart',
+            // Exact file name matches:
             'zoo:animals/insects/caterpillar.dart',
             'zoo:animals/insects/cicada.dart',
-            'kitchen:food/catering/party.dart',
-            'kitchen:food/carton/milk.dart',
             'kitchen:food/milk/carton.dart',
             'travel:adventure/cave_tours_europe.dart',
-            'travel:canada/banff.dart',
+            // Exact full path matches:
+            'zoo:animals/cats/meow.dart',
+            'zoo:animals/cats/purr.dart',
+            'kitchen:food/catering/party.dart',
+            'kitchen:food/carton/milk.dart',
+            'travel:canada/banff.dart'
           ],
         ),
       );
@@ -95,16 +96,17 @@ void main() {
         ),
         equals(
           [
-            // Exact matches:
-            '[12-13]',
-            '[12-13]',
-            '[16-17]',
-            '[16-17]',
-            '[3-4]',
-            '[3-4]',
-            '[3-4]',
+            // Exact file name matches:
+            '[20-21]',
+            '[20-21]',
+            '[18-19]',
             '[17-18]',
-            '[7-8]'
+            // Exact full path matches:
+            '[12-13]',
+            '[12-13]',
+            '[3-4]',
+            '[3-4]',
+            '[7-8]',
           ],
         ),
       );
@@ -116,16 +118,17 @@ void main() {
         ),
         equals(
           [
-            // Exact matches:
-            'zoo:animals/cats/meow.dart',
-            'zoo:animals/cats/purr.dart',
+            // Exact file name matches:
             'zoo:animals/insects/caterpillar.dart',
             'zoo:animals/insects/cicada.dart',
-            'kitchen:food/catering/party.dart',
-            'kitchen:food/carton/milk.dart',
             'kitchen:food/milk/carton.dart',
             'travel:adventure/cave_tours_europe.dart',
-            'travel:canada/banff.dart',
+            // Exact full path matches:
+            'zoo:animals/cats/meow.dart',
+            'zoo:animals/cats/purr.dart',
+            'kitchen:food/catering/party.dart',
+            'kitchen:food/carton/milk.dart',
+            'travel:canada/banff.dart'
           ],
         ),
       );
@@ -135,15 +138,16 @@ void main() {
         ),
         equals(
           [
-            // Exact matches:
-            '[12-14]',
-            '[12-14]',
+            // Exact file name matches:
             '[20-22]',
             '[22-24]',
-            '[13-15]',
-            '[13-15]',
             '[18-20]',
             '[17-19]',
+            // Exact full path matches:
+            '[12-14]',
+            '[12-14]',
+            '[13-15]',
+            '[13-15]',
             '[7-9]'
           ],
         ),
@@ -151,20 +155,18 @@ void main() {
 
       autoCompleteController.search = 'cat';
       expect(
-        getAutoCompleteTextValues(
+        getAutoCompleteMatch(
           autoCompleteController.searchAutoComplete.value,
         ),
         equals(
           [
-            // Exact matches:
-            'zoo:animals/cats/meow.dart',
-            'zoo:animals/cats/purr.dart',
-            'zoo:animals/insects/caterpillar.dart',
-            'kitchen:food/catering/party.dart',
-            // Fuzzy matches:
-            'zoo:animals/insects/cicada.dart',
-            'kitchen:food/milk/carton.dart',
-            'travel:adventure/cave_tours_europe.dart',
+            'zoo:animals/insects/CATerpillar.dart',
+            'zoo:animals/CATs/meow.dart',
+            'zoo:animals/CATs/purr.dart',
+            'kitchen:food/CATering/party.dart',
+            'zoo:animals/insects/CicAda.darT',
+            'kitchen:food/milk/CArTon.dart',
+            'travel:adventure/CAve_Tours_europe.dart'
           ],
         ),
       );
@@ -174,18 +176,21 @@ void main() {
         ),
         equals(
           [
-            // Exact matches:
-            '[12-15]',
-            '[12-15]',
+            // Exact file name matches:
             '[20-23]',
+            // Exact full path matches:
+            '[12-15]',
+            '[12-15]',
             '[13-16]',
             // Fuzzy matches:
             '[20-21, 23-24, 30-31]',
             '[18-19, 19-20, 21-22]',
-            '[17-18, 18-19, 22-23]'
+            '[17-18, 18-19, 22-23]',
           ],
         ),
       );
+
+      /*
 
       autoCompleteController.search = 'cate';
       expect(
@@ -301,8 +306,53 @@ void main() {
 
       autoCompleteController.search = 'caterpie';
       expect(autoCompleteController.searchAutoComplete.value, equals([]));
+      */
     });
   });
+}
+
+List<String> getAutoCompleteMatch(List<AutoCompleteMatch> matches) {
+  return matches
+      .map(
+        (match) => transformAutoCompleteMatch<String>(
+          match: match,
+          transformMatchedSegment: (segment) => segment.toUpperCase(),
+          transformUnmatchedSegment: (segment) => segment.toLowerCase(),
+          combineSegments: (segments) => segments.join(''),
+        ),
+      )
+      .toList();
+
+  // final values = <String>[];
+  // for (final match in matches) {
+  //   final text = match.text;
+  //   final matchedSegments = match.matchedSegments;
+  //   if (matchedSegments == null || matchedSegments.isEmpty) {
+  //     values.add(text);
+  //     break;
+  //   }
+  //   int previousEndIndex = 0;
+  //   String modifiedText = '';
+  //   for (final segment in matchedSegments) {
+  //     if (previousEndIndex < segment.begin) {
+  //       // Add uncapitalized segment before the capitalized segment:
+  //       final segmentBefore = text.substring(previousEndIndex, segment.begin);
+  //       modifiedText += segmentBefore;
+  //     }
+  //     // Add the capitalized segment:
+  //     final capitalizedSegment =
+  //         text.substring(segment.begin, segment.end).toUpperCase();
+  //     modifiedText += capitalizedSegment;
+  //     previousEndIndex = segment.end;
+  //   }
+  //   if (previousEndIndex < text.length - 1) {
+  //     // Add the last uncapitalized segment:
+  //     final lastSegment = text.substring(previousEndIndex);
+  //     modifiedText += lastSegment;
+  //   }
+  //   values.add(modifiedText);
+  // }
+  // return values;
 }
 
 List<String> getAutoCompleteTextValues(List<AutoCompleteMatch> matches) {
