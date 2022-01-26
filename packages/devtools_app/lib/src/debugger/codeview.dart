@@ -287,7 +287,10 @@ class _CodeViewState extends State<CodeView>
 
     return HistoryViewport(
       history: widget.controller.scriptsHistory,
-      generateTitle: (script) => script.uri,
+      generateTitle: (script) {
+        print('script is $script');
+        return script.uri;
+      },
       controls: [
         ScriptPopupMenu(widget.controller),
         ScriptHistoryPopupMenu(
@@ -462,6 +465,7 @@ class _CodeViewState extends State<CodeView>
     return widget.controller.scriptsHistory.openedScripts
         .take(scriptHistorySize)
         .map((scriptRef) {
+      print('HERE, SCRIPT REF IS $scriptRef');
       return PopupMenuItem(
         value: scriptRef,
         child: Column(

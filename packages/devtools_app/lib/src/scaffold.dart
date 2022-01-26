@@ -67,6 +67,8 @@ class DevToolsScaffold extends StatefulWidget {
   /// The size that all actions on this widget are expected to have.
   static double get actionWidgetSize => scaleByFontFactor(48.0);
 
+  static FocusNode topFocusNode = FocusNode(debugLabel: 'TopLevelFocusNode');
+
   /// The border around the content in the DevTools UI.
   EdgeInsets get appPadding => EdgeInsets.fromLTRB(
         horizontalPadding.left,
@@ -342,13 +344,13 @@ class DevToolsScaffoldState extends State<DevToolsScaffold>
           // of the [DragAndDropEventAbsorber] widget. Fix this.
           padding: widget.appPadding,
           alignment: Alignment.topLeft,
-          child: FocusScope(
-            child: AnalyticsPrompt(
-              child: BannerMessages(
-                screen: screen,
-              ),
+          // child: FocusScope(
+          child: AnalyticsPrompt(
+            child: BannerMessages(
+              screen: screen,
             ),
           ),
+          // ),
         ),
     ];
 
@@ -389,28 +391,33 @@ class DevToolsScaffoldState extends State<DevToolsScaffold>
                 keyboardShortcuts: _currentScreen.buildKeyboardShortcuts(
                   context,
                 ),
-                child: Scaffold(
-                  appBar: widget.embed ? null : _buildAppBar(scaffoldTitle),
-                  body: (serviceManager.connectedAppInitialized &&
-                          !serviceManager.connectedApp.isProfileBuildNow &&
-                          !offlineController.offlineMode.value &&
-                          _currentScreen.showConsole(widget.embed))
-                      ? Split(
-                          axis: Axis.vertical,
-                          children: [
-                            content,
-                            Padding(
-                              padding: DevToolsScaffold.horizontalPadding,
-                              child: const DebuggerConsole(),
-                            ),
-                          ],
-                          splitters: [
-                            DebuggerConsole.buildHeader(),
-                          ],
-                          initialFractions: const [0.8, 0.2],
-                        )
-                      : content,
-                  bottomNavigationBar: widget.embed ? null : _buildStatusLine(),
+                child: Focus(
+                  debugLabel: 'TopLevelFocus',
+                  focusNode: DevToolsScaffold.topFocusNode,
+                  child: Scaffold(
+                    appBar: widget.embed ? null : _buildAppBar(scaffoldTitle),
+                    body: (serviceManager.connectedAppInitialized &&
+                            !serviceManager.connectedApp.isProfileBuildNow &&
+                            !offlineController.offlineMode.value &&
+                            _currentScreen.showConsole(widget.embed))
+                        ? Split(
+                            axis: Axis.vertical,
+                            children: [
+                              content,
+                              Padding(
+                                padding: DevToolsScaffold.horizontalPadding,
+                                child: const DebuggerConsole(),
+                              ),
+                            ],
+                            splitters: [
+                              DebuggerConsole.buildHeader(),
+                            ],
+                            initialFractions: const [0.8, 0.2],
+                          )
+                        : content,
+                    bottomNavigationBar:
+                        widget.embed ? null : _buildStatusLine(),
+                  ),
                 ),
               ),
             ),

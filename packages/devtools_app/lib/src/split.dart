@@ -7,7 +7,9 @@ import 'dart:math' as math;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
+import 'auto_dispose_mixin.dart';
 import 'utils.dart';
+import 'scaffold.dart';
 
 /// A widget that takes a list of children, lays them out along [axis], and
 /// allows the user to resize them.
@@ -86,19 +88,24 @@ class Split extends StatefulWidget {
   State<StatefulWidget> createState() => _SplitState();
 }
 
-class _SplitState extends State<Split> {
+class _SplitState extends State<Split> with AutoDisposeMixin {
   List<double> fractions;
 
   bool get isHorizontal => widget.axis == Axis.horizontal;
+
+  FocusNode get _focusNode => FocusNode(
+      debugLabel: '${isHorizontal ? 'horizontal' : 'vertical'}-split');
 
   @override
   void initState() {
     super.initState();
     fractions = List.from(widget.initialFractions);
+    autoDisposeFocusNode(_focusNode);
   }
 
   @override
   Widget build(BuildContext context) {
+    // _focusNode.attach(context);
     return LayoutBuilder(builder: _buildLayout);
   }
 
@@ -179,6 +186,12 @@ class _SplitState extends State<Split> {
     final sizes = List.generate(fractions.length, (i) => _sizeForIndex(i));
 
     void updateSpacing(DragUpdateDetails dragDetails, int splitterIndex) {
+      // print(
+      //     '=========== IN UPDATE SPACING START WHAT IS THE FOCUS? ============');
+      // print(primaryFocus);
+      // print('---------- parent ---------------');
+      // print(primaryFocus.parent);
+
       final dragDelta =
           isHorizontal ? dragDetails.delta.dx : dragDetails.delta.dy;
       final fractionalDelta = dragDelta / axisSize;
@@ -240,6 +253,11 @@ class _SplitState extends State<Split> {
         }
       });
       _verifyFractionsSumTo1(fractions);
+      // print(
+      //     '=========== IN UPDATE SPACING END WHAT IS THE FOCUS? ============');
+      // print(primaryFocus);
+      // print('---------- parent ---------------');
+      // print(primaryFocus.parent);
     }
 
     final children = <Widget>[];
@@ -258,6 +276,22 @@ class _SplitState extends State<Split> {
             child: GestureDetector(
               key: widget.dividerKey(i),
               behavior: HitTestBehavior.translucent,
+              onTapDown: (details) {
+                print('================ on tap down!!');
+              },
+              onHorizontalDragStart: (details) {
+                print('!!!! requesting focus on horizontal drag start');
+                _focusNode.requestFocus();
+                // print('focus is:');
+                // print(primaryFocus);
+              },
+              onVerticalDragStart: (details) {
+                print('!!!! requesting focus on vertical drag start');
+                // Doesn't have a focus ancestor??
+                FocusScope.of(context).requestFocus(_focusNode);
+                print('focus is!!!!!!!!!!!!!!! ');
+                print(primaryFocus);
+              },
               onHorizontalDragUpdate: (details) =>
                   isHorizontal ? updateSpacing(details, i) : null,
               onVerticalDragUpdate: (details) =>
@@ -266,9 +300,36 @@ class _SplitState extends State<Split> {
               // the drag bar. There still appears to be a few frame lag before the
               // drag action triggers which is't ideal but isn't a launch blocker.
               dragStartBehavior: DragStartBehavior.down,
+              onHorizontalDragEnd: (details) {
+                print('ON HORIZONTAL DRAG END, REQUEST FOCUS');
+                _focusNode.requestFocus();
+                return null;
+              },
+              onVerticalDragEnd: (details) {
+                // print('=========== VERTICAL DRAG END ============');
+                // print(primaryFocus);
+                // print('---------- parent ---------------');
+                // print(primaryFocus.parent);
+                print(
+                    'ON VERTICAL DRAG END, REQUEST FOCUS ON ${DevToolsScaffold.topFocusNode}');
+
+                FocusScope.of(context)
+                    .requestFocus(DevToolsScaffold.topFocusNode);
+                // _focusNode.requestFocus();
+                print('focus is now $primaryFocus');
+                return null;
+              },
+              // child: FocusableActionDetector(
+              //   focusNode: _focusNode,
+              //   onFocusChange: (isFocused) {
+              //     print(
+              //         '============== ACTION DETECTOR IS FOCUSED? $isFocused');
+              //   },
+              //   autofocus: false,
               child: widget.splitters != null
                   ? widget.splitters[i]
                   : DefaultSplitter(isHorizontal: isHorizontal),
+              // ),
             ),
           ),
       ]);
