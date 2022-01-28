@@ -286,10 +286,10 @@ class AutoCompleteState extends State<AutoComplete> with AutoDisposeMixin {
         ? 0.0
         : calculateTextSpanHeight(tileContents.first) + denseSpacing;
 
-    final tileEntryMaxWidth = tileContents.isEmpty
-        ? 0.0
-        : calculateTextSpanWidth(findLongestTextSpan(tileContents)) +
-            denseSpacing;
+    // final tileEntryMaxWidth = tileContents.isEmpty
+    //     ? 0.0
+    //     : calculateTextSpanWidth(findLongestTextSpan(tileContents)) +
+    //         denseSpacing;
 
     // Find the searchField and place overlay below bottom of TextField and
     // make overlay width of TextField. This is also we decide the height of
@@ -354,7 +354,7 @@ class AutoCompleteState extends State<AutoComplete> with AutoDisposeMixin {
     return Positioned(
       key: searchAutoCompleteKey,
       width: isMaxWidth
-          ? max(tileEntryMaxWidth, box.size.width)
+          ? box.size.width
           : AutoCompleteSearchControllerMixin.minPopupWidth,
       height: bottom ? null : count * tileEntryHeight,
       child: CompositedTransformFollower(

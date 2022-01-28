@@ -214,7 +214,8 @@ class _CodeViewState extends State<CodeView>
                 : buildCodeArea(context),
             if (showFileOpener)
               Positioned(
-                left: fileOpenerLeftPadding,
+                left: 0,
+                right: 0,
                 child: buildFileSearchField(),
               ),
             if (showSearch && scriptRef != null)
@@ -401,6 +402,8 @@ class _CodeViewState extends State<CodeView>
   Widget wrapInElevatedCard(
     Widget widget, {
     double width = wideSearchTextWidth,
+    EdgeInsetsGeometry padding,
+    double height,
   }) {
     return Card(
       elevation: defaultElevation,
@@ -409,10 +412,10 @@ class _CodeViewState extends State<CodeView>
         borderRadius: BorderRadius.circular(defaultBorderRadius),
       ),
       child: Container(
-        width: width,
-        height: defaultTextFieldHeight + 2 * denseSpacing,
-        padding: const EdgeInsets.all(denseSpacing),
+        width: width ?? wideSearchTextWidth,
+        height: height ?? defaultTextFieldHeight + 2 * denseSpacing,
         child: widget,
+        padding: padding ?? const EdgeInsets.all(denseSpacing),
       ),
     );
   }
@@ -423,6 +426,8 @@ class _CodeViewState extends State<CodeView>
         debuggerController: widget.controller,
       ),
       width: extraWideSearchTextWidth,
+      padding: EdgeInsets.zero,
+      height: defaultTextFieldHeight,
     );
   }
 
