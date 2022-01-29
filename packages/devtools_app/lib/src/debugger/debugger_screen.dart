@@ -59,7 +59,14 @@ class DebuggerScreen extends Screen {
       EscapeIntent: EscapeAction(),
       OpenFileIntent: OpenFileAction(),
     };
-    return ShortcutsConfiguration(shortcuts: shortcuts, actions: actions);
+    return ShortcutsConfiguration(shortcuts: shortcuts, actions: actions
+        // onScreenTap: () {
+        //   print('screen tap!');
+        //   if (controller.showFileOpener.value) {
+        //     print('CLOSING THE FILE OPENER');
+        //     controller.toggleFileOpenerVisibility(false);
+        //   }
+        );
   }
 
   @override

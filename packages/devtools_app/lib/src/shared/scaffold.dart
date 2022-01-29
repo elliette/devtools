@@ -598,7 +598,12 @@ class KeyboardShortcutsState extends State<KeyboardShortcuts>
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: () => FocusScope.of(context).requestFocus(_focusNode),
+      onTap: () {
+        if (widget.keyboardShortcuts.onScreenTap != null) {
+          widget.keyboardShortcuts.onScreenTap();
+        }
+        FocusScope.of(context).requestFocus(_focusNode);
+      },
       child: FocusableActionDetector(
         child: widget.child,
         shortcuts: widget.keyboardShortcuts.shortcuts,

@@ -313,6 +313,7 @@ class ShortcutsConfiguration {
   const ShortcutsConfiguration({
     @required this.shortcuts,
     @required this.actions,
+    this.onScreenTap,
   }) : assert(shortcuts.length == actions.length);
 
   factory ShortcutsConfiguration.empty() {
@@ -321,6 +322,8 @@ class ShortcutsConfiguration {
 
   final Map<ShortcutActivator, Intent> shortcuts;
   final Map<Type, Action<Intent>> actions;
+  final void Function() onScreenTap;
 
-  bool get isEmpty => shortcuts.isEmpty && actions.isEmpty;
+  bool get isEmpty =>
+      shortcuts.isEmpty && actions.isEmpty && onScreenTap == null;
 }

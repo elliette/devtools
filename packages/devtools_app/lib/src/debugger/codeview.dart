@@ -421,8 +421,8 @@ class _CodeViewState extends State<CodeView>
   }
 
   Widget buildFileSearchField() {
-    return wrapInElevatedCard(
-      FileSearchField(
+    return ElevatedCard(
+      child: FileSearchField(
         debuggerController: widget.controller,
       ),
       width: extraWideSearchTextWidth,
@@ -432,8 +432,8 @@ class _CodeViewState extends State<CodeView>
   }
 
   Widget buildSearchInFileField() {
-    return wrapInElevatedCard(
-      buildSearchField(
+    return ElevatedCard(
+      child: buildSearchField(
         controller: widget.controller,
         searchFieldKey: debuggerCodeViewSearchKey,
         searchFieldEnabled: parsedScript != null,

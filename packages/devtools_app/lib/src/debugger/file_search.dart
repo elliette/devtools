@@ -62,19 +62,15 @@ class FileSearchFieldState extends State<FileSearchField>
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => print('RAPPPTT'),
-      child: buildAutoCompleteSearchField(
-        controller: autoCompleteController,
-        searchFieldKey: fileSearchFieldKey,
-        searchFieldEnabled: true,
-        shouldRequestFocus: true,
-        keyEventsToPropagate: {LogicalKeyboardKey.escape},
-        onSelection: _onSelection,
-        onClose: _onClose,
-        label: 'Open file',
-      ),
+    return buildAutoCompleteSearchField(
+      controller: autoCompleteController,
+      searchFieldKey: fileSearchFieldKey,
+      searchFieldEnabled: true,
+      shouldRequestFocus: true,
+      keyEventsToPropagate: {LogicalKeyboardKey.escape},
+      onSelection: _onSelection,
+      onClose: _onClose,
+      label: 'Open file',
     );
   }
 

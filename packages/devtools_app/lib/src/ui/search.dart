@@ -982,6 +982,20 @@ class _AutoCompleteSearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    searchFieldFocusNode.addListener(() {
+      print('change of focus on search field focus node');
+      print('search field has focus? ${searchFieldFocusNode.hasFocus}');
+    });
+
+    rawKeyboardFocusNode.addListener(() {
+      print('change of focus on raw keyboard focus node');
+      print('raw keyboard has focus? ${rawKeyboardFocusNode.hasFocus}');
+      print('search field has focus? ${searchFieldFocusNode.hasFocus}');
+    });
+
+    // TODO: CHANGE THIS TO A STATEFUL WIDGET, PASS CALLBACK WHEN FOCUS IS LOST.
+    // In file search case, close file search.
+
     final highlightDropdown =
         onHighlightDropdown != null ? onHighlightDropdown : _highlightDropdown;
 
