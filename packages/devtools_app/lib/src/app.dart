@@ -222,7 +222,7 @@ class DevToolsAppState extends State<DevToolsApp> with AutoDisposeMixin {
                 tabs: tabs,
                 actions: [
                   // TODO(https://github.com/flutter/devtools/issues/1941)
-                  if (serviceManager.connectedApp!.isFlutterAppNow!) ...[
+                  if (!embed && serviceManager.connectedApp!.isFlutterAppNow!) ...[
                     HotReloadButton(),
                     HotRestartButton(),
                   ],

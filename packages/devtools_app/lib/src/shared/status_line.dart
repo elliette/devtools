@@ -33,58 +33,41 @@ class StatusLine extends StatelessWidget {
   const StatusLine({
     required this.currentScreen,
     required this.extraActions,
-    required this.isEmbedded,
   });
 
   final Screen currentScreen;
   final List<Widget> extraActions;
-  final bool isEmbedded;
 
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<bool>(
       valueListenable: currentScreen.showIsolateSelector,
-      builder: (
-        context,
-        showIsolateSelector,
-        _,
-      ) {
+      builder: (context, showIsolateSelector, _) {
         final textTheme = Theme.of(context).textTheme;
 
-        final List<Widget> statusWidgets = removeNullValues(
-          [
-            buildHelpUrlStatus(context, currentScreen, textTheme),
-            if (showIsolateSelector) const IsolateSelector(),
-            buildPageStatus(context, currentScreen, textTheme),
-            buildConnectionStatus(textTheme),
-            ...extraActions,
-          ],
-        ).toList();
-
-        final children = <Widget>[];
-        final len = statusWidgets.length;
-        for (int i = 0; i < len; i++) {
-          final isFirst = i == 0;
-          final isLast = i == len - 1;
-          var alignment = Alignment.center;
-          if (isFirst) alignment = Alignment.centerLeft;
-          if (isLast) alignment = Alignment.centerRight;
-
-          children.add(
-            Expanded(
-              child: Align(child: statusWidgets[i], alignment: alignment),
-            ),
-          );
-
-          if (!isLast) children.add(const BulletSpacer());
-        }
+        final children = removeNullValues([
+          // Have an area for page specific help (always docked to the left).
+          buildHelpUrlStatus(context, currentScreen, textTheme),
+          // Display an isolate selector.
+          if (showIsolateSelector) const IsolateSelector(),
+          // Display page specific status.
+          buildPageStatus(context, currentScreen, textTheme),
+          // Display any extra actions for this screen.
+          ...extraActions,
+          // Always display connection status (docked to the right).
+          buildConnectionStatus(textTheme)
+        ])
+            .expand(
+              (child) => [child, const BulletSpacer()],
+            )
+            .toList();
 
         return Container(
           height: statusLineHeight,
           alignment: Alignment.centerLeft,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: children,
+            children: children.sublist(0, children.length - 1),
           ),
         );
       },
@@ -215,15 +198,13 @@ class IsolateSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
     final IsolateManager isolateManager = serviceManager.isolateManager;
     return DualValueListenableBuilder<List<IsolateRef?>, IsolateRef?>(
       firstListenable: isolateManager.isolates,
       secondListenable: isolateManager.selectedIsolate,
       builder: (context, isolates, selectedIsolateRef, _) {
-
         return PopupMenuButton<IsolateRef?>(
-          child: IsolateOption(isolateManager.selectedIsolate.value!),
+          child: IsolateOption(isolateManager.selectedIsolate.value),
           tooltip: 'Selected Isolate',
           initialValue: selectedIsolateRef,
           onSelected: isolateManager.selectIsolate,
@@ -237,7 +218,6 @@ class IsolateSelector extends StatelessWidget {
             },
           ).toList(),
         );
-        // );
       },
     );
   }
@@ -248,19 +228,19 @@ class IsolateOption extends StatelessWidget {
     this.ref,
   );
 
-  final IsolateRef ref;
+  final IsolateRef? ref;
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     return Row(
       children: [
-        ref.isSystemIsolate ?? false
+        ref?.isSystemIsolate ?? false
             ? const Icon(Icons.settings_applications)
             : const Icon(Icons.call_split),
         const SizedBox(width: denseSpacing),
         Text(
-          _isolateName(ref),
+          ref == null ? 'isolate' : _isolateName(ref!),
           style: textTheme.bodyText2,
         ),
       ],

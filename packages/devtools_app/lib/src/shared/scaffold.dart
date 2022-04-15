@@ -468,7 +468,6 @@ class DevToolsScaffoldState extends State<DevToolsScaffold>
             child: StatusLine(
               currentScreen: _currentScreen,
               extraActions: extraActions,
-              isEmbedded: isEmbedded,
             ),
           ),
         ],
