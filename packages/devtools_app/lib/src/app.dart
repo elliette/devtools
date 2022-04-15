@@ -226,9 +226,9 @@ class DevToolsAppState extends State<DevToolsApp> with AutoDisposeMixin {
                     HotReloadButton(),
                     HotRestartButton(),
                   ],
-                  OpenSettingsAction(),
+                  if (!embed) OpenSettingsAction(),
                   ReportFeedbackButton(),
-                  OpenAboutAction(),
+                  if (!embed) OpenAboutAction(),
                 ],
               ),
             );

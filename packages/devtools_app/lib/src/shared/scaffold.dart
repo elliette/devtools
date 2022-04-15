@@ -41,7 +41,7 @@ class DevToolsScaffold extends StatefulWidget {
     Key? key,
     required this.tabs,
     this.page,
-    this.actions,
+    required this.actions,
     this.embed = false,
     required this.ideTheme,
   }) : super(key: key);
@@ -55,7 +55,7 @@ class DevToolsScaffold extends StatefulWidget {
           key: key,
           tabs: [SimpleScreen(child)],
           ideTheme: ideTheme,
-          actions: actions,
+          actions: actions ?? [],
         );
 
   /// A [Key] that indicates the scaffold is showing in narrow-width mode.
@@ -96,7 +96,7 @@ class DevToolsScaffold extends StatefulWidget {
   /// Actions that it's possible to perform in this Scaffold.
   ///
   /// These will generally be [RegisteredServiceExtensionButton]s.
-  final List<Widget>? actions;
+  final List<Widget> actions;
 
   @override
   State<StatefulWidget> createState() => DevToolsScaffoldState();
@@ -354,7 +354,9 @@ class DevToolsScaffoldState extends State<DevToolsScaffold>
                           initialFractions: const [0.8, 0.2],
                         )
                       : content,
-                  bottomNavigationBar: widget.embed ? null : _buildStatusLine(),
+                  bottomNavigationBar: _buildStatusLine(
+                    isEmbedded: widget.embed,
+                  ),
                 ),
               ),
             ),
@@ -375,7 +377,7 @@ class DevToolsScaffoldState extends State<DevToolsScaffold>
         MediaQuery.of(context).size.width <= _wideWidth(title, widget);
 
     // Add a leading [BulletSpacer] to the actions if the screen is not narrow.
-    final actions = List<Widget>.from(widget.actions ?? []);
+    final actions = widget.actions;
     if (!isNarrow && actions.isNotEmpty && widget.tabs.length > 1) {
       actions.insert(0, const BulletSpacer(useAccentColor: true));
     }
@@ -445,7 +447,8 @@ class DevToolsScaffoldState extends State<DevToolsScaffold>
     );
   }
 
-  Widget _buildStatusLine() {
+  Widget _buildStatusLine({required bool isEmbedded}) {
+    final extraActions = isEmbedded ? widget.actions : <Widget>[];
     final appPadding = widget.appPadding;
 
     return Container(
@@ -462,7 +465,11 @@ class DevToolsScaffoldState extends State<DevToolsScaffold>
               right: appPadding.right,
               bottom: appPadding.bottom,
             ),
-            child: StatusLine(_currentScreen),
+            child: StatusLine(
+              currentScreen: _currentScreen,
+              extraActions: extraActions,
+              isEmbedded: isEmbedded,
+            ),
           ),
         ],
       ),
@@ -485,7 +492,7 @@ class DevToolsScaffoldState extends State<DevToolsScaffold>
     for (var tab in widget.tabs) {
       wideWidth += tab.approximateWidth(textTheme);
     }
-    final actionsLength = widget.actions?.length ?? 0;
+    final actionsLength = widget.actions.length;
     if (actionsLength > 0) {
       wideWidth += actionsLength * DevToolsScaffold.actionWidgetSize +
           BulletSpacer.width;
