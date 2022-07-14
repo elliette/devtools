@@ -178,6 +178,23 @@ class _OffsetScrollbarState extends State<OffsetScrollbar> {
   }
 }
 
+void scrollToPosition(
+  ScrollController scrollController,
+  double position,
+) {
+  final scrollStart = scrollController.offset;
+  final scrollEnd = scrollStart + scrollController.position.extentInside;
+  final alreadyVisible = position >= scrollStart && position <= scrollEnd;
+
+  if (!alreadyVisible) {
+    scrollController.animateTo(
+      position,
+      duration: defaultDuration,
+      curve: defaultCurve,
+    );
+  }
+}
+
 class ColorPair {
   const ColorPair({required this.background, required this.foreground});
 

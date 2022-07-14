@@ -15,6 +15,7 @@ import '../primitives/trees.dart';
 import '../primitives/utils.dart';
 import '../ui/colors.dart';
 import '../ui/search.dart';
+import '../ui/utils.dart';
 import 'collapsible_mixin.dart';
 import 'common_widgets.dart';
 import 'table_data.dart';
@@ -464,29 +465,23 @@ class TreeTableState<T extends TreeNode<T>> extends State<TreeTable<T>>
     addAutoDisposeListener(selectionNotifier, () {
       setState(() {
         final node = selectionNotifier.value.node;
-        //offset will need to be modified with new UI table changes
-        final offset = defaultRowHeight;
-        expandParents(node?.parent);
+        if (node == null) return;
+        expandParents(node);
 
-        node?.select();
-
-        final searchCondition = (T n) => n.isSelected;
-        final int selectedDisplayRow = node!.childCountToMatchingNode(
+        final searchCondition = (T n) {
+          return n == node;
+        };
+        final int selectedRowIndex = dataRoots[0].childCountToMatchingNode(
           matchingNodeCondition: searchCondition,
           includeCollapsedNodes: false,
         );
-        final newPos = selectedDisplayRow * defaultRowHeight;
 
-        //TODO Pull this code and _onActiveSearchChange to be shared
-        final indexInView = newPos > scrollController.offset &&
-            newPos <
-                scrollController.offset +
-                    scrollController.position.extentInside;
+        final newPosition = selectedRowIndex * defaultRowHeight;
+        scrollToPosition(
+          scrollController,
+          newPosition,
+        );
 
-        //TODO Ensure that jumping does not overjump or underjump and undershooting by 1 right now
-        if (!indexInView) scrollController.jumpTo(newPos);
-
-        node.unselect();
       });
     });
 
@@ -924,18 +919,7 @@ class _TableState<T> extends State<_Table<T>> with AutoDisposeMixin {
 
     if (index == -1) return;
 
-    final y = index * defaultRowHeight;
-    final indexInView = y > widget.scrollController.offset &&
-        y <
-            widget.scrollController.offset +
-                widget.scrollController.position.extentInside;
-    if (!indexInView) {
-      await widget.scrollController.animateTo(
-        index * defaultRowHeight,
-        duration: defaultDuration,
-        curve: defaultCurve,
-      );
-    }
+    scrollToPosition(widget.scrollController, index * defaultRowHeight);
   }
 
   @override
