@@ -16,7 +16,7 @@ import '../../shared/table.dart';
 import 'app_size_screen.dart';
 
 // Temporary feature flag for deferred loading.
-const deferredLoadingSupportEnabled = false;
+const deferredLoadingSupportEnabled = true;
 
 enum DiffTreeType {
   increaseOnly,
@@ -279,12 +279,15 @@ class AppSizeController {
 
     Map<String, dynamic> diffMap;
     if (oldFile.isAnalyzeSizeFile && newFile.isAnalyzeSizeFile) {
+      print('both are analyze size files');
+
+
       final oldApkProgramInfo = ProgramInfo();
       final oldFileJson = oldFile.data as Map<String, dynamic>;
       _apkJsonToProgramInfo(
         program: oldApkProgramInfo,
         parent: oldApkProgramInfo.root,
-        json: oldFileJson,
+        json: _maybeExtractMainRoot(oldFileJson),
       );
 
       // Extract the precompiler trace from the old file, if it exists, and
@@ -302,7 +305,7 @@ class AppSizeController {
       _apkJsonToProgramInfo(
         program: newApkProgramInfo,
         parent: newApkProgramInfo.root,
-        json: newFileJson,
+        json: _maybeExtractMainRoot(newFileJson),
       );
 
       // Extract the precompiler trace from the new file, if it exists, and
@@ -356,6 +359,17 @@ class AppSizeController {
     changeDiffRoot(_activeDiffRoot);
 
     _processingNotifier.value = false;
+  }
+
+  Map<String, dynamic> _maybeExtractMainRoot(Map<String, dynamic> jsonFile) {
+    final isDeferred = jsonFile['n'] == 'ArtificialRoot';
+    if (isDeferred) {
+      final List<dynamic> children = jsonFile['children'] as List<dynamic>;
+      for (final childJson in children.cast<Map<String, dynamic>>()) {
+        if (childJson['n'] == 'Root') return childJson;
+      }
+    }
+    return jsonFile;
   }
 
   ProgramInfoNode _apkJsonToProgramInfo({
