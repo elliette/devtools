@@ -75,7 +75,8 @@ class AppSizeAnalysisTable extends StatelessWidget {
 }
 
 class _NameColumn extends TreeColumnData<TreemapNode> {
-  _NameColumn({required this.currentRootLevel}) : super('Library or Class');
+  _NameColumn({required this.currentRootLevel, String? caption})
+      : super('Library or Class ${caption ?? ''}');
 
   final int currentRootLevel;
 
@@ -156,8 +157,32 @@ class _SizePercentageColumn extends ColumnData<TreemapNode> {
 }
 
 class AppSizeDiffTable extends StatelessWidget {
-  factory AppSizeDiffTable({required TreemapNode rootNode}) {
-    final treeColumn = _NameColumn(currentRootLevel: rootNode.level);
+  factory AppSizeDiffTable.fromRoot({
+    required TreemapNode rootNode,
+    String? caption,
+  }) {
+    final treeColumn =
+        _NameColumn(currentRootLevel: rootNode.level, caption: caption);
+    final diffColumn = _DiffColumn();
+    final columns = List<ColumnData<TreemapNode>>.unmodifiable([
+      treeColumn,
+      diffColumn,
+    ]);
+    return AppSizeDiffTable._(
+      rootNode,
+      null,
+      treeColumn,
+      diffColumn,
+      columns,
+    );
+  }
+
+  factory AppSizeDiffTable.fromNodes({
+    required List<TreemapNode> nodes,
+    String? caption,
+  }) {
+    final treeColumn =
+        _NameColumn(currentRootLevel: nodes[0].level, caption: caption);
     final diffColumn = _DiffColumn();
     final columns = List<ColumnData<TreemapNode>>.unmodifiable([
       treeColumn,
@@ -165,7 +190,8 @@ class AppSizeDiffTable extends StatelessWidget {
     ]);
 
     return AppSizeDiffTable._(
-      rootNode,
+      null,
+      nodes,
       treeColumn,
       diffColumn,
       columns,
@@ -174,12 +200,14 @@ class AppSizeDiffTable extends StatelessWidget {
 
   const AppSizeDiffTable._(
     this.rootNode,
+    this.nodes,
     this.treeColumn,
     this.sortColumn,
     this.columns,
   );
 
-  final TreemapNode rootNode;
+  final TreemapNode? rootNode;
+  final List<TreemapNode>? nodes;
 
   final TreeColumnData<TreemapNode> treeColumn;
   final ColumnData<TreemapNode> sortColumn;
@@ -190,7 +218,7 @@ class AppSizeDiffTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TreeTable<TreemapNode>(
-      dataRoots: [rootNode],
+      dataRoots: nodes != null && nodes!.isNotEmpty ? nodes! : [rootNode!],
       columns: columns,
       treeColumn: treeColumn,
       keyFactory: (node) => PageStorageKey<String>(node.name),

@@ -15,6 +15,8 @@ import '../../primitives/utils.dart';
 import '../../shared/table.dart';
 import 'app_size_screen.dart';
 
+import 'package:tuple/tuple.dart';
+
 // Temporary feature flag for deferred loading.
 const deferredLoadingSupportEnabled = true;
 
@@ -103,6 +105,14 @@ class AppSizeController {
   ValueListenable<TreemapNode?> get diffRoot => _diffRoot;
   final _diffRoot = ValueNotifier<TreemapNode?>(null);
 
+  ValueListenable<List<TreemapNode?>> get deferredDiffRoots =>
+      _deferredDiffRoots;
+  final _deferredDiffRoots = ValueNotifier<List<TreemapNode?>>([]);
+
+  void changeDiffRoots(List<TreemapNode?> deferredRoots) {
+    _deferredDiffRoots.value = deferredRoots;
+  }
+
   void changeDiffRoot(TreemapNode? newRoot) {
     _diffRoot.value = newRoot;
     if (newRoot == null) return;
@@ -134,9 +144,25 @@ class AppSizeController {
     }
   }
 
+  List<TreemapNode?> get _activeDeferredDiffs {
+    switch (_activeDiffTreeType.value) {
+      case DiffTreeType.increaseOnly:
+        return _increasedDeferredDiffs;
+      case DiffTreeType.decreaseOnly:
+        return _decreasedDeferredDiffs;
+      case DiffTreeType.combined:
+      default:
+        return _combinedDeferredDiffs;
+    }
+  }
+
   TreemapNode? _increasedDiffTreeRoot;
   TreemapNode? _decreasedDiffTreeRoot;
   TreemapNode? _combinedDiffTreeRoot;
+
+  List<TreemapNode?> _increasedDeferredDiffs = [];
+  List<TreemapNode?> _decreasedDeferredDiffs = [];
+  List<TreemapNode?> _combinedDeferredDiffs = [];
 
   ValueListenable<DevToolsJsonFile?> get oldDiffJsonFile => _oldDiffJsonFile;
 
@@ -192,6 +218,7 @@ class AppSizeController {
   void changeActiveDiffTreeType(DiffTreeType newDiffTreeType) {
     _activeDiffTreeType.value = newDiffTreeType;
     changeDiffRoot(_activeDiffRoot);
+    changeDiffRoots(_activeDeferredDiffs);
   }
 
   /// Notifies that the json files are currently being processed.
@@ -278,6 +305,8 @@ class AppSizeController {
     await delayForBatchProcessing(micros: 10000);
 
     Map<String, dynamic> diffMap;
+    List<Map<String, dynamic>> deferredDiffs = [];
+
     if (oldFile.isAnalyzeSizeFile && newFile.isAnalyzeSizeFile) {
       print('both are analyze size files');
 
@@ -308,6 +337,9 @@ class AppSizeController {
         json: _maybeExtractMainRoot(newFileJson),
       );
 
+      isDeferredApp = deferredLoadingSupportEnabled &&
+          (_hasDeferredInfo(oldFileJson) || _hasDeferredInfo(newFileJson));
+
       // Extract the precompiler trace from the new file, if it exists, and
       // generate a call graph.
       final newPrecompilerTrace = newFileJson.remove('precompiler-trace');
@@ -319,6 +351,11 @@ class AppSizeController {
       }
 
       diffMap = compareProgramInfo(oldApkProgramInfo, newApkProgramInfo);
+
+      if (isDeferredApp) {
+        deferredDiffs = _buildDeferredDiffs(oldFileJson, newFileJson);
+      }
+
     } else {
       try {
         diffMap = buildComparisonTreemap(oldFile.data, newFile.data);
@@ -356,20 +393,107 @@ class AppSizeController {
       DiffTreeType.decreaseOnly,
     );
 
+    _combinedDeferredDiffs = deferredDiffs
+        .map((node) => generateDiffTree(node, DiffTreeType.combined))
+        .toList();
+    _increasedDeferredDiffs = deferredDiffs
+        .map((node) => generateDiffTree(node, DiffTreeType.increaseOnly))
+        .toList();
+    _decreasedDeferredDiffs = deferredDiffs
+        .map((node) => generateDiffTree(node, DiffTreeType.decreaseOnly))
+        .toList();
     changeDiffRoot(_activeDiffRoot);
+    changeDiffRoots(_activeDeferredDiffs);
 
     _processingNotifier.value = false;
   }
 
+
+
+  List<Map<String, dynamic>> _buildDeferredDiffs(
+    Map<String, dynamic> oldJsonFile,
+    Map<String, dynamic> newJsonFile,
+  ) {
+    final oldChildren = _maybeExtractDeferredChildren(oldJsonFile);
+    final newChildren = _maybeExtractDeferredChildren(newJsonFile);
+    final comparisonMap = <String, Tuple2<ProgramInfo, ProgramInfo>>{};
+
+    for (final child in oldChildren) {
+      final name = child['n'];
+      comparisonMap[name] = Tuple2<ProgramInfo, ProgramInfo>(
+        _programInfoNode(child),
+        _programInfoNode(null),
+      );
+    }
+
+    for (final child in newChildren) {
+      final name = child['n'];
+      if (comparisonMap[name] != null) {
+        final oldNode = comparisonMap[name]!.item1;
+        comparisonMap[name] = Tuple2<ProgramInfo, ProgramInfo>(
+          oldNode,
+          _programInfoNode(child),
+        );
+      } else {
+        comparisonMap[name] = Tuple2<ProgramInfo, ProgramInfo>(
+          _programInfoNode(null),
+          _programInfoNode(child),
+        );
+      }
+    }
+
+    final diffs = <Map<String, dynamic>>[];
+    for (final nodeName in comparisonMap.keys) {
+      final oldNode = comparisonMap[nodeName]!.item1;
+      final newNode = comparisonMap[nodeName]!.item2;
+      final diff = compareProgramInfo(oldNode, newNode);
+      diffs.add(diff);
+    }
+
+    print('DIFFS ARE: $diffs');
+    return diffs;
+  }
+
+  ProgramInfo _programInfoNode(Map<String, dynamic>? jsonBlob) {
+    final programInfo = ProgramInfo();
+    if (jsonBlob != null) {
+      _apkJsonToProgramInfo(
+        program: programInfo,
+        parent: programInfo.root,
+        json: jsonBlob,
+      );
+      return programInfo;
+    }
+    return programInfo;
+  }
+
+  bool _hasDeferredInfo(Map<String, dynamic> jsonFile) {
+    return jsonFile['n'] == 'ArtificialRoot';
+  }
+
   Map<String, dynamic> _maybeExtractMainRoot(Map<String, dynamic> jsonFile) {
-    final isDeferred = jsonFile['n'] == 'ArtificialRoot';
-    if (isDeferred) {
+    if (_hasDeferredInfo(jsonFile)) {
       final List<dynamic> children = jsonFile['children'] as List<dynamic>;
       for (final childJson in children.cast<Map<String, dynamic>>()) {
         if (childJson['n'] == 'Root') return childJson;
       }
     }
     return jsonFile;
+  }
+
+  List<Map<String, dynamic>> _maybeExtractDeferredChildren(
+    Map<String, dynamic> jsonFile,
+  ) {
+    final List<Map<String, dynamic>> deferredChildren = [];
+    if (_hasDeferredInfo(jsonFile)) {
+      final List<dynamic> children = jsonFile['children'] as List<dynamic>;
+      for (final childJson in children.cast<Map<String, dynamic>>()) {
+        if (childJson['n'] != 'Root') {
+          deferredChildren.add(childJson);
+        }
+      }
+    }
+    return deferredChildren;
   }
 
   ProgramInfoNode _apkJsonToProgramInfo({

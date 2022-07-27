@@ -464,6 +464,7 @@ class _DiffViewState extends State<DiffView>
 
   Widget _buildTreemapAndTableSplitView() {
     final diffCallGraphRoot = controller.diffCallGraphRoot.value;
+    final hasDeferredComponents = controller.isDeferredApp;
     return OutlineDecoration(
       child: Column(
         children: [
@@ -484,8 +485,12 @@ class _DiffViewState extends State<DiffView>
                 Row(
                   children: [
                     Flexible(
-                      child: AppSizeDiffTable(rootNode: diffRoot!),
+                      child: AppSizeDiffTable.fromRoot(rootNode: diffRoot!, caption: '(Root)'),
                     ),
+                    if (hasDeferredComponents)
+                      Flexible(
+                        child: AppSizeDiffTable.fromRoot(rootNode: diffRoot!, caption: '(Deferred)'),
+                      ),
                     if (diffCallGraphRoot != null)
                       Flexible(
                         child: CallGraphWithDominators(
