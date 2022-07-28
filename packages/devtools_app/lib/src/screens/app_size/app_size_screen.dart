@@ -430,6 +430,7 @@ class _DiffViewState extends State<DiffView>
         AutoDisposeMixin,
         ProvidedControllerMixin<AppSizeController, DiffView> {
   TreemapNode? diffRoot;
+  List<TreemapNode?> diffRoots = [];
 
   @override
   void didChangeDependencies() {
@@ -442,6 +443,14 @@ class _DiffViewState extends State<DiffView>
         diffRoot = controller.diffRoot.value;
       });
     });
+
+    diffRoots = controller.deferredDiffRoots.value;
+    addAutoDisposeListener(controller.deferredDiffRoots, () {
+      setState(() {
+        diffRoots = controller.deferredDiffRoots.value;
+      });
+    });
+
 
     addAutoDisposeListener(controller.activeDiffTreeType);
 
@@ -489,7 +498,10 @@ class _DiffViewState extends State<DiffView>
                     ),
                     if (hasDeferredComponents)
                       Flexible(
-                        child: AppSizeDiffTable.fromRoot(rootNode: diffRoot!, caption: '(Deferred)'),
+                        child: AppSizeDiffTable.fromNodes(
+                          nodes: removeNullValues(diffRoots).toList(),
+                          caption: '(Deferred)',
+                        ),
                       ),
                     if (diffCallGraphRoot != null)
                       Flexible(
