@@ -13,6 +13,7 @@ import 'package:vm_snapshot_analysis/v8_profile.dart';
 import '../../charts/treemap.dart';
 import '../../primitives/utils.dart';
 import '../../shared/table.dart';
+import '../../ui/colors.dart';
 import 'app_size_screen.dart';
 
 import 'package:tuple/tuple.dart';
@@ -639,7 +640,8 @@ class AppSizeController {
       byteSize: byteSize,
       childrenMap: childrenMap,
       showDiff: showDiff,
-      isDeferred: isDeferred,
+      backgroundColor: isDeferred ? treemapDeferredColor : null,
+      caption: isDeferred ? '(Deferred)' : null,
     )..addAllChildren(children);
   }
 }
