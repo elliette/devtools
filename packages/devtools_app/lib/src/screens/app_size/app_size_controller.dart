@@ -61,6 +61,20 @@ enum AppUnit {
   }
 }
 
+class DiffTreeMap {
+  const DiffTreeMap({
+    required this.combined,
+    required this.increaseOnly,
+    required this.decreaseOnly,
+  });
+
+  final TreemapNode? combined;
+
+  final TreemapNode? increaseOnly;
+
+  final TreemapNode? decreaseOnly;
+}
+
 class AppSizeController {
   static const unsupportedFileTypeError =
       'Failed to load size analysis file: file type not supported.\n\n'
@@ -252,9 +266,13 @@ class AppSizeController {
   ValueListenable<AppUnit> get selectedAppUnit => _selectedAppUnit;
   final _selectedAppUnit = ValueNotifier<AppUnit>(AppUnit.entireApp);
 
-  void changeSelectedAppUnit(AppUnit appUnit) {
+  void changeSelectedAppUnit(AppUnit appUnit, Key tabKey) {
     _selectedAppUnit.value = appUnit;
-    _loadApp(_dataForAppUnit!);
+    if (tabKey == AppSizeScreen.analysisTabKey) {
+      _loadApp(_dataForAppUnit!);
+    } else {
+      print('selected $appUnit in diff view');
+    }
   }
 
   /// Notifies that the json files are currently being processed.
@@ -399,41 +417,10 @@ class AppSizeController {
         }
       }
 
-      final oldApkProgramInfo = ProgramInfo();
-      _apkJsonToProgramInfo(
-        program: oldApkProgramInfo,
-        parent: oldApkProgramInfo.root,
-        json: oldFileJson,
+      diffMap = _generateDiffMapFromAnalyzeSizeFiles(
+        oldFileJson: oldFileJson,
+        newFileJson: newFileJson,
       );
-
-      // Extract the precompiler trace from the old file, if it exists, and
-      // generate a call graph.
-      final oldPrecompilerTrace = oldFileJson.remove('precompiler-trace');
-      if (oldPrecompilerTrace != null) {
-        _oldDiffCallGraph = generateCallGraphWithDominators(
-          oldPrecompilerTrace,
-          NodeType.packageNode,
-        );
-      }
-
-      final newApkProgramInfo = ProgramInfo();
-      _apkJsonToProgramInfo(
-        program: newApkProgramInfo,
-        parent: newApkProgramInfo.root,
-        json: newFileJson,
-      );
-
-      // Extract the precompiler trace from the new file, if it exists, and
-      // generate a call graph.
-      final newPrecompilerTrace = newFileJson.remove('precompiler-trace');
-      if (newPrecompilerTrace != null) {
-        _newDiffCallGraph = generateCallGraphWithDominators(
-          newPrecompilerTrace,
-          NodeType.packageNode,
-        );
-      }
-
-      diffMap = compareProgramInfo(oldApkProgramInfo, newApkProgramInfo);
     } else {
       try {
         diffMap = buildComparisonTreemap(oldFile.data, newFile.data);
@@ -458,25 +445,76 @@ class AppSizeController {
     diffMap['n'] = isDeferredApp.value ? _entireAppNodeName : _rootNodeName;
 
     // TODO(peterdjlee): Try to move the non-active tree generation to separate isolates.
-    _combinedDiffTreeRoot = generateDiffTree(
-      diffMap,
-      DiffTreeType.combined,
-      skipNodesWithNoByteSizeChange: !isDeferredApp.value,
-    );
-    _increasedDiffTreeRoot = generateDiffTree(
-      diffMap,
-      DiffTreeType.increaseOnly,
-      skipNodesWithNoByteSizeChange: !isDeferredApp.value,
-    );
-    _decreasedDiffTreeRoot = generateDiffTree(
-      diffMap,
-      DiffTreeType.decreaseOnly,
-      skipNodesWithNoByteSizeChange: !isDeferredApp.value,
-    );
+    final diffTreeMap = _generateDiffTrees(diffMap);
+    _combinedDiffTreeRoot = diffTreeMap.combined;
+    _increasedDiffTreeRoot = diffTreeMap.increaseOnly;
+    _decreasedDiffTreeRoot = diffTreeMap.decreaseOnly;
 
     changeDiffRoot(_activeDiffRoot);
 
     _processingNotifier.value = false;
+  }
+
+  DiffTreeMap _generateDiffTrees(Map<String, dynamic> diffMap) {
+    // TODO(peterdjlee): Try to move the non-active tree generation to separate isolates.
+    return DiffTreeMap(
+      combined: generateDiffTree(
+        diffMap,
+        DiffTreeType.combined,
+        skipNodesWithNoByteSizeChange: !isDeferredApp.value,
+      ),
+      increaseOnly: generateDiffTree(
+        diffMap,
+        DiffTreeType.increaseOnly,
+        skipNodesWithNoByteSizeChange: !isDeferredApp.value,
+      ),
+      decreaseOnly: generateDiffTree(
+        diffMap,
+        DiffTreeType.decreaseOnly,
+        skipNodesWithNoByteSizeChange: !isDeferredApp.value,
+      ),
+    );
+  }
+
+  Map<String, dynamic> _generateDiffMapFromAnalyzeSizeFiles({
+    required Map<String, dynamic> oldFileJson,
+    required Map<String, dynamic> newFileJson,
+  }) {
+    final oldApkProgramInfo = ProgramInfo();
+    _apkJsonToProgramInfo(
+      program: oldApkProgramInfo,
+      parent: oldApkProgramInfo.root,
+      json: oldFileJson,
+    );
+
+    // Extract the precompiler trace from the old file, if it exists, and
+    // generate a call graph.
+    final oldPrecompilerTrace = oldFileJson.remove('precompiler-trace');
+    if (oldPrecompilerTrace != null) {
+      _oldDiffCallGraph = generateCallGraphWithDominators(
+        oldPrecompilerTrace,
+        NodeType.packageNode,
+      );
+    }
+
+    final newApkProgramInfo = ProgramInfo();
+    _apkJsonToProgramInfo(
+      program: newApkProgramInfo,
+      parent: newApkProgramInfo.root,
+      json: newFileJson,
+    );
+
+    // Extract the precompiler trace from the new file, if it exists, and
+    // generate a call graph.
+    final newPrecompilerTrace = newFileJson.remove('precompiler-trace');
+    if (newPrecompilerTrace != null) {
+      _newDiffCallGraph = generateCallGraphWithDominators(
+        newPrecompilerTrace,
+        NodeType.packageNode,
+      );
+    }
+
+    return compareProgramInfo(oldApkProgramInfo, newApkProgramInfo);
   }
 
   Map<String, dynamic> _wrapInArtificialRoot(Map<String, dynamic> json) {
