@@ -319,6 +319,7 @@ class DartObjectNode extends TreeNode<DartObjectNode> {
       if (kind != null && kind == InstanceKind.kList ||
           kind == InstanceKind.kMap ||
           kind!.endsWith('List')) {
+        valueStr = kind;
         final itemLength = value.length;
         if (itemLength == null) return valueStr;
         return '$valueStr (${_itemCount(itemLength)})';
