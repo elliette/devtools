@@ -319,10 +319,13 @@ class DartObjectNode extends TreeNode<DartObjectNode> {
       if (kind != null && kind == InstanceKind.kList ||
           kind == InstanceKind.kMap ||
           kind!.endsWith('List')) {
-        valueStr = kind;
+        // TODO(elliette): After https://github.com/dart-lang/sdk/issues/51550
+        // is fixed, to only use `classRef.name`. Currently we use `kind` for VM
+        // apps, because that provides us with a more readable name.
+        final name = _isPrivateName(valueStr) ? kind : valueStr;
         final itemLength = value.length;
         if (itemLength == null) return valueStr;
-        return '$valueStr (${_itemCount(itemLength)})';
+        return '$name (${_itemCount(itemLength)})';
       }
     } else if (value is Sentinel) {
       valueStr = value.valueAsString;
@@ -357,6 +360,8 @@ class DartObjectNode extends TreeNode<DartObjectNode> {
         instanceRef is InstanceRef ? instanceRef.valueAsString : instanceRef;
     return '$name - $value';
   }
+
+  bool _isPrivateName(String name) => name.startsWith('_');
 
   /// Selects the object in the Flutter Widget inspector.
   ///
