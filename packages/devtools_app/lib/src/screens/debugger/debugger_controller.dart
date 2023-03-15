@@ -390,15 +390,24 @@ class DebuggerController extends DisposableController
     // in_createStackFrameWithLocation).
 
     if (await serviceManager.connectedApp!.isDartWebApp) {
-      print('PAUSE EVENT? $pauseEvent');
-      print('top frame? ${pauseEvent?.topFrame}');
+      final topFrame = pauseEvent?.topFrame;
+      if (topFrame == null) {
+        print('Did not receive top frame in pause event. Most likely this indicates a DWDS bug.');
+        return;
+      }
+      print('creating stackFrame');
+      final stackFrame = await _createStackFrameWithLocation(topFrame);
+      print('stack frame is $stackFrame');
+      print('populatting frame ifno');
       _populateFrameInfo(
         [
-          await _createStackFrameWithLocation(pauseEvent!.topFrame!),
+          stackFrame,
         ],
         truncated: true,
       );
+      print('done populating frame info, get full stack');
       await _getFullStack();
+      print('done getting full stack');
       return;
     }
 
@@ -487,16 +496,22 @@ class DebuggerController extends DisposableController
   Future<StackFrameAndSourcePosition> _createStackFrameWithLocation(
     Frame frame,
   ) async {
+    print('in creating stackframe...');
     final scriptInfo =  frame.location?.script;
     final tokenPos = frame.location?.tokenPos;
+    print('script info $scriptInfo token pos $tokenPos');
 
-    if (scriptInfo == null || tokenPos == null) {
+    if (scriptInfo == null || tokenPos == null || tokenPos < 0) {
+      print('creating strack frame and source position with frame');
       return StackFrameAndSourcePosition(frame);
     }
 
+    print('calling get script');
     final script = await scriptManager.getScript(scriptInfo);
+    print('got script');
     final position =
         SourcePosition.calculatePosition(script, tokenPos);
+        print('creating strack frame and source position with frame and position');
     return StackFrameAndSourcePosition(frame, position: position);
   }
 
