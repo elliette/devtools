@@ -522,6 +522,7 @@ class VmServiceWrapper implements VmService {
 
   @override
   Future<Success> pause(String isolateId) {
+    print('CALL PAUSE!');
     return trackFuture('pause', _vmService.pause(isolateId));
   }
 

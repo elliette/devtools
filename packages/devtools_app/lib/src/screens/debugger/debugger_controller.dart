@@ -368,6 +368,7 @@ class DebuggerController extends DisposableController
   CancelableOperation<_StackInfo>? _getStackOperation;
 
   Future<void> _pause(bool paused, {Event? pauseEvent}) async {
+    print('Received pause $paused event: $pauseEvent');
     // TODO(jacobr): unify pause support with
     // serviceManager.isolateManager.selectedIsolateState.isPaused.value;
     // listening for changes there instead of having separate logic.
@@ -387,14 +388,17 @@ class DebuggerController extends DisposableController
     // TODO(elliette): Find a better solution for this. Currently, this means
     // we fetch all variable objects twice (once in _getFullStack and once in
     // in_createStackFrameWithLocation).
+
     if (await serviceManager.connectedApp!.isDartWebApp) {
+      print('PAUSE EVENT? $pauseEvent');
+      print('top frame? ${pauseEvent?.topFrame}');
       _populateFrameInfo(
         [
           await _createStackFrameWithLocation(pauseEvent!.topFrame!),
         ],
         truncated: true,
       );
-      unawaited(_getFullStack());
+      await _getFullStack();
       return;
     }
 
@@ -440,6 +444,7 @@ class DebuggerController extends DisposableController
     List<StackFrameAndSourcePosition> frames, {
     required final bool truncated,
   }) {
+    print('populating frame info with $frames');
     _log.log('populated frame info');
     _stackFramesWithLocation.value = frames;
     _hasTruncatedFrames.value = truncated;
@@ -482,14 +487,16 @@ class DebuggerController extends DisposableController
   Future<StackFrameAndSourcePosition> _createStackFrameWithLocation(
     Frame frame,
   ) async {
-    final location = frame.location;
-    if (location == null) {
+    final scriptInfo =  frame.location?.script;
+    final tokenPos = frame.location?.tokenPos;
+
+    if (scriptInfo == null || tokenPos == null) {
       return StackFrameAndSourcePosition(frame);
     }
 
-    final script = await scriptManager.getScript(location.script!);
+    final script = await scriptManager.getScript(scriptInfo);
     final position =
-        SourcePosition.calculatePosition(script, location.tokenPos!);
+        SourcePosition.calculatePosition(script, tokenPos);
     return StackFrameAndSourcePosition(frame, position: position);
   }
 

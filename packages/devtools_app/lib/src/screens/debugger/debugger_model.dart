@@ -218,8 +218,12 @@ class StackFrameAndSourcePosition {
     if (frame.kind == FrameKind.kAsyncSuspensionMarker) {
       return asyncBreak;
     }
+    var name = frame.code?.name;
+    if (name != null && frame.code?.kind == CodeKind.kNative) {
+      return '<native code: $name>';
+    }
 
-    var name = frame.code?.name ?? none;
+    name = name ?? none;
     if (name.startsWith(unoptimized)) {
       name = name.substring(unoptimized.length);
     }

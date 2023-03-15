@@ -93,15 +93,21 @@ class EvalService extends DisposableController with AutoDisposeControllerMixin {
     String isolateId,
   ) async {
     try {
-      return await evalFunction();
+      final response = await evalFunction();
+      print('RESPONSE IS: $response');
+      return response;
     } on RPCError catch (e) {
+      print('CAUGHT ERROR IS _evalWithVariablesRefresh');
       const expressionCompilationErrorCode = 113;
+      print('rethrow? ${e.code != expressionCompilationErrorCode}');
       if (e.code != expressionCompilationErrorCode) rethrow;
       final shouldRetry = await scope.refreshRefs(isolateId);
       _showScopeChangeMessageIfNeeded();
       if (shouldRetry) {
+        print('retrying');
         return await evalFunction();
       } else {
+        print('rethrowing');
         rethrow;
       }
     }
@@ -116,9 +122,11 @@ class EvalService extends DisposableController with AutoDisposeControllerMixin {
     );
   }
 
-  bool get isStoppedAtFrame =>
-      serviceManager.isMainIsolatePaused &&
-      serviceManager.appState.currentFrame.value != null;
+  bool get isStoppedAtDartFrame {
+    final frame = serviceManager.appState.currentFrame.value;
+    final isDartFrame = frame?.code?.kind == CodeKind.kDart;
+    return serviceManager.isMainIsolatePaused && isDartFrame;
+  }
 
   /// Evaluate the given expression in the context of the currently selected
   /// stack frame, or the top frame if there is no current selection.
@@ -162,7 +170,7 @@ class EvalService extends DisposableController with AutoDisposeControllerMixin {
     }
 
     final scope = await _scopeIfSupported(isolateRefId);
-
+    print('Calling _service.evaluateInFrame');
     Future<Response> evalFunction() => _service.evaluateInFrame(
           isolateRefId,
           frame.index!,

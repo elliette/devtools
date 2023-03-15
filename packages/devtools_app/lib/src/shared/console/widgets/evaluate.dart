@@ -310,7 +310,8 @@ class ExpressionEvalFieldState extends State<ExpressionEvalField>
 
       // Response is either a ErrorRef, InstanceRef, or Sentinel.
       final Response response;
-      if (evalService.isStoppedAtFrame) {
+      if (evalService.isStoppedAtDartFrame) {
+        print('EVALUATING AT FRAME');
         response = await evalService.evalAtCurrentFrame(expressionText);
       } else {
         if (_tryProcessAssignment(expressionText)) return;
@@ -320,6 +321,7 @@ class ExpressionEvalFieldState extends State<ExpressionEvalField>
           );
           return;
         }
+        print('EVALUATE IN RUNNING APP');
         response =
             await evalService.evalInRunningApp(isolateRef, expressionText);
       }
@@ -339,6 +341,7 @@ class ExpressionEvalFieldState extends State<ExpressionEvalField>
         _emitToConsole(value!);
       }
     } catch (e) {
+      print('CAUGHT: $e');
       // Display the error to the user.
       _emitToConsole('$e');
     }
