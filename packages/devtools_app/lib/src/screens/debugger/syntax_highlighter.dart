@@ -15,6 +15,11 @@ import 'span_parser.dart';
 
 final _log = Logger('syntax_highlighter');
 
+// It takes approximately ~1 second to syntax highlight 100,000 characters.
+// For performance reasons, we only highlight scripts with less than 100,000
+// characters.
+const _highlightableCharMax = 100000;
+
 class SyntaxHighlighter {
   SyntaxHighlighter({source}) : source = source ?? '';
 
@@ -59,13 +64,32 @@ class SyntaxHighlighter {
     }
   }
 
-  /// Returns the highlighted [source] in [TextSpan] form.
+  /// Returns the highlighted [source] as a list of [TextSpan]s. Each [TextSpan]
+  /// represents a single line.
   ///
   /// If [lineRange] is provided, only the lines between
   /// `[lineRange.begin, lineRange.end]` will be returned.
-  TextSpan highlight(BuildContext context, {LineRange? lineRange}) {
+  ///
+  /// If the script has more characters than the [_highlightableCharMax], no
+  /// syntax highlighting is performed and the script is only split into lines.
+  List<TextSpan> highlight(BuildContext context, {LineRange? lineRange}) {
+    final theme = Theme.of(context);
+    final lines = <TextSpan>[];
+    if (source.length > _highlightableCharMax) {
+      lines.addAll(
+        [
+          for (final line in source.split('\n'))
+            TextSpan(
+              style: theme.fixedFontStyle,
+              text: line,
+            ),
+        ],
+      );
+      return lines;
+    }
+
     // Generate the styling for the various scopes based on the current theme.
-    _scopeStyles = _buildSyntaxColorTable(Theme.of(context));
+    _scopeStyles = _buildSyntaxColorTable(theme);
     _currentPosition = 0;
     _processedSource = source;
     if (lineRange != null) {
@@ -75,16 +99,39 @@ class SyntaxHighlighter {
           .join('\n');
     }
     final grammar = _grammar;
-    if (grammar == null) {
-      return TextSpan(text: _processedSource);
-    }
-    return TextSpan(
-      children: _highlightLoopHelper(
-        currentScope: null,
-        loopCondition: () => _currentPosition < _processedSource.length,
-        scopes: SpanParser.parse(grammar, _processedSource),
+    final highlightedSpan = grammar == null
+        ? TextSpan(text: _processedSource)
+        : TextSpan(
+            children: _highlightLoopHelper(
+              currentScope: null,
+              loopCondition: () => _currentPosition < _processedSource.length,
+              scopes: SpanParser.parse(grammar, _processedSource),
+            ),
+          );
+
+    // Look for [InlineSpan]s which only contain '\n' to manually break the
+    // output into individual lines.
+    var currentLine = <InlineSpan>[];
+    highlightedSpan.visitChildren((span) {
+      currentLine.add(span);
+      if (span.toPlainText() == '\n') {
+        lines.add(
+          TextSpan(
+            style: theme.fixedFontStyle,
+            children: currentLine,
+          ),
+        );
+        currentLine = <InlineSpan>[];
+      }
+      return true;
+    });
+    lines.add(
+      TextSpan(
+        style: theme.fixedFontStyle,
+        children: currentLine,
       ),
     );
+    return lines;
   }
 
   /// Returns the [TextStyle] for the current span based on the current scopes.

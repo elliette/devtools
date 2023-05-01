@@ -286,53 +286,16 @@ class _CodeViewState extends State<CodeView> with AutoDisposeMixin {
   Widget buildCodeArea(BuildContext context) {
     final theme = Theme.of(context);
 
-    final lines = <TextSpan>[];
-
     // Ensure the syntax highlighter has been initialized.
     // TODO(bkonyi): process source for highlighting on a separate thread.
     final script = parsedScript;
     final scriptSource = parsedScript?.script.source;
-    if (script != null && scriptSource != null) {
-      if (scriptSource.length < 500000) {
-        final highlighted = script.highlighter.highlight(
-          context,
-          lineRange: widget.lineRange,
-        );
-
-        // Look for [InlineSpan]s which only contain '\n' to manually break the
-        // output from the syntax highlighter into individual lines.
-        var currentLine = <InlineSpan>[];
-        highlighted.visitChildren((span) {
-          currentLine.add(span);
-          if (span.toPlainText() == '\n') {
-            lines.add(
-              TextSpan(
-                style: theme.fixedFontStyle,
-                children: currentLine,
-              ),
-            );
-            currentLine = <InlineSpan>[];
-          }
-          return true;
-        });
-        lines.add(
-          TextSpan(
-            style: theme.fixedFontStyle,
-            children: currentLine,
-          ),
-        );
-      } else {
-        lines.addAll(
-          [
-            for (final line in scriptSource.split('\n'))
-              TextSpan(
-                style: theme.fixedFontStyle,
-                text: line,
-              ),
-          ],
-        );
-      }
-    }
+    final lines = (script != null && scriptSource != null)
+        ? script.highlighter.highlight(
+            context,
+            lineRange: widget.lineRange,
+          )
+        : <TextSpan>[];
 
     Widget contentBuilder(_, ScriptRef? script) {
       if (lines.isNotEmpty) {
@@ -1247,10 +1210,11 @@ class _LineItemState extends State<LineItem>
       );
 
   TextSpan searchAwareLineContents() {
-    final children = widget.lineContents.children;
-    if (children == null) return const TextSpan();
-
-    final activeSearchAwareContents = _activeSearchAwareLineContents(children);
+    // If syntax highlighting is disabled for the script, then
+    // `widget.lineContents` is simply a `TextSpan` with no children.
+    final lineContents = widget.lineContents.children ?? [widget.lineContents];
+    final activeSearchAwareContents =
+        _activeSearchAwareLineContents(lineContents);
     final allSearchAwareContents =
         _searchMatchAwareLineContents(activeSearchAwareContents!);
     return TextSpan(
