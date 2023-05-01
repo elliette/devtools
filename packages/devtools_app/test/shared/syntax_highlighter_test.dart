@@ -204,126 +204,126 @@ void main() {
             await tester.pumpWidget(
               buildSyntaxHighlightingTestContext(
                 (context) {
-                  final highlighted = highlighter.highlight(context);
-                  final children = highlighted.children!;
+                  final highlightedLines = highlighter.highlight(context);
+                  // final children = highlighted.children!;
 
                   spanTester(
                     context,
-                    children[0] as TextSpan,
+                    highlightedLines[0],
                     'Future',
                     declarationSyntaxColor,
                   );
 
                   spanTester(
                     context,
-                    children[1] as TextSpan,
+                    highlightedLines[1],
                     '<',
                     defaultTextColor,
                   );
 
                   spanTester(
                     context,
-                    children[2] as TextSpan,
+                    highlightedLines[2],
                     'void',
                     modifierSyntaxColor,
                   );
 
                   spanTester(
                     context,
-                    children[3] as TextSpan,
+                    highlightedLines[3],
                     '>',
                     defaultTextColor,
                   );
 
                   spanTester(
                     context,
-                    children[4] as TextSpan,
+                    highlightedLines[4] ,
                     ' ',
                     defaultTextColor,
                   );
 
                   spanTester(
                     context,
-                    children[5] as TextSpan,
+                    highlightedLines[5] ,
                     'main',
                     functionSyntaxColor,
                   );
 
                   spanTester(
                     context,
-                    children[6] as TextSpan,
+                    highlightedLines[6] ,
                     '() ',
                     defaultTextColor,
                   );
 
                   spanTester(
                     context,
-                    children[7] as TextSpan,
+                    highlightedLines[7] ,
                     'async',
                     controlFlowSyntaxColor,
                   );
 
                   spanTester(
                     context,
-                    children[8] as TextSpan,
+                    highlightedLines[8] ,
                     ' {',
                     defaultTextColor,
                   );
 
-                  expect(children[9].toPlainText(), '\n');
+                  expect(highlightedLines[9].toPlainText(), '\n');
 
                   spanTester(
                     context,
-                    children[10] as TextSpan,
+                    highlightedLines[10] ,
                     '  ',
                     defaultTextColor,
                   );
 
                   spanTester(
                     context,
-                    children[11] as TextSpan,
+                    highlightedLines[11] ,
                     'print',
                     functionSyntaxColor,
                   );
 
                   spanTester(
                     context,
-                    children[12] as TextSpan,
+                    highlightedLines[12] ,
                     '(',
                     defaultTextColor,
                   );
 
                   spanTester(
                     context,
-                    children[13] as TextSpan,
+                    highlightedLines[13] ,
                     "'hello world!'",
                     stringSyntaxColor,
                   );
 
                   spanTester(
                     context,
-                    children[14] as TextSpan,
+                    highlightedLines[14] ,
                     ')',
                     defaultTextColor,
                   );
 
                   spanTester(
                     context,
-                    children[15] as TextSpan,
+                    highlightedLines[15] ,
                     ';',
                     defaultTextColor,
                   );
 
-                  expect(children[16].toPlainText(), '\n');
+                  expect(highlightedLines[16].toPlainText(), '\n');
 
                   spanTester(
                     context,
-                    children[17] as TextSpan,
+                    highlightedLines[17] ,
                     '}',
                     defaultTextColor,
                   );
 
-                  expect(children[18].toPlainText(), '\n');
+                  expect(highlightedLines[18].toPlainText(), '\n');
 
                   return Container();
                 },
@@ -343,33 +343,32 @@ void main() {
             await tester.pumpWidget(
               buildSyntaxHighlightingTestContext(
                 (context) {
-                  final highlighted = highlighter.highlight(context);
-                  final children = highlighted.children!;
+                  final highlightedLines = highlighter.highlight(context);
 
                   spanTester(
                     context,
-                    children[0] as TextSpan,
+                    highlightedLines[0] ,
                     '/**',
                     commentSyntaxColor,
                   );
 
-                  expect(children[1].toPlainText(), '\n');
+                  expect(highlightedLines[1].toPlainText(), '\n');
 
                   spanTester(
                     context,
-                    children[2] as TextSpan,
+                    highlightedLines[2] ,
                     ' * Multiline',
                     commentSyntaxColor,
                   );
 
                   expect(
-                    children[3].toPlainText(),
+                    highlightedLines[3].toPlainText(),
                     '\n',
                   );
 
                   spanTester(
                     context,
-                    children[4] as TextSpan,
+                    highlightedLines[4] ,
                     ' */',
                     commentSyntaxColor,
                   );
@@ -390,24 +389,23 @@ void main() {
             await tester.pumpWidget(
               buildSyntaxHighlightingTestContext(
                 (context) {
-                  final highlighted = highlighter.highlight(context);
-                  final children = highlighted.children!;
+                  final highlightedLines = highlighter.highlight(context);
 
                   spanTester(
                     context,
-                    children[0] as TextSpan,
+                    highlightedLines[0] ,
                     '/// This is a code reference for ',
                     commentSyntaxColor,
                   );
 
                   spanTester(
                     context,
-                    children[1] as TextSpan,
+                    highlightedLines[1] ,
                     '[Foo]',
                     variableSyntaxColor,
                   );
 
-                  expect(children[2].toPlainText(), '\n');
+                  expect(highlightedLines[2].toPlainText(), '\n');
                 },
               ),
             );
@@ -425,98 +423,97 @@ void main() {
             await tester.pumpWidget(
               buildSyntaxHighlightingTestContext(
                 (context) {
-                  final highlighted = highlighter.highlight(context);
-                  final children = highlighted.children!;
+                  final highlightedLines = highlighter.highlight(context);
 
                   var i = 0;
 
                   spanTester(
                     context,
-                    children[i++] as TextSpan,
+                    highlightedLines[i++] ,
                     "'\$",
                     stringSyntaxColor,
                   );
 
                   spanTester(
                     context,
-                    children[i++] as TextSpan,
+                    highlightedLines[i++] ,
                     'i',
                     variableSyntaxColor,
                   );
 
                   spanTester(
                     context,
-                    children[i++] as TextSpan,
+                    highlightedLines[i++] ,
                     ': ',
                     stringSyntaxColor,
                   );
 
                   spanTester(
                     context,
-                    children[i++] as TextSpan,
+                    highlightedLines[i++] ,
                     '\${',
                     stringSyntaxColor,
                   );
 
                   spanTester(
                     context,
-                    children[i++] as TextSpan,
+                    highlightedLines[i++] ,
                     'foo',
                     variableSyntaxColor,
                   );
 
                   spanTester(
                     context,
-                    children[i++] as TextSpan,
+                    highlightedLines[i++] ,
                     '[',
                     stringSyntaxColor,
                   );
 
                   spanTester(
                     context,
-                    children[i++] as TextSpan,
+                    highlightedLines[i++] ,
                     'i',
                     variableSyntaxColor,
                   );
 
                   spanTester(
                     context,
-                    children[i++] as TextSpan,
+                    highlightedLines[i++] ,
                     '] == ',
                     stringSyntaxColor,
                   );
 
                   spanTester(
                     context,
-                    children[i++] as TextSpan,
+                    highlightedLines[i++] ,
                     'bar',
                     variableSyntaxColor,
                   );
 
                   spanTester(
                     context,
-                    children[i++] as TextSpan,
+                    highlightedLines[i++] ,
                     '[',
                     stringSyntaxColor,
                   );
 
                   spanTester(
                     context,
-                    children[i++] as TextSpan,
+                    highlightedLines[i++] ,
                     'i',
                     variableSyntaxColor,
                   );
 
                   spanTester(
                     context,
-                    children[i++] as TextSpan,
+                    highlightedLines[i++] ,
                     ']}',
                     stringSyntaxColor,
                   );
 
                   spanTester(
                     context,
-                    children[i++] as TextSpan,
+                    highlightedLines[i++] ,
                     '\'',
                     stringSyntaxColor,
                   );
@@ -542,9 +539,9 @@ void main() {
               await tester.pumpWidget(
                 buildSyntaxHighlightingTestContext(
                   (context) {
-                    final highlighted = highlighter.highlight(context);
+                    final highlightedLines = highlighter.highlight(context);
                     expect(
-                      highlighted.children!.first.style,
+                      highlightedLines.first.style,
                       TextStyle(
                         color: colorCallback(Theme.of(context).colorScheme),
                       ),
