@@ -28,10 +28,10 @@ class CodeViewController extends DisposableController
         SearchControllerMixin<SourceToken>,
         RouteStateHandlerMixin {
   CodeViewController() {
-    _scriptHistoryListener = () {
+    _scriptHistoryListener = () async {
       final currentScriptValue = scriptsHistory.current.value;
       if (currentScriptValue != null) {
-        _showScriptLocation(ScriptLocation(currentScriptValue));
+        await _showScriptLocation(ScriptLocation(currentScriptValue));
       }
     };
     scriptsHistory.current.addListener(_scriptHistoryListener);
@@ -172,23 +172,25 @@ class CodeViewController extends DisposableController
   }
 
   /// Jump to the given ScriptRef and optional SourcePosition.
-  void showScriptLocation(
+  Future<void> showScriptLocation(
     ScriptLocation scriptLocation, {
     bool focusLine = false,
-  }) {
+  }) async {
     // TODO(elliette): This is here so that when a program is selected in the
     // program explorer, the file opener will close (if it was open). Instead,
     // give the program explorer focus so that the focus changes so the file
     // opener will close automatically when its focus is lost.
     toggleFileOpenerVisibility(false);
 
-    _showScriptLocation(scriptLocation, focusLine: focusLine);
-
-    // Update the scripts history (and make sure we don't react to the
-    // subsequent event).
-    scriptsHistory.current.removeListener(_scriptHistoryListener);
-    scriptsHistory.pushEntry(scriptLocation.scriptRef);
-    scriptsHistory.current.addListener(_scriptHistoryListener);
+    final success =
+        await _showScriptLocation(scriptLocation, focusLine: focusLine);
+    if (success) {
+      // Update the scripts history (and make sure we don't react to the
+      // subsequent event).
+      scriptsHistory.current.removeListener(_scriptHistoryListener);
+      scriptsHistory.pushEntry(scriptLocation.scriptRef);
+      scriptsHistory.current.addListener(_scriptHistoryListener);
+    }
   }
 
   Future<void> refreshCodeStatistics() async {
@@ -215,22 +217,34 @@ class CodeViewController extends DisposableController
     _scriptLocation.value = null;
     _currentScriptRef.value = null;
     parsedScript.value = null;
-    showScriptLocation(scriptLocation);
+    unawaited(showScriptLocation(scriptLocation));
   }
 
   /// Show the given script location (without updating the script navigation
-  /// history).
-  void _showScriptLocation(
+  /// history). Returns a boolean value representing success or failure.
+  ///
+  /// Note: Shows an error notification on failure.
+  Future<bool> _showScriptLocation(
     ScriptLocation scriptLocation, {
     bool focusLine = false,
-  }) {
-    _currentScriptRef.value = scriptLocation.scriptRef;
-    if (_currentScriptRef.value == null) {
-      _log.shout('Trying to show a location with a null script ref');
+  }) async {
+    final scriptRef = scriptLocation.scriptRef;
+    ParsedScript? script;
+    try {
+      script = await _parseScript(scriptRef);
+    } catch (error) {
+      final errorMessage = 'Failed to parse script ${scriptRef.uri}.';
+      notificationService.pushErrorNotification(
+        'ERROR: Failed to parse script ${scriptRef.uri}.',
+      );
+      _log.shout('$errorMessage: $error');
+      return false;
     }
-
-    unawaited(_parseCurrentScript());
-
+    // Update all the notifier values:
+    if (script != null) {
+      parsedScript.value = script;
+    }
+    _currentScriptRef.value = scriptRef;
     if (focusLine) {
       _focusLine.value = scriptLocation.location?.line ?? -1;
     }
@@ -238,6 +252,7 @@ class CodeViewController extends DisposableController
     // set to null to ensure that happens.
     _scriptLocation.value = null;
     _scriptLocation.value = scriptLocation;
+    return true;
   }
 
   Future<ProcessedSourceReport> _getSourceReport(
@@ -282,50 +297,49 @@ class CodeViewController extends DisposableController
     return const ProcessedSourceReport.empty();
   }
 
-  /// Parses the current script into executable lines and prepares the script
-  /// for syntax highlighting.
-  Future<void> _parseCurrentScript() async {
+  /// Parses script for the given [scriptRef] into executable lines and prepares
+  /// it for syntax highlighting.
+  Future<ParsedScript?> _parseScript(ScriptRef scriptRef) async {
     // Return early if the current script has not changed.
-    if (parsedScript.value?.script.id == _currentScriptRef.value?.id) return;
+    if (parsedScript.value?.script.id == scriptRef.id) return null;
 
-    final scriptRef = _currentScriptRef.value;
-    if (scriptRef == null) return;
     final script = await getScriptForRef(scriptRef);
+    if (script == null) {
+      throw Exception('Failed to get script for $scriptRef');
+    }
 
     // Create a new SyntaxHighlighter with the script's source in preparation
     // for building the code view.
-    final highlighter = SyntaxHighlighter(source: script?.source ?? '');
+    final highlighter = SyntaxHighlighter(source: script.source ?? '');
 
     // Gather the data to display breakable lines.
     var executableLines = <int>{};
 
-    if (script != null) {
-      final isolateRef = serviceManager.isolateManager.selectedIsolate.value!;
-      try {
-        final positions = await breakpointManager.getBreakablePositions(
-          isolateRef,
-          script,
-        );
-        executableLines = Set.from(
-          positions.where((p) => p.line != null).map((p) => p.line),
-        );
-      } catch (e, st) {
-        // Ignore - not supported for all vm service implementations.
-        _log.warning(e, e, st);
-      }
-
-      final processedReport = await _getSourceReport(
+    final isolateRef = serviceManager.isolateManager.selectedIsolate.value!;
+    try {
+      final positions = await breakpointManager.getBreakablePositions(
         isolateRef,
         script,
       );
-
-      parsedScript.value = ParsedScript(
-        script: script,
-        highlighter: highlighter,
-        executableLines: executableLines,
-        sourceReport: processedReport,
+      executableLines = Set.from(
+        positions.where((p) => p.line != null).map((p) => p.line),
       );
+    } catch (e, st) {
+      // Ignore - not supported for all vm service implementations.
+      _log.warning(e, e, st);
     }
+
+    final processedReport = await _getSourceReport(
+      isolateRef,
+      script,
+    );
+
+    return ParsedScript(
+      script: script,
+      highlighter: highlighter,
+      executableLines: executableLines,
+      sourceReport: processedReport,
+    );
   }
 
   /// Make the 'Libraries' view on the right-hand side of the screen visible or

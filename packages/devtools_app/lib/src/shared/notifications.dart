@@ -2,10 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'dart:async';
 import 'dart:collection';
 
 import 'package:flutter/material.dart';
 
+import 'config_specific/launch_url/launch_url.dart';
+import 'globals.dart';
 import 'primitives/utils.dart';
 
 class NotificationMessage {
@@ -13,6 +16,7 @@ class NotificationMessage {
     this.text, {
     this.actions = const [],
     this.duration = defaultDuration,
+    this.isError = false,
   });
 
   /// The default duration for notifications to show.
@@ -21,6 +25,7 @@ class NotificationMessage {
   final String text;
   final List<Widget> actions;
   final Duration duration;
+  final bool isError;
 }
 
 /// Collects tasks to show or dismiss notifications in UI.
@@ -55,6 +60,30 @@ class NotificationService {
     toPush.add(message);
     newTasks.value++;
     return true;
+  }
+
+  /// Pushes an error notification with [errorMessage] as the text. Includes an
+  /// action to report the error by opening the link to our issue tracker.
+  bool pushErrorNotification(String errorMessage) {
+    final reportErrorAction = NotificationAction(
+      'Report error',
+      () {
+        unawaited(
+          launchUrl(
+            devToolsExtensionPoints.issueTrackerLink().url,
+          ),
+        );
+      },
+      isPrimary: true,
+    );
+    return pushNotification(
+      NotificationMessage(
+        errorMessage,
+        isError: true,
+        actions: [reportErrorAction],
+      ),
+      allowDuplicates: false,
+    );
   }
 
   /// Dismisses all notifications with a matching message.

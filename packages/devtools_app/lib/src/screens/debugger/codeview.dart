@@ -451,8 +451,10 @@ class _CodeViewState extends State<CodeView> with AutoDisposeMixin {
           ScriptHistoryPopupMenu(
             itemBuilder: _buildScriptMenuFromHistory,
             onSelected: (scriptRef) {
-              widget.codeViewController
-                  .showScriptLocation(ScriptLocation(scriptRef));
+              unawaited(
+                widget.codeViewController
+                    .showScriptLocation(ScriptLocation(scriptRef)),
+              );
             },
             enabled: widget.codeViewController.scriptsHistory.hasScripts,
           ),
