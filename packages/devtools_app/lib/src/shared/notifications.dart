@@ -44,6 +44,32 @@ class NotificationService {
   /// Pushes a notification [message].
   bool push(String message) => pushNotification(NotificationMessage(message));
 
+  /// Pushes an error notification with [errorMessage] as the text. Includes an
+  /// action to report the error by opening the link to our issue tracker.
+  bool pushError(String errorMessage) {
+    final reportErrorAction = NotificationAction(
+      'Report error',
+      () {
+        unawaited(
+          launchUrl(
+            devToolsExtensionPoints
+                .issueTrackerLink(additionalInfo: errorMessage)
+                .url,
+          ),
+        );
+      },
+      isPrimary: true,
+    );
+    return pushNotification(
+      NotificationMessage(
+        errorMessage,
+        isError: true,
+        actions: [reportErrorAction],
+      ),
+      allowDuplicates: false,
+    );
+  }
+
   /// Pushes a notification [message].
   ///
   /// Ignores the message if [allowDuplicates] is false and a message with the
@@ -60,30 +86,6 @@ class NotificationService {
     toPush.add(message);
     newTasks.value++;
     return true;
-  }
-
-  /// Pushes an error notification with [errorMessage] as the text. Includes an
-  /// action to report the error by opening the link to our issue tracker.
-  bool pushErrorNotification(String errorMessage) {
-    final reportErrorAction = NotificationAction(
-      'Report error',
-      () {
-        unawaited(
-          launchUrl(
-            devToolsExtensionPoints.issueTrackerLink().url,
-          ),
-        );
-      },
-      isPrimary: true,
-    );
-    return pushNotification(
-      NotificationMessage(
-        errorMessage,
-        isError: true,
-        actions: [reportErrorAction],
-      ),
-      allowDuplicates: false,
-    );
   }
 
   /// Dismisses all notifications with a matching message.

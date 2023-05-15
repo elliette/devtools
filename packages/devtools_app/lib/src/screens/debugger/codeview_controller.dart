@@ -56,11 +56,11 @@ class CodeViewController extends DisposableController
     }
   }
 
-  void _handleNavigationEvent(DevToolsNavigationState state) {
+  void _handleNavigationEvent(DevToolsNavigationState state) async {
     final processedState =
         CodeViewSourceLocationNavigationState._fromState(state);
     final object = processedState.object;
-    showScriptLocation(processedState.location, focusLine: true);
+    await showScriptLocation(processedState.location, focusLine: true);
     if (programExplorerController.initialized.value) {
       if (object != null) {
         final node = programExplorerController.findOutlineNode(object);
@@ -234,7 +234,7 @@ class CodeViewController extends DisposableController
       script = await _parseScript(scriptRef);
     } catch (error) {
       final errorMessage = 'Failed to parse script ${scriptRef.uri}.';
-      notificationService.pushErrorNotification(
+      notificationService.pushError(
         'ERROR: Failed to parse script ${scriptRef.uri}.',
       );
       _log.shout('$errorMessage: $error');
