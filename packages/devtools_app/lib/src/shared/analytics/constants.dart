@@ -125,6 +125,7 @@ const refreshStatistics = 'refreshStatistics';
 const showFileExplorer = 'showFileExplorer';
 const hideFileExplorer = 'hideFileExplorer';
 const pausedWithNoFrames = 'pausedWithNoFrames';
+const enableSourceMapsLink = 'enableSourceMapsLink';
 
 // Logging UX actions:
 const structuredErrors = 'structuredErrors';
