@@ -39,10 +39,14 @@ class DisplayProvider extends StatelessWidget {
     super.key,
     required this.variable,
     required this.onTap,
+    this.isHoverable = true,
+    this.isSelectable = true,
   });
 
   final DartObjectNode variable;
   final VoidCallback onTap;
+  final bool isHoverable;
+  final bool isSelectable;
 
   @override
   Widget build(BuildContext context) {
@@ -53,20 +57,22 @@ class DisplayProvider extends StatelessWidget {
     // should also include the type of the value in the tooltip if the variable
     // is not null.
     if (variable.text != null) {
-      return SelectableText.rich(
-        TextSpan(
-          children: processAnsiTerminalCodes(
-            variable.text,
-            theme.subtleFixedFontStyle,
+      print('showing ${variable.text}');
+      return GestureDetector(
+        onTap: onTap,
+        child: Text.rich(
+          TextSpan(
+            children: processAnsiTerminalCodes(
+              variable.text,
+              theme.subtleFixedFontStyle,
+            ),
           ),
         ),
-        onTap: onTap,
-        selectionControls:
-            _selectionControls(variable: variable, onInspect: null),
       );
     }
     final diagnostic = variable.ref?.diagnostic;
     if (diagnostic != null) {
+      print('showing diagnostic');
       return DiagnosticsNodeDescription(
         diagnostic,
         multiline: true,
