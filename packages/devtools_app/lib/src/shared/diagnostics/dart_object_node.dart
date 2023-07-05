@@ -267,6 +267,7 @@ class DartObjectNode extends TreeNode<DartObjectNode> {
 
   @override
   bool get isExpandable {
+    print('determing whether expandable here...');
     final theRef = ref;
     final instanceRef = theRef?.instanceRef;
 

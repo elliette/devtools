@@ -172,6 +172,14 @@ class _TreeViewItemState<T extends TreeNode<T>> extends State<_TreeViewItem<T>>
     with TickerProviderStateMixin, CollapsibleAnimationMixin {
   @override
   Widget build(BuildContext context) {
+    final children = widget.data.children;
+    print('==============');
+    print('CHILDREN ARE $children');
+    print('children are not empty ${children.isNotEmpty}');
+    if (children.isNotEmpty) {
+      print('length ${children.length}');
+    }
+    print('is expandable ${widget.data.isExpandable}');
     return Container(
       margin: EdgeInsets.only(left: nodeIndent(widget.data)),
       color: widget.data.isSelected

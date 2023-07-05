@@ -68,7 +68,10 @@ abstract class TreeNode<T extends TreeNode<T>> {
   int? _level;
 
   /// Whether the tree table node is expandable.
-  bool get isExpandable => children.isNotEmpty;
+  bool get isExpandable {
+    print('determining whether expandable, $children');
+    return children.isNotEmpty;
+  }
 
   /// Whether the node is currently expanded in the tree table.
   bool get isExpanded => _isExpanded;

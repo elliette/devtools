@@ -33,6 +33,7 @@ class ExpandableVariable extends StatelessWidget {
     }
     // TODO(kenz): preserve expanded state of tree on switching frames and
     // on stepping.
+    print('building ${variable.text}');
     return TreeView<DartObjectNode>(
       dataRootsListenable:
           FixedValueListenable<List<DartObjectNode>>([variable]),

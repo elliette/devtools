@@ -77,6 +77,8 @@ class VariableDisplayProvider extends StatelessWidget {
     }
 
     final hasName = variable.name?.isNotEmpty ?? false;
+    final name = hasName ? variable.name : null;
+    print('Returning $name');
     return DevToolsTooltip(
       message: variable.displayValue.toString(),
       waitDuration: tooltipWaitLong,
