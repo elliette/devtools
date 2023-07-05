@@ -10,7 +10,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart' hide Stack;
 
-import '../../shared/console/widgets/display_provider.dart';
+import '../../shared/console/widgets/variable_display_provider.dart';
 import '../../shared/diagnostics/dart_object_node.dart';
 import '../../shared/diagnostics/tree_builder.dart';
 import '../../shared/globals.dart';
@@ -25,7 +25,7 @@ class Variables extends StatelessWidget {
     // on stepping.
     return TreeView<DartObjectNode>(
       dataRootsListenable: serviceManager.appState.variables,
-      dataDisplayProvider: (variable, onPressed) => DisplayProvider(
+      dataDisplayProvider: (variable, onPressed) => VariableDisplayProvider(
         variable: variable,
         onTap: onPressed,
       ),

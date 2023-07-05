@@ -34,8 +34,8 @@ VariableSelectionControls _selectionControls({
   );
 }
 
-class DisplayProvider extends StatelessWidget {
-  const DisplayProvider({
+class VariableDisplayProvider extends StatelessWidget {
+  const VariableDisplayProvider({
     super.key,
     required this.variable,
     required this.onTap,
@@ -53,11 +53,13 @@ class DisplayProvider extends StatelessWidget {
     // should also include the type of the value in the tooltip if the variable
     // is not null.
     if (variable.text != null) {
-      return SelectableText.rich(
-        TextSpan(
-          children: processAnsiTerminalCodes(
-            variable.text,
-            theme.subtleFixedFontStyle,
+      return _VariableDisplayWrapper(
+        variableText: Text.rich(
+          TextSpan(
+            children: processAnsiTerminalCodes(
+              variable.text,
+              theme.subtleFixedFontStyle,
+            ),
           ),
         ),
         onTap: onTap,
@@ -78,35 +80,37 @@ class DisplayProvider extends StatelessWidget {
     return DevToolsTooltip(
       message: variable.displayValue.toString(),
       waitDuration: tooltipWaitLong,
-      child: SelectableText.rich(
-        TextSpan(
-          text: hasName ? variable.name : null,
-          style: variable.artificialName
-              ? theme.subtleFixedFontStyle
-              : theme.fixedFontStyle.apply(
-                  color: theme.colorScheme.controlFlowSyntaxColor,
-                ),
-          children: [
-            if (hasName)
-              TextSpan(
-                text: ': ',
-                style: theme.fixedFontStyle,
-              ),
-            TextSpan(
-              text: variable.displayValue.toString(),
-              style: variable.artificialValue
-                  ? theme.subtleFixedFontStyle
-                  : _variableDisplayStyle(theme, variable),
-            ),
-          ],
-        ),
+      child: _VariableDisplayWrapper(
+        onTap: onTap,
         selectionControls: _selectionControls(
           variable: variable,
           onInspect: serviceManager.inspectorService == null
               ? null
               : (delegate) => _handleInspect(delegate, context),
         ),
-        onTap: onTap,
+        variableText: Text.rich(
+          TextSpan(
+            text: hasName ? variable.name : null,
+            style: variable.artificialName
+                ? theme.subtleFixedFontStyle
+                : theme.fixedFontStyle.apply(
+                    color: theme.colorScheme.controlFlowSyntaxColor,
+                  ),
+            children: [
+              if (hasName)
+                TextSpan(
+                  text: ': ',
+                  style: theme.fixedFontStyle,
+                ),
+              TextSpan(
+                text: variable.displayValue.toString(),
+                style: variable.artificialValue
+                    ? theme.subtleFixedFontStyle
+                    : _variableDisplayStyle(theme, variable),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -175,5 +179,28 @@ class DisplayProvider extends StatelessWidget {
       default:
         return style;
     }
+  }
+}
+
+class _VariableDisplayWrapper extends StatelessWidget {
+  const _VariableDisplayWrapper({
+    required this.variableText,
+    required this.onTap,
+    required this.selectionControls,
+  });
+
+  final Text variableText;
+  final VoidCallback onTap;
+  final VariableSelectionControls selectionControls;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: SelectionArea(
+        selectionControls: selectionControls,
+        child: variableText,
+      ),
+    );
   }
 }

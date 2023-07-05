@@ -10,7 +10,7 @@ import '../../../shared/primitives/listenable.dart';
 import '../../../shared/tree.dart';
 import '../../diagnostics/dart_object_node.dart';
 import '../../diagnostics/tree_builder.dart';
-import 'display_provider.dart';
+import 'variable_display_provider.dart';
 
 class ExpandableVariable extends StatelessWidget {
   const ExpandableVariable({
@@ -38,7 +38,7 @@ class ExpandableVariable extends StatelessWidget {
           FixedValueListenable<List<DartObjectNode>>([variable]),
       shrinkWrap: true,
       dataDisplayProvider: dataDisplayProvider ??
-          (variable, onPressed) => DisplayProvider(
+          (variable, onPressed) => VariableDisplayProvider(
                 variable: variable,
                 onTap: onPressed,
               ),
