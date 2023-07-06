@@ -273,6 +273,7 @@ class DartObjectNode extends TreeNode<DartObjectNode> {
     if (isRootForReferences(ref)) return true;
 
     if (treeInitializeComplete || children.isNotEmpty || childCount > 0) {
+      // childCount for strings is length of string
       return children.isNotEmpty || childCount > 0;
     }
     final diagnostic = theRef?.diagnostic;
