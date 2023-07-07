@@ -53,16 +53,16 @@ class DisplayProvider extends StatelessWidget {
     // should also include the type of the value in the tooltip if the variable
     // is not null.
     if (variable.text != null) {
-      return SelectableText.rich(
-        TextSpan(
-          children: processAnsiTerminalCodes(
-            variable.text,
-            theme.subtleFixedFontStyle,
+      return _DisplayWrapper(
+        text: Text.rich(
+          TextSpan(
+            children: processAnsiTerminalCodes(
+              variable.text,
+              theme.subtleFixedFontStyle,
+            ),
           ),
         ),
         onTap: onTap,
-        selectionControls:
-            _selectionControls(variable: variable, onInspect: null),
       );
     }
     final diagnostic = variable.ref?.diagnostic;
@@ -75,10 +75,8 @@ class DisplayProvider extends StatelessWidget {
     }
 
     final hasName = variable.name?.isNotEmpty ?? false;
-    return DevToolsTooltip(
-      message: variable.displayValue.toString(),
-      waitDuration: tooltipWaitLong,
-      child: SelectableText.rich(
+    return _DisplayWrapper(
+      text: Text.rich(
         TextSpan(
           text: hasName ? variable.name : null,
           style: variable.artificialName
@@ -100,14 +98,8 @@ class DisplayProvider extends StatelessWidget {
             ),
           ],
         ),
-        selectionControls: _selectionControls(
-          variable: variable,
-          onInspect: serviceManager.inspectorService == null
-              ? null
-              : (delegate) => _handleInspect(delegate, context),
-        ),
-        onTap: onTap,
       ),
+      onTap: onTap,
     );
   }
 
@@ -175,5 +167,28 @@ class DisplayProvider extends StatelessWidget {
       default:
         return style;
     }
+  }
+}
+
+class _DisplayWrapper extends StatelessWidget {
+  const _DisplayWrapper({
+    required this.text,
+    required this.onTap,
+  });
+
+  final Text text;
+  final VoidCallback onTap;
+  // final VariableSelectionControls selectionControls;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: text,
+      // child: SelectionArea(
+      //   selectionControls: selectionControls,
+      //   child: text,
+      // ),
+    );
   }
 }
