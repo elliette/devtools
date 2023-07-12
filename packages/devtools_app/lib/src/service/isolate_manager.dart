@@ -245,6 +245,17 @@ class IsolateManager extends Disposer {
       service.onDebugEvent.listen(_handleDebugEvent),
     );
 
+    // Listen for DAP events:
+    print('Listening for DAP events...');
+    autoDisposeStreamSubscription(
+      service.onDAPEvent.listen(
+        (Event event) {
+          // NOTE: We never receive any DAP events here :(
+          print('Received a DAP event! $event');
+        },
+      ),
+    );
+
     // We don't know the main isolate yet.
     _mainIsolate.value = null;
   }

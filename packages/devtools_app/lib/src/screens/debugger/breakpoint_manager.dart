@@ -10,6 +10,7 @@ import 'package:vm_service/vm_service.dart';
 
 import '../../service/vm_service_wrapper.dart';
 import '../../shared/diagnostics/primitives/source_location.dart';
+import 'package:dds_service_extensions/dap.dart';
 import '../../shared/globals.dart';
 import '../../shared/primitives/auto_dispose.dart';
 import 'debugger_model.dart';
@@ -98,6 +99,9 @@ class BreakpointManager extends Disposer {
   Future<Breakpoint> addBreakpoint(String scriptId, int line) =>
       _service.addBreakpoint(_isolateRefId, scriptId, line);
 
+  Future<DapResponse> addDAPBreakpoint(String scriptId, int line) =>
+      _service.dapBreakpointsRequest(scriptId, line);
+
   Future<void> removeBreakpoint(Breakpoint breakpoint) =>
       _service.removeBreakpoint(_isolateRefId, breakpoint.id!);
 
@@ -122,7 +126,21 @@ class BreakpointManager extends Disposer {
       await removeBreakpoint(bp.breakpoint);
     } else {
       try {
+        // Add breakpoint using the vm_service:
         await addBreakpoint(script.id!, line);
+        // NOTE: I'm not sure adding a breakpoint with DAP is necessary to get the
+        // DAP stopped event.
+        //
+        // Add breakpoint using DAP, use the file path because we don't have
+        // access to the `sourceReference` (requires listening to the `LoadedSource`
+        // event: https://microsoft.github.io/debug-adapter-protocol/specification#Events_LoadedSource)
+        final scriptUri = script.uri!;
+        final isolateId = selectedIsolate.id!;
+        await serviceManager.resolvedUriManager
+            .fetchFileUris(isolateId, [scriptUri]);
+        final filePath = serviceManager.resolvedUriManager
+            .lookupFileUri(isolateId, scriptUri);
+        await addDAPBreakpoint(filePath!, line);
       } catch (_) {
         // ignore errors setting breakpoints
       }

@@ -7,8 +7,11 @@
 library vm_service_wrapper;
 
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:collection/collection.dart' show IterableExtension;
+import 'package:dap/dap.dart' as dap;
+import 'package:dds_service_extensions/dap.dart';
 import 'package:dds_service_extensions/dds_service_extensions.dart';
 import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
@@ -525,6 +528,8 @@ class VmServiceWrapper implements VmService {
 
   @override
   Stream<Event> get onHeapSnapshotEvent => _vmService.onHeapSnapshotEvent;
+
+  Stream<Event> get onDAPEvent => _vmService.onDAPEvent;
 
   @override
   Future<Success> pause(String isolateId) {
@@ -1091,6 +1096,45 @@ class VmServiceWrapper implements VmService {
         isolateId: isolateId,
         parser: ObjectStore.parse,
       );
+
+  Future<DapResponse> dapVariablesRequest() => _sendDapRequest(
+        dap.Request(
+          command: 'variables',
+          seq: 0,
+          arguments: dap.VariablesArguments(
+            variablesReference: 0,
+          ),
+        ),
+      );
+
+  Future<DapResponse> dapBreakpointsRequest(
+    String path,
+    int line,
+  ) =>
+      _sendDapRequest(
+        dap.Request(
+          command: 'setBreakpoints',
+          seq: 0,
+          arguments: dap.SetBreakpointsArguments(
+            source: dap.Source(
+              path: path,
+            ),
+            lines: [line],
+            breakpoints: [
+              dap.SourceBreakpoint(line: line),
+            ],
+            sourceModified: false,
+          ),
+        ),
+      );
+
+  Future<DapResponse> _sendDapRequest(dap.Request request) async {
+    assert(_ddsSupported);
+    print('DAP request: ${request.command}');
+    final response = await _vmService.sendDapRequest(jsonEncode(request));
+    print('--> DAP response: ${response.dapResponse.body}');
+    return response;
+  }
 
   /// Prevent DevTools from blocking Dart SDK rolls if changes in
   /// package:vm_service are unimplemented in DevTools.
