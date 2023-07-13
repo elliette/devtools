@@ -247,18 +247,19 @@ class IsolateManager extends Disposer {
     );
 
     // Listen for DAP events:
+    print('Sending init dap');
+    await service.initDap();
+
     print('Listening for DAP events...');
     await service.streamListen(DapEventStreams.kDAP);
-    autoDisposeStreamSubscription(
-      service.onDAPEvent.listen(
-        (Event event) {
-          // NOTE: We never receive any DAP events here :(
-          print('Received a DAP event! $event');
-        },
-      ),
+    service.onDAPEvent.listen(
+      (Event event) {
+        // NOTE: We never receive any DAP events here :(
+        print('Received a DAP event! $event');
+      },
     );
 
-    print('Sending init dap');
+    print('Sending init dap again');
     await service.initDap();
 
     // We don't know the main isolate yet.
