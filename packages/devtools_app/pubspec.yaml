@@ -167,8 +167,8 @@ dependency_overrides:
     path: ../devtools_shared
   devtools_test:
     path: ../devtools_test
-  dds:
-    path: /Users/elliottbrooks/dev/dart-sdk/sdk/pkg/dds
-  dds_service_extensions:
-    path: /Users/elliottbrooks/dev/dart-sdk/sdk/pkg/dds_service_extensions
+  # dds:
+  #   path: /Users/elliottbrooks/dev/dart-sdk/sdk/pkg/dds
+  # dds_service_extensions:
+  #   path: /Users/elliottbrooks/dev/dart-sdk/sdk/pkg/dds_service_extensions
 

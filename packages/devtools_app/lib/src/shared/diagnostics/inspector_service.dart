@@ -420,7 +420,7 @@ class InspectorService extends InspectorServiceBase {
   }
 
   Future<void> _addPubRootDirectories(List<String> pubDirectories) {
-    assert(useDaemonApi);
+    // assert(useDaemonApi);
     return invokeServiceMethodDaemonNoGroupArgs(
       WidgetInspectorServiceExtensions.addPubRootDirectories.name,
       pubDirectories,
@@ -428,7 +428,7 @@ class InspectorService extends InspectorServiceBase {
   }
 
   Future<void> _removePubRootDirectories(List<String> pubDirectories) {
-    assert(useDaemonApi);
+    // assert(useDaemonApi);
     return invokeServiceMethodDaemonNoGroupArgs(
       WidgetInspectorServiceExtensions.removePubRootDirectories.name,
       pubDirectories,
@@ -436,7 +436,7 @@ class InspectorService extends InspectorServiceBase {
   }
 
   Future<List<String>?> getPubRootDirectories() async {
-    assert(useDaemonApi);
+    // assert(useDaemonApi);
     final response = await invokeServiceMethodDaemonNoGroupArgs(
       WidgetInspectorServiceExtensions.getPubRootDirectories.name,
     );
@@ -452,7 +452,7 @@ class InspectorService extends InspectorServiceBase {
   ///
   /// See [LocationMap] which provides support to parse this JSON.
   Future<Map<String, dynamic>> widgetLocationIdMap() async {
-    assert(useDaemonApi);
+    // assert(useDaemonApi);
     final response = await invokeServiceMethodDaemonNoGroupArgs(
       'widgetLocationIdMap',
     );

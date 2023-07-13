@@ -1128,6 +1128,14 @@ class VmServiceWrapper implements VmService {
         ),
       );
 
+  Future<void> initDap() async {
+    try {
+      await _vmService.sendDapRequest('triggerInit');
+    } catch (e) {
+      print('INIT DAP? $e');
+    }
+  }
+
   Future<DapResponse> _sendDapRequest(dap.Request request) async {
     assert(_ddsSupported);
     print('DAP request: ${request.command}');

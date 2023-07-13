@@ -6,6 +6,7 @@ import 'dart:async';
 import 'dart:core';
 
 import 'package:collection/collection.dart' show IterableExtension;
+import 'package:dds_service_extensions/dap.dart';
 import 'package:flutter/foundation.dart';
 import 'package:vm_service/vm_service.dart' hide Error;
 
@@ -233,7 +234,7 @@ class IsolateManager extends Disposer {
     _isolates.clear();
   }
 
-  void vmServiceOpened(VmServiceWrapper service) {
+  void vmServiceOpened(VmServiceWrapper service) async {
     _selectedIsolate.value = null;
 
     cancelStreamSubscriptions();
@@ -247,6 +248,7 @@ class IsolateManager extends Disposer {
 
     // Listen for DAP events:
     print('Listening for DAP events...');
+    await service.streamListen(DapEventStreams.kDAP);
     autoDisposeStreamSubscription(
       service.onDAPEvent.listen(
         (Event event) {
@@ -255,6 +257,9 @@ class IsolateManager extends Disposer {
         },
       ),
     );
+
+    print('Sending init dap');
+    await service.initDap();
 
     // We don't know the main isolate yet.
     _mainIsolate.value = null;
