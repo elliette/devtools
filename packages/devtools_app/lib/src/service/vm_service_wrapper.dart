@@ -770,6 +770,39 @@ class VmServiceWrapper implements VmService {
     );
   }
 
+  Future<bool> initDap() async {
+    await _supportedProtocolsInitialized.future;
+    if (!_ddsSupported) {
+      print('returning false');
+      return false;
+    }
+    try {
+      await _vmService.sendDapRequest('init');
+    } catch (_) {
+      return true;
+      // Ignore any errors.
+    }
+    print('returning true');
+    return true;
+  }
+
+  Future<DapResponse> dapVariablesRequest() => _sendDapRequest(
+        dap.Request(
+          command: 'variables',
+          seq: 0,
+          arguments: dap.VariablesArguments(
+            variablesReference: 0,
+          ),
+        ),
+      );
+
+  Future<DapResponse> _sendDapRequest(dap.Request request) async {
+    print('DAP request: ${request.command}');
+    final response = await _vmService.sendDapRequest(jsonEncode(request));
+    print('--> DAP response: ${response.dapResponse.body}');
+    return response;
+  }
+
   // Mark: Overrides for [DdsExtension]. It would help with logical grouping to
   // make these extension methods, but that makes testing more difficult due to
   // mocking limitations for extension methods.
@@ -1096,53 +1129,6 @@ class VmServiceWrapper implements VmService {
         isolateId: isolateId,
         parser: ObjectStore.parse,
       );
-
-  Future<DapResponse> dapVariablesRequest() => _sendDapRequest(
-        dap.Request(
-          command: 'variables',
-          seq: 0,
-          arguments: dap.VariablesArguments(
-            variablesReference: 0,
-          ),
-        ),
-      );
-
-  Future<DapResponse> dapBreakpointsRequest(
-    String path,
-    int line,
-  ) =>
-      _sendDapRequest(
-        dap.Request(
-          command: 'setBreakpoints',
-          seq: 0,
-          arguments: dap.SetBreakpointsArguments(
-            source: dap.Source(
-              path: path,
-            ),
-            lines: [line],
-            breakpoints: [
-              dap.SourceBreakpoint(line: line),
-            ],
-            sourceModified: false,
-          ),
-        ),
-      );
-
-  Future<void> initDap() async {
-    try {
-      await _vmService.sendDapRequest('triggerInit');
-    } catch (e) {
-      print('INIT DAP? $e');
-    }
-  }
-
-  Future<DapResponse> _sendDapRequest(dap.Request request) async {
-    assert(_ddsSupported);
-    print('DAP request: ${request.command}');
-    final response = await _vmService.sendDapRequest(jsonEncode(request));
-    print('--> DAP response: ${response.dapResponse.body}');
-    return response;
-  }
 
   /// Prevent DevTools from blocking Dart SDK rolls if changes in
   /// package:vm_service are unimplemented in DevTools.

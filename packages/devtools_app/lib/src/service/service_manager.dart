@@ -277,7 +277,6 @@ class ServiceConnectionManager {
     service.onEvent(EventStreams.kService).listen(handleServiceEvent);
 
     final streamIds = [
-      // DapEventStreams.kDAP,
       EventStreams.kDebug,
       EventStreams.kExtension,
       EventStreams.kGC,
@@ -288,6 +287,7 @@ class ServiceConnectionManager {
       EventStreams.kTimeline,
       EventStreams.kVM,
       EventStreams.kService,
+      DapEventStreams.kDAP,
     ];
 
     for (final id in streamIds) {

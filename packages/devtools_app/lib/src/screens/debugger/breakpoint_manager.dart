@@ -99,8 +99,8 @@ class BreakpointManager extends Disposer {
   Future<Breakpoint> addBreakpoint(String scriptId, int line) =>
       _service.addBreakpoint(_isolateRefId, scriptId, line);
 
-  Future<DapResponse> addDAPBreakpoint(String scriptId, int line) =>
-      _service.dapBreakpointsRequest(scriptId, line);
+  // Future<DapResponse> addDAPBreakpoint(String scriptId, int line) =>
+  //     _service.dapBreakpointsRequest(scriptId, line);
 
   Future<void> removeBreakpoint(Breakpoint breakpoint) =>
       _service.removeBreakpoint(_isolateRefId, breakpoint.id!);
@@ -134,13 +134,13 @@ class BreakpointManager extends Disposer {
         // Add breakpoint using DAP, use the file path because we don't have
         // access to the `sourceReference` (requires listening to the `LoadedSource`
         // event: https://microsoft.github.io/debug-adapter-protocol/specification#Events_LoadedSource)
-        final scriptUri = script.uri!;
-        final isolateId = selectedIsolate.id!;
-        await serviceManager.resolvedUriManager
-            .fetchFileUris(isolateId, [scriptUri]);
-        final filePath = serviceManager.resolvedUriManager
-            .lookupFileUri(isolateId, scriptUri);
-        await addDAPBreakpoint(filePath!, line);
+        // final scriptUri = script.uri!;
+        // final isolateId = selectedIsolate.id!;
+        // await serviceManager.resolvedUriManager
+        //     .fetchFileUris(isolateId, [scriptUri]);
+        // final filePath = serviceManager.resolvedUriManager
+        //     .lookupFileUri(isolateId, scriptUri);
+        // await addDAPBreakpoint(filePath!, line);
       } catch (_) {
         // ignore errors setting breakpoints
       }
