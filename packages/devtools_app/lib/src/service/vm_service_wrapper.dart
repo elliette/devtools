@@ -1097,7 +1097,7 @@ class VmServiceWrapper implements VmService {
         parser: ObjectStore.parse,
       );
 
-  Future<DapResponse> dapVariablesRequest() => _sendDapRequest(
+  Future<DapResponse> dapVariablesRequest() => sendDapRequest(
         dap.Request(
           command: 'variables',
           seq: 0,
@@ -1107,11 +1107,22 @@ class VmServiceWrapper implements VmService {
         ),
       );
 
+
+  Future<DapResponse> dapStackTraceRequest(int threadId) => sendDapRequest(
+        dap.Request(
+          command: 'stackTrace',
+          seq: 0,
+          arguments: dap.StackTraceArguments(
+            threadId: threadId,
+          ),
+        ),
+      );
+
   Future<DapResponse> dapBreakpointsRequest(
     String path,
     int line,
   ) =>
-      _sendDapRequest(
+      sendDapRequest(
         dap.Request(
           command: 'setBreakpoints',
           seq: 0,
@@ -1136,11 +1147,13 @@ class VmServiceWrapper implements VmService {
     }
   }
 
-  Future<DapResponse> _sendDapRequest(dap.Request request) async {
+  Future<DapResponse> sendDapRequest(dap.Request request) async {
     assert(_ddsSupported);
     print('DAP request: ${request.command}');
     final response = await _vmService.sendDapRequest(jsonEncode(request));
-    print('--> DAP response: ${response.dapResponse.body}');
+    final stringify = jsonEncode(response.dapResponse.body);
+    print('--> DAP response:');
+    print(stringify);
     return response;
   }
 

@@ -252,15 +252,9 @@ class IsolateManager extends Disposer {
 
     print('Listening for DAP events...');
     await service.streamListen(DapEventStreams.kDAP);
-    service.onDAPEvent.listen(
-      (Event event) {
-        // NOTE: We never receive any DAP events here :(
-        print('Received a DAP event! $event');
-      },
+    autoDisposeStreamSubscription(
+      service.onDAPEvent.listen(_handleDapEvent),
     );
-
-    print('Sending init dap again');
-    await service.initDap();
 
     // We don't know the main isolate yet.
     _mainIsolate.value = null;
@@ -283,4 +277,31 @@ class IsolateManager extends Disposer {
 
     isolateState.handleDebugEvent(event.kind);
   }
+
+  void _handleDapEvent(Event event) {
+    print('handle dap event $event');
+    // final data = event.dapData.toJson();
+    if (event.dapData.body == null) return;
+    final body = event.dapData.body as Map<String, dynamic>;
+    // The DAP threadId is equaivalent to the isolate number.
+    print('body is $body');
+    print('dapData is ${event.dapData.toJson()}');
+
+    final isolateNumber = body['threadId'] as int?;
+    print('isolate number is $isolateNumber');
+    if (isolateNumber == null) return;
+    final IsolateRef? ref =
+        _isolateStates.keys.firstWhereOrNull((IsolateRef ref) {
+      final refNumber = ref.number;
+      return refNumber != null && int.parse(refNumber) == isolateNumber;
+    });
+    final isolateState = _isolateStates[ref];
+    if (isolateState == null) {
+      print('no matching isolate for $isolateNumber');
+      return;
+    }
+    print('isolate state is $isolateState');
+  }
 }
+
+

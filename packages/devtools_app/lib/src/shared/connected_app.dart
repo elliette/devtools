@@ -12,6 +12,7 @@ import '../service/service_registrations.dart' as registrations;
 import 'console/primitives/eval_history.dart';
 import 'diagnostics/dart_object_node.dart';
 import 'eval_on_dart_library.dart';
+import 'package:dap/dap.dart' as dap;
 import 'globals.dart';
 import 'primitives/auto_dispose.dart';
 import 'title.dart';
@@ -282,9 +283,9 @@ class AppState extends DisposableController with AutoDisposeControllerMixin {
   final _variables = ValueNotifier<List<DartObjectNode>>([]);
   void setVariables(List<DartObjectNode> value) => _variables.value = value;
 
-  ValueListenable<Frame?> get currentFrame => _currentFrame;
-  final _currentFrame = ValueNotifier<Frame?>(null);
-  void setCurrentFrame(Frame? value) => _currentFrame.value = value;
+  ValueListenable<dap.StackFrame?> get currentFrame => _currentFrame;
+  final _currentFrame = ValueNotifier<dap.StackFrame?>(null);
+  void setCurrentFrame(dap.StackFrame? value) => _currentFrame.value = value;
 
   final EvalHistory evalHistory = EvalHistory();
 

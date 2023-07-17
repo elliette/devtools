@@ -62,13 +62,10 @@ class _CallStackState extends State<CallStack>
 
     Widget child;
 
-    final frameKind = frame.frame.kind;
-
-    final asyncMarker = frameKind == FrameKind.kAsyncSuspensionMarker;
     final frameDescription = frame.description;
     final locationDescription = frame.location;
 
-    if (asyncMarker) {
+    if (frame.isLabel) {
       child = Row(
         children: [
           const SizedBox(width: defaultSpacing, child: Divider()),
@@ -102,8 +99,6 @@ class _CallStackState extends State<CallStack>
       );
     }
 
-    final isAsyncBreak = frame.frame.kind == FrameKind.kAsyncSuspensionMarker;
-
     final result = Material(
       color: selected ? theme.colorScheme.selectedRowBackgroundColor : null,
       child: InkWell(
@@ -116,7 +111,7 @@ class _CallStackState extends State<CallStack>
       ),
     );
 
-    return isAsyncBreak
+    return frame.isLabel
         ? result
         : DevToolsTooltip(
             message: locationDescription == null

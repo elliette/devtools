@@ -8,6 +8,7 @@ import '../../shared/diagnostics/primitives/source_location.dart';
 import '../../shared/primitives/simple_items.dart';
 import '../../shared/primitives/trees.dart';
 import '../../shared/ui/search.dart';
+import 'package:dap/dap.dart' as dap;
 
 /// Whether to include properties surfaced through Diagnosticable objects as
 /// part of the generic Debugger view of an object.
@@ -192,44 +193,34 @@ class StackFrameAndSourcePosition {
     this.position,
   });
 
-  final Frame frame;
+  final dap.StackFrame frame;
+
+  // final Frame oldFrame;
 
   /// This can be null.
   final SourcePosition? position;
 
-  ScriptRef? get scriptRef => frame.location?.script;
+  ScriptRef? get scriptRef {
+    final adapterData = frame.source?.adapterData;
+    if (adapterData == null) return null;
+    return ScriptRef.parse(adapterData as Map<String, dynamic>?);
+  }
 
-  String? get scriptUri => frame.location?.script?.uri;
+  String? get scriptUri {
+    return scriptRef?.uri;
+  }
 
   int? get line => position?.line;
 
   int? get column => position?.column;
 
   String get callStackDisplay {
-    final asyncMarker = frame.kind == FrameKind.kAsyncSuspensionMarker;
-    return '$description${asyncMarker ? null : ' ($location)'}';
+    if (location == null) return description;
+    return '$description ($location)';
   }
 
   String get description {
-    const unoptimized = '[Unoptimized] ';
-    const none = '<none>';
-    const asyncBreak = '<async break>';
-
-    if (frame.kind == FrameKind.kAsyncSuspensionMarker) {
-      return asyncBreak;
-    }
-
-    var name = frame.code?.name ?? none;
-    if (name.startsWith(unoptimized)) {
-      name = name.substring(unoptimized.length);
-    }
-    name = name.replaceAll(anonymousClosureName, closureName);
-
-    if (frame.code?.kind == CodeKind.kNative) {
-      return '<native code: $name>';
-    }
-
-    return name;
+    return frame.name;
   }
 
   String? get location {
@@ -240,6 +231,10 @@ class StackFrameAndSourcePosition {
     final file = uri.split('/').last;
     return line == null ? file : '$file:$line';
   }
+
+  // TODO: also handle case when presentation hint is 'subtle',
+  // see https://github.com/dart-lang/sdk/blob/1d8dde36e166db5b62ef08d0dab0031dae0148f3/pkg/dds/lib/src/dap/protocol_converter.dart#L581
+  bool get isLabel => frame.presentationHint == 'label';
 }
 
 /// A node in a tree of scripts.

@@ -13,6 +13,7 @@ import 'package:vm_service/vm_service.dart';
 import '../../service/vm_service_wrapper.dart';
 import '../../shared/analytics/analytics.dart' as ga;
 import '../../shared/analytics/constants.dart' as gac;
+import 'package:dap/dap.dart' as dap;
 import '../../shared/diagnostics/dart_object_node.dart';
 import '../../shared/diagnostics/primitives/source_location.dart';
 import '../../shared/diagnostics/tree_builder.dart';
@@ -380,6 +381,8 @@ class DebuggerController extends DisposableController
       return;
     }
 
+    /* TODO ELLIOTT - HANDLE THIS LOGIC!!!
+
     // Collecting frames for Dart web applications can be slow. At the potential
     // cost of a flicker in the stack view, display only the top frame
     // initially.
@@ -418,6 +421,7 @@ class DebuggerController extends DisposableController
       unawaited(_getFullStack());
       return;
     }
+    */
 
     // We populate the first 12 frames; this ~roughly corresponds to the number
     // of visible stack frames.
@@ -435,26 +439,46 @@ class DebuggerController extends DisposableController
     );
 
     // In the background, populate the rest of the frames.
+    // Note: Instead of fetching all the frames, consider just fetching those
+    // that weren't included in the truncated request.
     if (stackInfo.truncated) {
       unawaited(_getFullStack());
     }
   }
 
   Future<_StackInfo> _getStackInfo({int? limit}) async {
-    _debugTimingLog.log('getStack() with limit: $limit');
-    final stack = await _service.getStack(_isolateRefId, limit: limit);
-    _debugTimingLog
-        .log('getStack() completed (frames: ${stack.frames!.length})');
+    _debugTimingLog.log('stackTrace with limit: $limit');
+    final isolateNumber =
+        serviceManager.isolateManager.selectedIsolate.value?.number;
 
-    final frames = _framesForCallStack(
-      stack.frames ?? [],
-      asyncCausalFrames: stack.asyncCausalFrames ?? [],
-      reportedException: _lastEvent?.exception,
+    if (isolateNumber == null) return _StackInfo([], false);
+
+    final dapStack = await _service.sendDapRequest(
+      dap.Request(
+        command: 'stackTrace',
+        seq: 0,
+        arguments: dap.StackTraceArguments(
+          threadId: int.parse(isolateNumber),
+          levels: limit ?? 0,
+        ),
+      ),
     );
 
+    final stackTraceResponse = dap.StackTraceResponseBody.fromJson(
+      dapStack.dapResponse.body as Map<String, Object?>,
+    );
+
+    _debugTimingLog.log(
+      'stackTrace completed (frames: ${stackTraceResponse.totalFrames})',
+    );
+
+    // TODO add logic from _framesForCallstack to frames list (eg reported
+    // exception, asyncCausalFrames are already given precedence by DAP.)
+    final frames = stackTraceResponse.stackFrames;
+    
     return _StackInfo(
       await Future.wait(frames.map(_createStackFrameWithLocation)),
-      stack.truncated ?? false,
+      limit != null,
     );
   }
 
@@ -502,16 +526,9 @@ class DebuggerController extends DisposableController
   }
 
   Future<StackFrameAndSourcePosition> _createStackFrameWithLocation(
-    Frame frame,
+    dap.StackFrame frame,
   ) async {
-    final scriptInfo = frame.location?.script;
-    final tokenPos = frame.location?.tokenPos ?? -1;
-    if (scriptInfo == null || tokenPos < 0) {
-      return StackFrameAndSourcePosition(frame);
-    }
-
-    final script = await scriptManager.getScript(scriptInfo);
-    final position = SourcePosition.calculatePosition(script, tokenPos);
+    final position = SourcePosition(line: frame.line, column: frame.column);
     return StackFrameAndSourcePosition(frame, position: position);
   }
 

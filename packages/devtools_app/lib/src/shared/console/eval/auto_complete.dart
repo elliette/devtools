@@ -54,6 +54,9 @@ Future<List<String>> autoCompleteResultsFor(
     }
     final frame = _appState.currentFrame.value;
     if (frame != null) {
+      // TODO figure out how to handle functions, which are not provided by dap
+      // Frames
+      /*
       final function = frame.function;
       if (function != null) {
         final libraryRef = await evalService.findOwnerLibrary(function);
@@ -66,6 +69,7 @@ Future<List<String>> autoCompleteResultsFor(
           );
         }
       }
+      */
     }
   } else {
     var left = parts.leftSide.split(' ').last;
@@ -350,7 +354,9 @@ bool _isAccessible(
   String member,
   Class? clazz,
 ) {
-  final frame = _appState.currentFrame.value!;
-  final currentScript = frame.location!.script;
-  return !isPrivate(member) || currentScript!.id == clazz?.location?.script?.id;
+  return true;
+  // TODO handle this
+  // final frame = _appState.currentFrame.value!;
+  // final currentScript = frame.location!.script;
+  // return !isPrivate(member) || currentScript!.id == clazz?.location?.script?.id;
 }
