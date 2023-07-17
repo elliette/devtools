@@ -13,6 +13,7 @@ import 'package:vm_service/vm_service.dart';
 import '../../service/vm_service_wrapper.dart';
 import '../../shared/analytics/analytics.dart' as ga;
 import '../../shared/analytics/constants.dart' as gac;
+import 'package:dap/dap.dart' as dap;
 import '../../shared/diagnostics/dart_object_node.dart';
 import '../../shared/diagnostics/primitives/source_location.dart';
 import '../../shared/diagnostics/tree_builder.dart';
@@ -380,6 +381,8 @@ class DebuggerController extends DisposableController
       return;
     }
 
+    /* TODO ELLIOTT - HANDLE THIS LOGIC!!!
+
     // Collecting frames for Dart web applications can be slow. At the potential
     // cost of a flicker in the stack view, display only the top frame
     // initially.
@@ -418,6 +421,7 @@ class DebuggerController extends DisposableController
       unawaited(_getFullStack());
       return;
     }
+    */
 
     // We populate the first 12 frames; this ~roughly corresponds to the number
     // of visible stack frames.
@@ -435,6 +439,8 @@ class DebuggerController extends DisposableController
     );
 
     // In the background, populate the rest of the frames.
+    // Note: Instead of fetching all the frames, consider just fetching those
+    // that weren't included in the truncated request.
     if (stackInfo.truncated) {
       unawaited(_getFullStack());
     }

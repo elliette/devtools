@@ -6,6 +6,7 @@ import 'dart:async';
 import 'dart:core';
 
 import 'package:collection/collection.dart' show IterableExtension;
+import 'package:dds_service_extensions/dap.dart';
 import 'package:flutter/foundation.dart';
 import 'package:vm_service/vm_service.dart' hide Error;
 
@@ -233,7 +234,7 @@ class IsolateManager extends Disposer {
     _isolates.clear();
   }
 
-  void vmServiceOpened(VmServiceWrapper service) {
+  void vmServiceOpened(VmServiceWrapper service) async {
     _selectedIsolate.value = null;
 
     cancelStreamSubscriptions();
@@ -243,6 +244,16 @@ class IsolateManager extends Disposer {
     );
     autoDisposeStreamSubscription(
       service.onDebugEvent.listen(_handleDebugEvent),
+    );
+
+    // Listen for DAP events:
+    print('Sending init dap');
+    await service.initDap();
+
+    print('Listening for DAP events...');
+    await service.streamListen(DapEventStreams.kDAP);
+    autoDisposeStreamSubscription(
+      service.onDAPEvent.listen(_handleDapEvent),
     );
 
     // We don't know the main isolate yet.
@@ -266,4 +277,31 @@ class IsolateManager extends Disposer {
 
     isolateState.handleDebugEvent(event.kind);
   }
+
+  void _handleDapEvent(Event event) {
+    print('handle dap event $event');
+    // final data = event.dapData.toJson();
+    if (event.dapData.body == null) return;
+    final body = event.dapData.body as Map<String, dynamic>;
+    // The DAP threadId is equaivalent to the isolate number.
+    print('body is $body');
+    print('dapData is ${event.dapData.toJson()}');
+
+    final isolateNumber = body['threadId'] as int?;
+    print('isolate number is $isolateNumber');
+    if (isolateNumber == null) return;
+    final IsolateRef? ref =
+        _isolateStates.keys.firstWhereOrNull((IsolateRef ref) {
+      final refNumber = ref.number;
+      return refNumber != null && int.parse(refNumber) == isolateNumber;
+    });
+    final isolateState = _isolateStates[ref];
+    if (isolateState == null) {
+      print('no matching isolate for $isolateNumber');
+      return;
+    }
+    print('isolate state is $isolateState');
+  }
 }
+
+

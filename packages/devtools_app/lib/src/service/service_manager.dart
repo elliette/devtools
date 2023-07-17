@@ -6,6 +6,7 @@ import 'dart:async';
 import 'dart:core';
 
 import 'package:collection/collection.dart';
+import 'package:dds_service_extensions/dap.dart';
 import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
 import 'package:vm_service/vm_service.dart' hide Error;
@@ -276,6 +277,7 @@ class ServiceConnectionManager {
     service.onEvent(EventStreams.kService).listen(handleServiceEvent);
 
     final streamIds = [
+      // DapEventStreams.kDAP,
       EventStreams.kDebug,
       EventStreams.kExtension,
       EventStreams.kGC,
