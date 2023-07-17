@@ -553,7 +553,24 @@ class DebuggerController extends DisposableController
     _selectedStackFrame.value = frame;
   }
 
-  List<DartObjectNode> _createVariablesForFrame(Frame frame) {
+  List<DartObjectNode> _createVariablesForFrame(Frame frame) async {
+    // TODO: Handle null.
+    final isolateNumber =
+        serviceManager.isolateManager.selectedIsolate.value!.number!;
+
+    final dapStack = await _service.sendDapRequest(
+      dap.Request(
+        command: 'stackTrace',
+        seq: 0,
+        arguments: dap.StackTraceArguments(
+          threadId: int.parse(isolateNumber),
+          startFrame: frame.index!, // TODO: handle null.
+          levels: 1, // The number of frames to return.
+        ),
+      ),
+    );
+
+
     // vars can be null for async frames.
     if (frame.vars == null) {
       return [];
