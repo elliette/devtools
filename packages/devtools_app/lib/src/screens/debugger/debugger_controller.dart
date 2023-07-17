@@ -570,6 +570,29 @@ class DebuggerController extends DisposableController
       ),
     );
 
+    final stackTraceResponse = dap.StackTraceResponseBody.fromJson(
+      dapStack.dapResponse.body as Map<String, Object?>,
+    );
+
+    final dapFrame = stackTraceResponse.stackFrames.first;
+    final frameId = dapFrame.id;
+
+    final dapScopes = await _service.sendDapRequest(
+      dap.Request(
+        command: 'scopes',
+        seq: 0,
+        arguments: dap.ScopesArguments(
+          frameId: frameId,
+        ),
+      ),
+    );
+
+    final scopesResponse = dap.ScopesResponseBody.fromJson(
+      dapScopes.dapResponse.body as Map<String, Object?>,
+    );
+
+    scopesResponse.scopes;
+
 
     // vars can be null for async frames.
     if (frame.vars == null) {
