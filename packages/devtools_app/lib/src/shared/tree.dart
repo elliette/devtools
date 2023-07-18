@@ -217,6 +217,7 @@ class _TreeViewItemState<T extends TreeNode<T>> extends State<_TreeViewItem<T>>
   }
 
   void _onSelected() {
+    print('calling on selected for ${widget.data}');
     widget.onItemSelected(widget.data);
     setExpanded(widget.data.isExpanded);
   }

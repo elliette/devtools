@@ -1097,26 +1097,50 @@ class VmServiceWrapper implements VmService {
         parser: ObjectStore.parse,
       );
 
-  Future<DapResponse> dapVariablesRequest() => sendDapRequest(
-        dap.Request(
-          command: 'variables',
-          seq: 0,
-          arguments: dap.VariablesArguments(
-            variablesReference: 0,
-          ),
-        ),
-      );
+  Future<dap.VariablesResponseBody> dapVariablesRequest(
+    dap.VariablesArguments args,
+  ) async {
+    final response = await _sendDapRequest(
+      dap.Request(
+        command: 'variables',
+        seq: 0,
+        arguments: args,
+      ),
+    );
+    return dap.VariablesResponseBody.fromJson(
+      response.dapResponse.body as Map<String, Object?>,
+    );
+  }
 
+  Future<dap.ScopesResponseBody> dapScopesRequest(
+    dap.ScopesArguments args,
+  ) async {
+    final response = await _sendDapRequest(
+      dap.Request(
+        command: 'scopes',
+        seq: 0,
+        arguments: args,
+      ),
+    );
+    return dap.ScopesResponseBody.fromJson(
+      response.dapResponse.body as Map<String, Object?>,
+    );
+  }
 
-  Future<DapResponse> dapStackTraceRequest(int threadId) => sendDapRequest(
-        dap.Request(
-          command: 'stackTrace',
-          seq: 0,
-          arguments: dap.StackTraceArguments(
-            threadId: threadId,
-          ),
-        ),
-      );
+  Future<dap.StackTraceResponseBody> dapStackTraceRequest(
+    dap.StackTraceArguments args,
+  ) async {
+    final response = await _sendDapRequest(
+      dap.Request(
+        command: 'stackTrace',
+        seq: 0,
+        arguments: args,
+      ),
+    );
+    return dap.StackTraceResponseBody.fromJson(
+      response.dapResponse.body as Map<String, Object?>,
+    );
+  }
 
   Future<DapResponse> dapBreakpointsRequest(
     String path,
@@ -1145,6 +1169,15 @@ class VmServiceWrapper implements VmService {
     } catch (e) {
       print('INIT DAP? $e');
     }
+  }
+
+  Future<DapResponse> _sendDapRequest(dap.Request request) async {
+    print('DAP request: ${request.command}');
+    assert(_ddsSupported);
+    final response = await _vmService.sendDapRequest(jsonEncode(request));
+    print('--> DAP response:');
+    print(jsonEncode(response.dapResponse.body));
+    return response;
   }
 
   Future<DapResponse> sendDapRequest(dap.Request request) async {

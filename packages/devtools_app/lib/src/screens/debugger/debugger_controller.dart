@@ -549,51 +549,62 @@ class DebuggerController extends DisposableController
     serviceManager.appState.setVariables(
       frame != null ? _createVariablesForFrame(frame.frame) : [],
     );
+
+    // Update the DAP variables for the stack frame:
+    serviceManager.appState.setDapVariables(
+      frame != null ? await _createDapVariablesForFrame(frame.frame) : [],
+    );
+
     // Notify that the stack frame has been succesfully selected:
     _selectedStackFrame.value = frame;
   }
 
-  List<DartObjectNode> _createVariablesForFrame(Frame frame) async {
+  Future<List<DapObjectNode>> _createDapVariablesForFrame(Frame frame) async {
     // TODO: Handle null.
     final isolateNumber =
         serviceManager.isolateManager.selectedIsolate.value!.number!;
 
-    final dapStack = await _service.sendDapRequest(
-      dap.Request(
-        command: 'stackTrace',
-        seq: 0,
-        arguments: dap.StackTraceArguments(
-          threadId: int.parse(isolateNumber),
-          startFrame: frame.index!, // TODO: handle null.
-          levels: 1, // The number of frames to return.
-        ),
+    final stackTraceResponse = await _service.dapStackTraceRequest(
+      dap.StackTraceArguments(
+        threadId: int.parse(isolateNumber),
+        startFrame: frame.index!, // TODO: handle null.
+        levels: 1, // The number of frames to return.
       ),
-    );
-
-    final stackTraceResponse = dap.StackTraceResponseBody.fromJson(
-      dapStack.dapResponse.body as Map<String, Object?>,
     );
 
     final dapFrame = stackTraceResponse.stackFrames.first;
     final frameId = dapFrame.id;
 
-    final dapScopes = await _service.sendDapRequest(
-      dap.Request(
-        command: 'scopes',
-        seq: 0,
-        arguments: dap.ScopesArguments(
-          frameId: frameId,
-        ),
+    final scopesResponse = await _service.dapScopesRequest(
+      dap.ScopesArguments(
+        frameId: frameId,
       ),
     );
 
-    final scopesResponse = dap.ScopesResponseBody.fromJson(
-      dapScopes.dapResponse.body as Map<String, Object?>,
-    );
+    final scopes = scopesResponse.scopes;
 
-    scopesResponse.scopes;
+    final variables = <DapObjectNode>[];
 
+    for (final scope in scopes) {
+      final varsResponse = await _service.dapVariablesRequest(
+        dap.VariablesArguments(
+          variablesReference: scope.variablesReference,
+        ),
+      );
 
+      for (final variable in varsResponse.variables) {
+        final node = DapObjectNode(
+          variable: variable,
+          service: _service,
+        );
+        await node.fetchChildren();
+        variables.add(node);
+      }
+    }
+    return variables;
+  }
+
+  List<DartObjectNode> _createVariablesForFrame(Frame frame) {
     // vars can be null for async frames.
     if (frame.vars == null) {
       return [];

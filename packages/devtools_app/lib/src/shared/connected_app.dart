@@ -16,6 +16,7 @@ import 'globals.dart';
 import 'primitives/auto_dispose.dart';
 import 'title.dart';
 import 'version.dart';
+import 'package:dap/dap.dart' as dap;
 
 final _log = Logger('connected_app');
 
@@ -281,6 +282,13 @@ class AppState extends DisposableController with AutoDisposeControllerMixin {
   ValueListenable<List<DartObjectNode>> get variables => _variables;
   final _variables = ValueNotifier<List<DartObjectNode>>([]);
   void setVariables(List<DartObjectNode> value) => _variables.value = value;
+
+
+  ValueListenable<List<DapObjectNode>> get dapVariables => _dapVariables;
+  final _dapVariables = ValueNotifier<List<DapObjectNode>>([]);
+  void setDapVariables(List<DapObjectNode> value) =>
+      _dapVariables.value = value;
+
 
   ValueListenable<Frame?> get currentFrame => _currentFrame;
   final _currentFrame = ValueNotifier<Frame?>(null);

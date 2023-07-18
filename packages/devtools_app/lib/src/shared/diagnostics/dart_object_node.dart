@@ -7,6 +7,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:vm_service/vm_service.dart';
 
+import '../../service/vm_service_wrapper.dart';
 import '../globals.dart';
 import '../memory/adapted_heap_data.dart';
 import '../primitives/trees.dart';
@@ -15,6 +16,42 @@ import 'diagnostics_node.dart';
 import 'generic_instance_reference.dart';
 import 'helpers.dart';
 import 'inspector_service.dart';
+import 'package:dap/dap.dart' as dap;
+
+class DapObjectNode extends TreeNode<DapObjectNode> {
+  DapObjectNode({required this.variable, required service})
+      : _service = service;
+
+  final dap.Variable variable;
+  final VmServiceWrapper _service;
+
+  Future<void> fetchChildren() async {
+    final hasChildren = variable.variablesReference > 0;
+    if (hasChildren) {
+      final childrenResponse = await _service.dapVariablesRequest(
+        dap.VariablesArguments(
+          variablesReference: variable.variablesReference,
+        ),
+      );
+      for (final child in childrenResponse.variables) {
+        addChild(
+          DapObjectNode(
+            variable: child,
+            service: _service,
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  DapObjectNode shallowCopy() {
+    throw UnimplementedError(
+      'This method is not implemented. Implement if you '
+      'need to call `shallowCopy` on an instance of this class.',
+    );
+  }
+}
 
 // TODO(jacobr): gracefully handle cases where the isolate has closed and
 // InstanceRef objects have become sentinels.

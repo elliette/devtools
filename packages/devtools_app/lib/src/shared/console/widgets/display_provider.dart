@@ -13,6 +13,7 @@ import '../../routing.dart';
 import '../../screen.dart';
 import '../../theme.dart';
 import 'description.dart';
+import 'package:dap/dap.dart' as dap;
 
 VariableSelectionControls _selectionControls({
   required DartObjectNode variable,
@@ -31,6 +32,45 @@ VariableSelectionControls _selectionControls({
         : null,
     onInspect: onInspect,
   );
+}
+
+class DapDisplayProvider extends StatelessWidget {
+  const DapDisplayProvider({
+    super.key,
+    required this.node,
+    required this.onTap,
+  });
+
+  final DapObjectNode node;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    final variable = node.variable;
+    final name = variable.name;
+    final value = variable.value;
+
+    return Text.rich(
+      TextSpan(
+        text: name,
+        style: theme.fixedFontStyle.apply(
+          color: theme.colorScheme.controlFlowSyntaxColor,
+        ),
+        children: [
+          TextSpan(
+            text: ': ',
+            style: theme.fixedFontStyle,
+          ),
+          TextSpan(
+            text: value,
+            style: theme.subtleFixedFontStyle,
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class DisplayProvider extends StatelessWidget {

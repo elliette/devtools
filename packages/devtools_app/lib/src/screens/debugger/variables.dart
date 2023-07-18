@@ -15,6 +15,7 @@ import '../../shared/diagnostics/dart_object_node.dart';
 import '../../shared/diagnostics/tree_builder.dart';
 import '../../shared/globals.dart';
 import '../../shared/tree.dart';
+import 'package:dap/dap.dart' as dap;
 
 class Variables extends StatelessWidget {
   const Variables({Key? key}) : super(key: key);
@@ -23,7 +24,8 @@ class Variables extends StatelessWidget {
   Widget build(BuildContext context) {
     // TODO(kenz): preserve expanded state of tree on switching frames and
     // on stepping.
-    return TreeView<DartObjectNode>(
+
+    final vmTree = TreeView<DartObjectNode>(
       dataRootsListenable: serviceManager.appState.variables,
       dataDisplayProvider: (variable, onPressed) => DisplayProvider(
         variable: variable,
@@ -31,6 +33,27 @@ class Variables extends StatelessWidget {
       ),
       onItemSelected: onItemPressed,
     );
+
+    final dapTree = TreeView<DapObjectNode>(
+      dataRootsListenable: serviceManager.appState.dapVariables,
+      dataDisplayProvider: (variable, onPressed) {
+        return DapDisplayProvider(node: variable, onTap: onPressed);
+      },
+      onItemSelected: onDapItemPressed,
+    );
+
+    return dapTree;
+    // return vmTree;
+  }
+
+  Future<void> onDapItemPressed(
+    DapObjectNode node,
+  ) async {
+    if (node.isExpanded) {
+      for (final child in node.children) {
+        await child.fetchChildren();
+      }
+    }
   }
 
   Future<void> onItemPressed(
