@@ -1099,14 +1099,13 @@ class VmServiceWrapper implements VmService {
   Future<dap.VariablesResponseBody?> dapVariablesRequest(
     dap.VariablesArguments args,
   ) async {
-    final response = await _sendDapRequest(
+    final responseBody = await _sendDapRequest(
       dap.Request(
         command: 'variables',
         seq: 0,
         arguments: args,
       ),
     );
-    final responseBody = response?.dapResponse.body;
     if (responseBody == null) return null;
 
     return dap.VariablesResponseBody.fromJson(
@@ -1117,14 +1116,13 @@ class VmServiceWrapper implements VmService {
   Future<dap.ScopesResponseBody?> dapScopesRequest(
     dap.ScopesArguments args,
   ) async {
-    final response = await _sendDapRequest(
+    final responseBody = await _sendDapRequest(
       dap.Request(
         command: 'scopes',
         seq: 0,
         arguments: args,
       ),
     );
-    final responseBody = response?.dapResponse.body;
     if (responseBody == null) return null;
 
     return dap.ScopesResponseBody.fromJson(
@@ -1135,14 +1133,13 @@ class VmServiceWrapper implements VmService {
   Future<dap.StackTraceResponseBody?> dapStackTraceRequest(
     dap.StackTraceArguments args,
   ) async {
-    final response = await _sendDapRequest(
+    final responseBody = await _sendDapRequest(
       dap.Request(
         command: 'stackTrace',
         seq: 0,
         arguments: args,
       ),
     );
-    final responseBody = response?.dapResponse.body;
     if (responseBody == null) return null;
 
     return dap.StackTraceResponseBody.fromJson(
@@ -1150,7 +1147,7 @@ class VmServiceWrapper implements VmService {
     );
   }
 
-  Future<DapResponse?> _sendDapRequest(dap.Request request) async {
+  Future<Object?> _sendDapRequest(dap.Request request) async {
     if (!FeatureFlags.dapDebugging) return null;
 
     // Warn the user if there is no DDS connection.
@@ -1159,12 +1156,35 @@ class VmServiceWrapper implements VmService {
       return null;
     }
 
-    return trackFuture(
-      'dap.${request.command}',
+    final commandName = 'dap.${request.command}';
+    final response = await trackFuture(
+      commandName,
       _vmService.sendDapRequest(
         jsonEncode(request),
       ),
     );
+
+    return _handleDapErrors(command: commandName, response: response);
+  }
+
+  Object? _handleDapErrors({
+    required String command,
+    required DapResponse? response,
+  }) async {
+    if (response == null) {
+      _log.warning('Received a null response for $command');
+      return null;
+    }
+
+    final responseBody = response.dapResponse.body;
+    if (!response.dapResponse.success) {
+      _log.warning(
+        'Error for $command: ${response.dapResponse.message ?? 'Unknown.'}',
+      );
+      return null;
+    }
+
+    return responseBody;
   }
 
   /// Prevent DevTools from blocking Dart SDK rolls if changes in
