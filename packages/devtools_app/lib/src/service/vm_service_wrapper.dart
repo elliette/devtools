@@ -1147,6 +1147,46 @@ class VmServiceWrapper implements VmService {
     );
   }
 
+  Future<Object?> dapVariableForInstanceRequest(
+    String instanceId, // instanceRef.id
+    String isolateId, // isolate.id
+  ) async {
+    final responseBody = await _sendDapRequest(
+      dap.Request(
+        command: r'$/createVariableForInstance',
+        seq: 0,
+        arguments: {
+          'isolateId': isolateId,
+          'instanceId': instanceId,
+        },
+      ),
+    );
+
+    if (responseBody == null) return null;
+    print('dapVariableForInstanceRequest');
+    print(responseBody);
+    return responseBody;
+  }
+
+  Future<Object?> dapInstanceForVariableRequest(
+    int variablesReference,
+  ) async {
+    final responseBody = await _sendDapRequest(
+      dap.Request(
+        command: r'$/getVariablesInstanceId',
+        seq: 0,
+        arguments: {
+          'variablesReference': variablesReference,
+        },
+      ),
+    );
+
+    if (responseBody == null) return null;
+    print('dapInstanceForVariableRequest');
+    print(responseBody);
+    return responseBody;
+  }
+
   Future<Object?> _sendDapRequest(dap.Request request) async {
     if (!FeatureFlags.dapDebugging) return null;
 

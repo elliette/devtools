@@ -5,6 +5,8 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:dap/dap.dart' as dap;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -14,6 +16,7 @@ import 'package:vm_service/vm_service.dart' hide Stack;
 
 import '../../shared/common_widgets.dart';
 import '../../shared/console/widgets/expandable_variable.dart';
+import '../../shared/diagnostics/dap_object_node.dart';
 import '../../shared/diagnostics/dart_object_node.dart';
 import '../../shared/diagnostics/primitives/source_location.dart';
 import '../../shared/diagnostics/tree_builder.dart';
@@ -1153,6 +1156,38 @@ class _LineItemState extends State<LineItem>
         final response = await evalService.evalAtCurrentFrame(word);
         final isolateRef = serviceManager.isolateManager.selectedIsolate.value;
         if (response is! InstanceRef) return null;
+
+        final dapVar =
+            await serviceManager.service?.dapVariableForInstanceRequest(
+          response.id!,
+          isolateRef!.id!,
+        );
+        print('got dap var!!!');
+        print(dapVar);
+
+        if (dapVar == null) return null;
+        final dapVarMap = dapVar as Map<String, Object?>;
+        final varRef = dapVarMap['variablesReference'] as int?;
+        if (varRef == null) return null;
+
+        final variablesResponse =
+            await serviceManager.service?.dapVariablesRequest(
+          dap.VariablesArguments(
+            variablesReference: varRef,
+          ),
+        );
+
+        print('got variables???');
+        print(variablesResponse?.variables);
+        final varValue = variablesResponse?.variables.first;
+        if (varValue == null) return null;
+
+        final dapVariable = DapObjectNode(
+          variable: varValue,
+          service: serviceManager.service!,
+        );
+        await dapVariable.fetchChildren();
+
         final variable = DartObjectNode.fromValue(
           value: response,
           isolateRef: isolateRef,
