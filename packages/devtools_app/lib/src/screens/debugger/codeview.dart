@@ -1160,14 +1160,6 @@ class _LineItemState extends State<LineItem>
         final isolateRef = serviceManager.isolateManager.selectedIsolate.value;
         if (response is! InstanceRef || isolateRef == null) return null;
 
-        final dapVar =
-            await serviceManager.service?.dapVariableForInstanceRequest(
-          response.id!,
-          isolateRef.id!,
-        );
-        print('got dap var!!!');
-        print(dapVar);
-
         final expandableVariable = FeatureFlags.dapDebugging
             ? await _buildDapExpandableVariable(
                 instanceRef: response,
@@ -1264,6 +1256,8 @@ class _LineItemState extends State<LineItem>
     required InstanceRef instanceRef,
     required IsolateRef isolateRef,
   }) async {
+    final vmService = serviceManager.service;
+    if (vmService == null) return null;
     final dapVariable = await dapVariableForInstance(
       instanceRef: instanceRef,
       isolateRef: isolateRef,
@@ -1271,7 +1265,7 @@ class _LineItemState extends State<LineItem>
     if (dapVariable == null) return null;
     final dapNode = DapObjectNode(
       variable: dapVariable,
-      service: serviceManager.service!,
+      service: vmService,
     );
     await dapNode.fetchChildren();
 
@@ -1300,10 +1294,8 @@ class _LineItemState extends State<LineItem>
         return DisplayProvider(variable: variable, onTap: onPressed);
       },
       onItemExpanded: (variable) async {
-        // On expansion, lazily build the variables tree for performance reasons.
-        if (variable.isExpanded) {
-          await Future.wait(variable.children.map(buildVariablesTree));
-        }
+        // Lazily build the variables tree for performance reasons.
+        await Future.wait(variable.children.map(buildVariablesTree));
       },
     );
   }
