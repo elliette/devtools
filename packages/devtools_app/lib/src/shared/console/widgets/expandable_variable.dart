@@ -52,13 +52,4 @@ class ExpandableVariable<T extends TreeNode<T>> extends StatelessWidget {
       isSelectable: isSelectable,
     );
   }
-
-  Future<void> onItemPressedOld(
-    DartObjectNode v,
-  ) async {
-    // On expansion, lazily build the variables tree for performance reasons.
-    if (v.isExpanded) {
-      await Future.wait(v.children.map(buildVariablesTree));
-    }
-  }
 }

@@ -1193,7 +1193,7 @@ class _LineItemState extends State<LineItem>
     }
     return null;
   }
- 
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -1280,6 +1280,7 @@ class _LineItemState extends State<LineItem>
       dataDisplayProvider: (variable, onPressed) {
         return DapDisplayProvider(node: variable, onTap: onPressed);
       },
+      onItemExpanded: (variable) => variable.fetchChildren(),
     );
   }
 
@@ -1297,6 +1298,12 @@ class _LineItemState extends State<LineItem>
       variable: variable,
       dataDisplayProvider: (variable, onPressed) {
         return DisplayProvider(variable: variable, onTap: onPressed);
+      },
+      onItemExpanded: (variable) async {
+        // On expansion, lazily build the variables tree for performance reasons.
+        if (variable.isExpanded) {
+          await Future.wait(variable.children.map(buildVariablesTree));
+        }
       },
     );
   }
