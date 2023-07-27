@@ -8,8 +8,6 @@ import 'package:flutter/material.dart' hide Stack;
 
 import '../../../shared/primitives/listenable.dart';
 import '../../../shared/tree.dart';
-import '../../diagnostics/dart_object_node.dart';
-import '../../diagnostics/tree_builder.dart';
 import '../../primitives/trees.dart';
 
 class ExpandableVariable<T extends TreeNode<T>> extends StatelessWidget {
@@ -18,18 +16,15 @@ class ExpandableVariable<T extends TreeNode<T>> extends StatelessWidget {
     required this.dataDisplayProvider,
     this.variable,
     this.isSelectable = true,
-    this.onItemSelected,
     this.onItemExpanded,
   }) : super(key: key);
 
   @visibleForTesting
   static const emptyExpandableVariableKey = Key('empty expandable variable');
 
-  final Widget Function(T, void Function()) dataDisplayProvider;
-
   final T? variable;
-
-  final Future<void> Function(T)? onItemSelected;
+  
+  final Widget Function(T, void Function()) dataDisplayProvider;
 
   final Future<void> Function(T)? onItemExpanded;
 
@@ -47,7 +42,6 @@ class ExpandableVariable<T extends TreeNode<T>> extends StatelessWidget {
       dataRootsListenable:
           FixedValueListenable<List<T>>([variable]),
       dataDisplayProvider: dataDisplayProvider,
-      onItemSelected: onItemSelected,
       onItemExpanded: onItemExpanded,
       isSelectable: isSelectable,
     );
