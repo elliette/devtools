@@ -12,6 +12,7 @@ import '../primitives/auto_dispose.dart';
 import '../primitives/utils.dart';
 import '../theme.dart';
 import 'console_service.dart';
+import 'widgets/display_provider.dart';
 import 'widgets/expandable_variable.dart';
 
 // TODO(devoncarew): Allow scrolling horizontally as well.
@@ -211,6 +212,12 @@ class _ConsoleOutputState extends State<_ConsoleOutput>
                 return ExpandableVariable(
                   variable: line.variable,
                   isSelectable: false,
+                  dataDisplayProvider: (variable, onPressed) {
+                    return DisplayProvider(
+                      variable: variable,
+                      onTap: onPressed,
+                    );
+                  },
                 );
               } else {
                 assert(

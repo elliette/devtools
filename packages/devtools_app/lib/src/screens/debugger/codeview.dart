@@ -5,6 +5,8 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:dap/dap.dart' as dap;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -13,11 +15,14 @@ import 'package:logging/logging.dart';
 import 'package:vm_service/vm_service.dart' hide Stack;
 
 import '../../shared/common_widgets.dart';
+import '../../shared/console/widgets/display_provider.dart';
 import '../../shared/console/widgets/expandable_variable.dart';
+import '../../shared/diagnostics/dap_object_node.dart';
 import '../../shared/diagnostics/dart_object_node.dart';
 import '../../shared/diagnostics/primitives/source_location.dart';
 import '../../shared/diagnostics/tree_builder.dart';
 import '../../shared/dialogs.dart';
+import '../../shared/feature_flags.dart';
 import '../../shared/globals.dart';
 import '../../shared/history_viewport.dart';
 import '../../shared/primitives/auto_dispose.dart';
@@ -38,6 +43,7 @@ import 'debugger_controller.dart';
 import 'debugger_model.dart';
 import 'file_search.dart';
 import 'key_sets.dart';
+import 'shared/dap_utils.dart';
 
 final _log = Logger('codeview');
 
@@ -1152,18 +1158,31 @@ class _LineItemState extends State<LineItem>
       try {
         final response = await evalService.evalAtCurrentFrame(word);
         final isolateRef = serviceManager.isolateManager.selectedIsolate.value;
-        if (response is! InstanceRef) return null;
-        final variable = DartObjectNode.fromValue(
-          value: response,
-          isolateRef: isolateRef,
+        if (response is! InstanceRef || isolateRef == null) return null;
+
+        final dapVar =
+            await serviceManager.service?.dapVariableForInstanceRequest(
+          response.id!,
+          isolateRef.id!,
         );
-        await buildVariablesTree(variable);
+        print('got dap var!!!');
+        print(dapVar);
+
+        final expandableVariable = FeatureFlags.dapDebugging
+            ? await _buildDapExpandableVariable(
+                instanceRef: response,
+                isolateRef: isolateRef,
+              )
+            : await _buildVmExpandableVariable(
+                instanceRef: response,
+                isolateRef: isolateRef,
+              );
+        if (expandableVariable == null) return null;
+
         return HoverCardData(
           title: word,
           contents: Material(
-            child: ExpandableVariable(
-              variable: variable,
-            ),
+            child: expandableVariable,
           ),
           width: LineItem._hoverWidth,
         );
@@ -1174,7 +1193,7 @@ class _LineItemState extends State<LineItem>
     }
     return null;
   }
-
+ 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -1238,6 +1257,47 @@ class _LineItemState extends State<LineItem>
       height: CodeView.rowHeight,
       color: backgroundColor,
       child: child,
+    );
+  }
+
+  Future<ExpandableVariable<DapObjectNode>?> _buildDapExpandableVariable({
+    required InstanceRef instanceRef,
+    required IsolateRef isolateRef,
+  }) async {
+    final dapVariable = await dapVariableForInstance(
+      instanceRef: instanceRef,
+      isolateRef: isolateRef,
+    );
+    if (dapVariable == null) return null;
+    final dapNode = DapObjectNode(
+      variable: dapVariable,
+      service: serviceManager.service!,
+    );
+    await dapNode.fetchChildren();
+
+    return ExpandableVariable(
+      variable: dapNode,
+      dataDisplayProvider: (variable, onPressed) {
+        return DapDisplayProvider(node: variable, onTap: onPressed);
+      },
+    );
+  }
+
+  Future<ExpandableVariable<DartObjectNode>> _buildVmExpandableVariable({
+    required InstanceRef instanceRef,
+    required IsolateRef isolateRef,
+  }) async {
+    final variable = DartObjectNode.fromValue(
+      value: instanceRef,
+      isolateRef: isolateRef,
+    );
+    await buildVariablesTree(variable);
+
+    return ExpandableVariable(
+      variable: variable,
+      dataDisplayProvider: (variable, onPressed) {
+        return DisplayProvider(variable: variable, onTap: onPressed);
+      },
     );
   }
 

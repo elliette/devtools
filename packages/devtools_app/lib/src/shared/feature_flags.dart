@@ -77,7 +77,7 @@ abstract class FeatureFlags {
   /// Flag to enable debugging via DAP.
   ///
   /// https://github.com/flutter/devtools/issues/6056
-  static bool dapDebugging = enableExperiments;
+  static bool dapDebugging = true;
 
   // TODO(elliottbrooks): remove this flag once you add instructions to the
   // web performance page body.

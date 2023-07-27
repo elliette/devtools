@@ -1132,6 +1132,34 @@ class VmServiceWrapper implements VmService {
     );
   }
 
+  /// Returns the DAP variable's reference as an integer.
+  Future<int?> dapVariableForInstanceRequest(
+    String instanceId, // instanceRef.id
+    String isolateId, // isolate.id
+  ) async {
+    final response = await _sendDapRequest(
+      r'$/createVariableForInstance',
+      args: {
+        'isolateId': isolateId,
+        'instanceId': instanceId,
+      },
+    );
+    if (response == null) return null;
+    final parsedResponse = response as Map<String, Object?>;
+    return parsedResponse['variablesReference'] as int?;
+  }
+
+  Future<Object?> dapInstanceForVariableRequest(
+    int variablesReference,
+  ) {
+    return _sendDapRequest(
+      r'$/getVariablesInstanceId',
+      args: {
+        'variablesReference': variablesReference,
+      },
+    );
+  }
+
   Future<Object?> _sendDapRequest(
     String command, {
     required Object? args,

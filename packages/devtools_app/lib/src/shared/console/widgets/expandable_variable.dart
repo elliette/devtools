@@ -10,21 +10,28 @@ import '../../../shared/primitives/listenable.dart';
 import '../../../shared/tree.dart';
 import '../../diagnostics/dart_object_node.dart';
 import '../../diagnostics/tree_builder.dart';
-import 'display_provider.dart';
+import '../../primitives/trees.dart';
 
-class ExpandableVariable extends StatelessWidget {
+class ExpandableVariable<T extends TreeNode<T>> extends StatelessWidget {
   const ExpandableVariable({
     Key? key,
+    required this.dataDisplayProvider,
     this.variable,
-    this.dataDisplayProvider,
     this.isSelectable = true,
+    this.onItemSelected,
+    this.onItemExpanded,
   }) : super(key: key);
 
   @visibleForTesting
   static const emptyExpandableVariableKey = Key('empty expandable variable');
 
-  final DartObjectNode? variable;
-  final Widget Function(DartObjectNode, void Function())? dataDisplayProvider;
+  final Widget Function(T, void Function()) dataDisplayProvider;
+
+  final T? variable;
+
+  final Future<void> Function(T)? onItemSelected;
+
+  final Future<void> Function(T)? onItemExpanded;
 
   final bool isSelectable;
 
@@ -36,20 +43,17 @@ class ExpandableVariable extends StatelessWidget {
     }
     // TODO(kenz): preserve expanded state of tree on switching frames and
     // on stepping.
-    return TreeView<DartObjectNode>(
+    return TreeView<T>(
       dataRootsListenable:
-          FixedValueListenable<List<DartObjectNode>>([variable]),
-      dataDisplayProvider: dataDisplayProvider ??
-          (variable, onPressed) => DisplayProvider(
-                variable: variable,
-                onTap: onPressed,
-              ),
-      onItemSelected: onItemPressed,
+          FixedValueListenable<List<T>>([variable]),
+      dataDisplayProvider: dataDisplayProvider,
+      onItemSelected: onItemSelected,
+      onItemExpanded: onItemExpanded,
       isSelectable: isSelectable,
     );
   }
 
-  Future<void> onItemPressed(
+  Future<void> onItemPressedOld(
     DartObjectNode v,
   ) async {
     // On expansion, lazily build the variables tree for performance reasons.

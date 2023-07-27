@@ -4,6 +4,7 @@
 
 import 'package:devtools_app/src/service/service_manager.dart';
 import 'package:devtools_app/src/shared/config_specific/ide_theme/ide_theme.dart';
+import 'package:devtools_app/src/shared/console/widgets/display_provider.dart';
 import 'package:devtools_app/src/shared/console/widgets/expandable_variable.dart';
 import 'package:devtools_app/src/shared/diagnostics/dart_object_node.dart';
 import 'package:devtools_app/src/shared/globals.dart';
@@ -34,6 +35,9 @@ void main() {
         wrap(
           ExpandableVariable(
             variable: variable,
+            dataDisplayProvider: (variable, onPressed) {
+              return DisplayProvider(variable: variable, onTap: onPressed);
+            },
           ),
         ),
       );

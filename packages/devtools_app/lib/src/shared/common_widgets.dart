@@ -16,6 +16,7 @@ import '../screens/inspector/layout_explorer/ui/theme.dart';
 import 'analytics/analytics.dart' as ga;
 import 'analytics/constants.dart' as gac;
 import 'config_specific/launch_url/launch_url.dart';
+import 'console/widgets/display_provider.dart';
 import 'console/widgets/expandable_variable.dart';
 import 'diagnostics/dart_object_node.dart';
 import 'diagnostics/tree_builder.dart';
@@ -1886,6 +1887,9 @@ class _JsonViewerState extends State<JsonViewer>
             }
             return ExpandableVariable(
               variable: variable,
+              dataDisplayProvider: (variable, onPressed) {
+                return DisplayProvider(variable: variable, onTap: onPressed);
+              },
             );
           },
         ),

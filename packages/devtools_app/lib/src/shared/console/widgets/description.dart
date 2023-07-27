@@ -15,6 +15,7 @@ import '../../ui/hover.dart';
 import '../../ui/icons.dart';
 import '../../ui/utils.dart';
 import '../eval/inspector_tree.dart';
+import 'display_provider.dart';
 import 'expandable_variable.dart';
 
 final _colorIconMaker = ColorIconMaker();
@@ -219,6 +220,9 @@ class DiagnosticsNodeDescription extends StatelessWidget {
           contents: Material(
             child: ExpandableVariable(
               variable: variable,
+              dataDisplayProvider: (variable, onPressed) {
+                return DisplayProvider(variable: variable, onTap: onPressed);
+              },
             ),
           ),
         );
