@@ -220,9 +220,8 @@ class DiagnosticsNodeDescription extends StatelessWidget {
           contents: Material(
             child: ExpandableVariable(
               variable: variable,
-              dataDisplayProvider: (variable, onPressed) {
-                return DisplayProvider(variable: variable, onTap: onPressed);
-              },
+              dataDisplayProvider: (node, onTap) =>
+                  VmDisplayProvider(node: node, onTap: onTap),
             ),
           ),
         );

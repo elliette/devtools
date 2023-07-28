@@ -1271,9 +1271,8 @@ class _LineItemState extends State<LineItem>
 
     return ExpandableVariable(
       variable: dapNode,
-      dataDisplayProvider: (variable, onPressed) {
-        return DapDisplayProvider(node: variable, onTap: onPressed);
-      },
+      dataDisplayProvider: (node, onTap) =>
+          DapDisplayProvider(node: node, onTap: onTap),
       onItemExpanded: (variable) => variable.fetchChildren(),
     );
   }
@@ -1290,9 +1289,8 @@ class _LineItemState extends State<LineItem>
 
     return ExpandableVariable(
       variable: variable,
-      dataDisplayProvider: (variable, onPressed) {
-        return DisplayProvider(variable: variable, onTap: onPressed);
-      },
+      dataDisplayProvider: (node, onTap) =>
+          VmDisplayProvider(node: node, onTap: onTap),
       onItemExpanded: (variable) async {
         // Lazily build the variables tree for performance reasons.
         await Future.wait(variable.children.map(buildVariablesTree));

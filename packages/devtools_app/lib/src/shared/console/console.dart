@@ -212,12 +212,10 @@ class _ConsoleOutputState extends State<_ConsoleOutput>
                 return ExpandableVariable(
                   variable: line.variable,
                   isSelectable: false,
-                  dataDisplayProvider: (variable, onPressed) {
-                    return DisplayProvider(
-                      variable: variable,
-                      onTap: onPressed,
-                    );
-                  },
+                  dataDisplayProvider: (node, onTap) => VmDisplayProvider(
+                    node: node,
+                    onTap: onTap,
+                  ),
                 );
               } else {
                 assert(

@@ -1887,9 +1887,8 @@ class _JsonViewerState extends State<JsonViewer>
             }
             return ExpandableVariable(
               variable: variable,
-              dataDisplayProvider: (variable, onPressed) {
-                return DisplayProvider(variable: variable, onTap: onPressed);
-              },
+              dataDisplayProvider: (node, onTap) =>
+                  VmDisplayProvider(node: node, onTap: onTap),
             );
           },
         ),
