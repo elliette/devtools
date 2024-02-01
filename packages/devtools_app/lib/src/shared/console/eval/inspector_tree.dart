@@ -28,7 +28,7 @@ typedef TreeEventCallback = void Function(InspectorTreeNode node);
 
 const double iconPadding = 4.0;
 const double chartLineStrokeWidth = 1.0;
-double get inspectorColumnWidth => scaleByFontFactor(12.0);
+double get inspectorColumnWidth => scaleByFontFactor(24.0);
 double get inspectorRowHeight => scaleByFontFactor(16.0);
 
 /// This class could be refactored out to be a reasonable generic collapsible
@@ -231,7 +231,7 @@ class InspectorTreeNode {
         current += subtreeSize;
       }
       assert(i < children.length);
-      if (indented) {
+      if (indented && children.length > 1) {
         depth++;
       }
     }
