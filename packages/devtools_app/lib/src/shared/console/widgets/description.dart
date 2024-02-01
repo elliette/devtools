@@ -258,7 +258,7 @@ class DiagnosticsNodeDescription extends StatelessWidget {
         colorScheme,
       ),
     );
-    var descriptionTextStyle = textStyle;
+    // var descriptionTextStyle = textStyle;
     // TODO(jacobr): use TextSpans and SelectableText instead of Text.
     if (diagnosticLocal.isProperty) {
       // Display of inline properties.
@@ -274,8 +274,7 @@ class DiagnosticsNodeDescription extends StatelessWidget {
         );
         // provide some contrast between the name and description if both are
         // present.
-        descriptionTextStyle =
-            descriptionTextStyle.merge(theme.subtleTextStyle);
+        textStyle = textStyle.merge(theme.subtleTextStyle);
       }
 
       if (diagnosticLocal.isCreatedByLocalProject) {
@@ -327,7 +326,7 @@ class DiagnosticsNodeDescription extends StatelessWidget {
         Flexible(
           child: buildDescription(
             description: description,
-            textStyle: descriptionTextStyle,
+            textStyle: textStyle,
             colorScheme: colorScheme,
             diagnostic: diagnostic,
             searchValue: searchValue,
@@ -375,6 +374,7 @@ class DiagnosticsNodeDescription extends StatelessWidget {
             );
           }
         }
+
       }
 
       if (!diagnosticLocal.isSummaryTree &&
@@ -382,9 +382,13 @@ class DiagnosticsNodeDescription extends StatelessWidget {
         textStyle = textStyle.merge(DiagnosticsTextStyles.regularBold);
       }
 
+      if (!diagnosticLocal.isSummaryTree) {
+        textStyle = textStyle.merge(theme.subtleTextStyle);
+      }
+
       var diagnosticDescription = buildDescription(
         description: diagnosticLocal.description ?? '',
-        textStyle: descriptionTextStyle,
+        textStyle: textStyle,
         colorScheme: colorScheme,
         diagnostic: diagnostic,
         searchValue: searchValue,

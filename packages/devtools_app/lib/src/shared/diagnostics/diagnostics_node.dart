@@ -540,6 +540,7 @@ class RemoteDiagnosticsNode extends DiagnosticableTree {
     return getBooleanMember('hasChildren', false);
   }
 
+  // bold if true
   bool get isCreatedByLocalProject {
     return getBooleanMember('createdByLocalProject', false);
   }

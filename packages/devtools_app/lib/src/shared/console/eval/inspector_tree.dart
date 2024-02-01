@@ -105,6 +105,7 @@ class InspectorTreeNode {
 
   bool get showExpandCollapse {
     return (diagnostic?.hasChildren == true || children.isNotEmpty) &&
+        children.length > 1 &&
         allowExpandCollapse;
   }
 
@@ -231,6 +232,7 @@ class InspectorTreeNode {
         current += subtreeSize;
       }
       assert(i < children.length);
+      // Don't indent if a widget has only one child:
       if (indented && children.length > 1) {
         depth++;
       }

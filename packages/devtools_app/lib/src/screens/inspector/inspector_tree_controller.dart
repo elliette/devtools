@@ -582,19 +582,19 @@ class InspectorTreeController extends DisposableController
     }
     final inlineProperties = parent.inlineProperties;
 
-    for (RemoteDiagnosticsNode property in inlineProperties) {
-      appendChild(
-        treeNode,
-        setupInspectorTreeNode(
-          createNode(),
-          property,
-          // We are inside a property so only expand children if
-          // expandProperties is true.
-          expandChildren: expandProperties,
-          expandProperties: expandProperties,
-        ),
-      );
-    }
+    // for (RemoteDiagnosticsNode property in inlineProperties) {
+    //   appendChild(
+    //     treeNode,
+    //     setupInspectorTreeNode(
+    //       createNode(),
+    //       property,
+    //       // We are inside a property so only expand children if
+    //       // expandProperties is true.
+    //       expandChildren: expandProperties,
+    //       expandProperties: expandProperties,
+    //     ),
+    //   );
+    // }
     if (children != null) {
       for (RemoteDiagnosticsNode child in children) {
         appendChild(

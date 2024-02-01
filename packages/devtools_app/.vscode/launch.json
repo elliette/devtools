@@ -60,5 +60,11 @@
             "type": "dart",
             "request": "attach",
         },
+        {
+            "name": "flutter_tools",
+            "request": "launch",
+            "type": "dart",
+            "customTool": "/Users/elliottbrooks/dev/vscode_local_flutter/local_flutter.sh",
+        }
     ]
 }
