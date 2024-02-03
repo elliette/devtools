@@ -209,6 +209,7 @@ class InspectorTreeNode {
           lineToParent: !node.isProperty &&
               index != 0 &&
               node.parent!.showLinesToChildren,
+          hasOneChild: node.children.length == 1,
         );
       }
       assert(index > current);
@@ -266,6 +267,7 @@ class InspectorTreeRow with SearchableDataMixin {
     required this.ticks,
     required this.depth,
     required this.lineToParent,
+    required this.hasOneChild,
   });
 
   final InspectorTreeNode node;
@@ -275,6 +277,7 @@ class InspectorTreeRow with SearchableDataMixin {
   final int depth;
   final int index;
   final bool lineToParent;
+  final bool hasOneChild;
 
   bool get isSelected => node.selected;
 }

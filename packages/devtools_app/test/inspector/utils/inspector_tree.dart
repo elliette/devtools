@@ -39,7 +39,7 @@ Future<RemoteDiagnosticsNode> widgetToInspectorTreeDiagnosticsNode({
             InspectorSerializationDelegate(
               service: WidgetInspectorService.instance,
               subtreeDepth: 1000000,
-              summaryTree: true,
+              // summaryTree: true,
               addAdditionalPropertiesCallback: (node, delegate) {
                 final additionalJson = <String, Object>{};
 
