@@ -222,6 +222,9 @@ class ServiceManager<T extends VmService> {
 
     connectedApp = ConnectedApp(this);
 
+    final response = await service.setFlag('pause_isolates_on_start', 'true');
+    print('Set pause isolates on start: $response');
+
     // It is critical we call vmServiceOpened on each manager class before
     // performing any async operations. Otherwise, we may get end up with
     // race conditions where managers cannot listen for events soon enough.
