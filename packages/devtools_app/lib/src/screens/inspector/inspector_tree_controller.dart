@@ -1111,10 +1111,6 @@ Paint _defaultPaint(ColorScheme colorScheme) => Paint()
   ..color = colorScheme.treeGuidelineColor
   ..strokeWidth = chartLineStrokeWidth;
 
-Paint _pinkPaint() => Paint()
-  ..color = Color.fromARGB(137, 231, 27, 200)
-  ..strokeWidth = chartLineStrokeWidth;
-
 /// Custom painter that draws lines indicating how parent and child rows are
 /// connected to each other.
 ///
@@ -1135,7 +1131,6 @@ class _RowPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     double currentX = 0;
     final paint = _defaultPaint(colorScheme);
-    final pinkPaint = _pinkPaint();
 
     final InspectorTreeNode node = row.node;
     final bool showExpandCollapse = node.showExpandCollapse;
@@ -1176,14 +1171,8 @@ class _RowPainter extends CustomPainter {
           ? inspectorColumnWidth * 0.5
           : inspectorColumnWidth;
       canvas.drawLine(
-        Offset(currentX + width, inspectorRowHeight * 0.5),
-        Offset(currentX + width / 2, inspectorRowHeight * 0.75),
-        paint,
-      );
-
-      canvas.drawLine(
-        Offset(currentX + width / 2, inspectorRowHeight * 0.75),
-        Offset(currentX + width, inspectorRowHeight * 1.5),
+        Offset(currentX + (width * 1.25), inspectorRowHeight * 0.75),
+        Offset(currentX + (width * 1.25), inspectorRowHeight * 1.25),
         paint,
       );
     }
