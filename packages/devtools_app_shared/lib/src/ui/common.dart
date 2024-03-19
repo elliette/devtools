@@ -106,6 +106,22 @@ class AreaPaneHeader extends StatelessWidget implements PreferredSizeWidget {
   }
 }
 
+/// A blank, drop-in replacement for [AreaPaneHeader].
+///
+/// Acts as an empty header widget with zero size that is compatible with
+/// interfaces that expect a [PreferredSizeWidget].
+final class BlankHeader extends StatelessWidget implements PreferredSizeWidget {
+  const BlankHeader({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container();
+  }
+
+  @override
+  Size get preferredSize => Size.zero;
+}
+
 /// Wraps [child] in a rounded border with default styling.
 ///
 /// This border can optionally be made non-uniform by setting any of
@@ -453,6 +469,7 @@ final class DevToolsTooltip extends StatelessWidget {
     required this.child,
     this.waitDuration = tooltipWait,
     this.preferBelow = false,
+    this.enableTapToDismiss = true,
     this.padding = const EdgeInsets.all(defaultSpacing),
     this.decoration,
     this.textStyle,
@@ -464,6 +481,7 @@ final class DevToolsTooltip extends StatelessWidget {
   final Widget child;
   final Duration waitDuration;
   final bool preferBelow;
+  final bool enableTapToDismiss;
   final EdgeInsetsGeometry? padding;
   final Decoration? decoration;
   final TextStyle? textStyle;
@@ -482,6 +500,7 @@ final class DevToolsTooltip extends StatelessWidget {
       richMessage: richMessage,
       waitDuration: waitDuration,
       preferBelow: preferBelow,
+      enableTapToDismiss: enableTapToDismiss,
       padding: padding,
       textStyle: style,
       decoration: decoration,

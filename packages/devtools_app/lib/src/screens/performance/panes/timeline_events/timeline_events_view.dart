@@ -9,14 +9,9 @@ import 'package:devtools_app_shared/utils.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../shared/analytics/constants.dart' as gac;
-import '../../../../shared/charts/flame_chart.dart';
 import '../../../../shared/common_widgets.dart';
 import '../../../../shared/globals.dart';
 import '../../../../shared/http/http_service.dart' as http_service;
-import '../../../../shared/primitives/utils.dart';
-import '../../../../shared/ui/search.dart';
-import 'legacy/legacy_events_controller.dart';
-import 'legacy/timeline_flame_chart.dart';
 import 'perfetto/perfetto.dart';
 import 'timeline_events_controller.dart';
 
@@ -27,33 +22,10 @@ class TimelineEventsTabView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<bool>(
-      valueListenable: controller.useLegacyTraceViewer,
-      builder: (context, useLegacy, _) {
-        return useLegacy
-            ? KeepAliveWrapper(
-                child: MultiValueListenableBuilder(
-                  listenables: [
-                    controller.status,
-                    controller.legacyController.processor.progressNotifier,
-                  ],
-                  builder: (context, values, _) {
-                    final status = values.first as EventsControllerStatus;
-                    final processingProgress = values.second as double;
-                    return TimelineEventsView(
-                      controller: controller,
-                      processing: status == EventsControllerStatus.processing,
-                      processingProgress: processingProgress,
-                    );
-                  },
-                ),
-              )
-            : KeepAliveWrapper(
-                child: EmbeddedPerfetto(
-                  perfettoController: controller.perfettoController,
-                ),
-              );
-      },
+    return KeepAliveWrapper(
+      child: EmbeddedPerfetto(
+        perfettoController: controller.perfettoController,
+      ),
     );
   }
 }
@@ -65,88 +37,57 @@ class TimelineEventsTabControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<bool>(
-      valueListenable: controller.useLegacyTraceViewer,
-      builder: (context, useLegacy, _) {
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            if (useLegacy) ...[
-              ValueListenableBuilder<EventsControllerStatus>(
-                valueListenable: controller.status,
-                builder: (context, status, _) {
-                  final searchFieldEnabled =
-                      status == EventsControllerStatus.ready;
-                  return SearchField<LegacyTimelineEventsController>(
-                    searchController: controller.legacyController,
-                    searchFieldEnabled: searchFieldEnabled,
-                    searchFieldWidth: wideSearchFieldWidth,
-                  );
-                },
-              ),
-              const SizedBox(width: denseSpacing),
-              FlameChartHelpButton(
-                gaScreen: gac.performance,
-                gaSelection: gac.PerformanceEvents.timelineFlameChartHelp.name,
-              ),
-            ],
-            if (!controller.useLegacyTraceViewer.value)
-              Padding(
-                padding: const EdgeInsets.only(right: densePadding),
-                child: PerfettoHelpButton(
-                  perfettoController: controller.perfettoController,
-                ),
-              ),
-            if (!offlineController.offlineMode.value) ...[
-              // TODO(kenz): add a switch to enable the CPU profiler once the
-              // tracing format supports it (when we switch to protozero).
-              const SizedBox(width: densePadding),
-              TraceCategoriesButton(controller: controller),
-              const SizedBox(width: densePadding),
-              RefreshTimelineEventsButton(controller: controller),
-            ],
-          ],
-        );
-      },
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(right: densePadding),
+          child: PerfettoHelpButton(
+            perfettoController: controller.perfettoController,
+          ),
+        ),
+        if (!offlineController.offlineMode.value) ...[
+          // TODO(kenz): add a switch to enable the CPU profiler once the
+          // tracing format supports it (when we switch to protozero).
+          const SizedBox(width: densePadding),
+          TimelineSettingsButton(controller: controller),
+          const SizedBox(width: densePadding),
+          RefreshTimelineEventsButton(controller: controller),
+        ],
+      ],
     );
   }
 }
 
-class TraceCategoriesButton extends StatelessWidget {
-  const TraceCategoriesButton({
-    required this.controller,
-    super.key,
-  });
+class TimelineSettingsButton extends StatelessWidget {
+  const TimelineSettingsButton({required this.controller, super.key});
 
   final TimelineEventsController controller;
 
   @override
   Widget build(BuildContext context) {
     return GaDevToolsButton.iconOnly(
-      icon: Icons.checklist_outlined,
+      icon: Icons.settings_outlined,
       outlined: false,
-      tooltip: 'Trace categories',
+      tooltip: 'Timeline settings',
       gaScreen: gac.performance,
-      gaSelection: gac.PerformanceEvents.traceCategories.name,
-      onPressed: () => _openTraceCategoriesDialog(context),
+      gaSelection: gac.PerformanceEvents.timelineSettings.name,
+      onPressed: () => _openTimelineSettingsDialog(context),
     );
   }
 
-  void _openTraceCategoriesDialog(BuildContext context) {
+  void _openTimelineSettingsDialog(BuildContext context) {
     unawaited(
       showDialog(
         context: context,
-        builder: (context) => const TraceCategoriesDialog(),
+        builder: (context) => const TimelineSettingsDialog(),
       ),
     );
   }
 }
 
 class RefreshTimelineEventsButton extends StatelessWidget {
-  const RefreshTimelineEventsButton({
-    Key? key,
-    required this.controller,
-  }) : super(key: key);
+  const RefreshTimelineEventsButton({required this.controller, super.key});
 
   final TimelineEventsController controller;
 
@@ -160,7 +101,7 @@ class RefreshTimelineEventsButton extends StatelessWidget {
           outlined: false,
           onPressed: status == EventsControllerStatus.processing
               ? null
-              : controller.processAllTraceEvents,
+              : controller.forceRefresh,
           tooltip: 'Refresh timeline events',
           gaScreen: gac.performance,
           gaSelection: gac.PerformanceEvents.refreshTimelineEvents.name,
@@ -170,14 +111,14 @@ class RefreshTimelineEventsButton extends StatelessWidget {
   }
 }
 
-class TraceCategoriesDialog extends StatefulWidget {
-  const TraceCategoriesDialog({super.key});
+class TimelineSettingsDialog extends StatefulWidget {
+  const TimelineSettingsDialog({super.key});
 
   @override
-  State<TraceCategoriesDialog> createState() => _TraceCategoriesDialogState();
+  State<TimelineSettingsDialog> createState() => _TimelineSettingsDialogState();
 }
 
-class _TraceCategoriesDialogState extends State<TraceCategoriesDialog>
+class _TimelineSettingsDialogState extends State<TimelineSettingsDialog>
     with AutoDisposeMixin {
   late final ValueNotifier<bool?> _httpLogging;
 
@@ -204,7 +145,7 @@ class _TraceCategoriesDialogState extends State<TraceCategoriesDialog>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return DevToolsDialog(
-      title: const DialogTitleText('Trace Categories'),
+      title: const DialogTitleText('Timeline Settings'),
       includeDivider: false,
       content: SizedBox(
         width: defaultDialogWidth,
@@ -226,6 +167,14 @@ class _TraceCategoriesDialogState extends State<TraceCategoriesDialog>
 
   List<Widget> _defaultRecordedStreams(ThemeData theme) {
     return [
+      ...dialogSubHeader(theme, 'General'),
+      CheckboxSetting(
+        notifier: preferences.performance.includeCpuSamplesInTimeline,
+        title: 'Include CPU samples in the timeline',
+        description: 'This may negatively affect performance.',
+      ),
+      const SizedBox(height: defaultSpacing),
+      ...dialogSubHeader(theme, 'Trace categories'),
       RichText(
         text: TextSpan(
           text: 'Default',

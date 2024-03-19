@@ -673,22 +673,6 @@ abstract class ScaffoldAction extends StatelessWidget {
   }
 }
 
-/// A blank, drop-in replacement for [AreaPaneHeader].
-///
-/// Acts as an empty header widget with zero size that is compatible with
-/// interfaces that expect a [PreferredSizeWidget].
-class BlankHeader extends StatelessWidget implements PreferredSizeWidget {
-  const BlankHeader({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container();
-  }
-
-  @override
-  Size get preferredSize => Size.zero;
-}
-
 /// Button to open related information / documentation.
 ///
 /// [tooltip] specifies the hover text for the button.
@@ -1230,18 +1214,6 @@ class _BreadcrumbPainter extends CustomPainter {
   }
 }
 
-class JsonViewer extends StatefulWidget {
-  const JsonViewer({
-    super.key,
-    required this.encodedJson,
-  });
-
-  final String encodedJson;
-
-  @override
-  State<JsonViewer> createState() => _JsonViewerState();
-}
-
 /// A wrapper for a Text widget, which allows for concatenating text if it
 /// becomes too long.
 class TextViewer extends StatelessWidget {
@@ -1272,6 +1244,18 @@ class TextViewer extends StatelessWidget {
       style: style,
     );
   }
+}
+
+class JsonViewer extends StatefulWidget {
+  const JsonViewer({
+    super.key,
+    required this.encodedJson,
+  });
+
+  final String encodedJson;
+
+  @override
+  State<JsonViewer> createState() => _JsonViewerState();
 }
 
 class _JsonViewerState extends State<JsonViewer>
@@ -1459,7 +1443,9 @@ class LinkIconLabel extends StatelessWidget {
 
   void _onLinkTap() {
     unawaited(launchUrl(link.url));
-    ga.select(link.gaScreenName, link.gaSelectedItemDescription);
+    if (link.gaScreenName != null && link.gaSelectedItemDescription != null) {
+      ga.select(link.gaScreenName!, link.gaSelectedItemDescription!);
+    }
   }
 }
 
@@ -1473,10 +1459,13 @@ class LinkTextSpan extends TextSpan {
           style: style ?? Theme.of(context).linkTextStyle,
           recognizer: TapGestureRecognizer()
             ..onTap = () async {
-              ga.select(
-                link.gaScreenName,
-                link.gaSelectedItemDescription,
-              );
+              if (link.gaScreenName != null &&
+                  link.gaSelectedItemDescription != null) {
+                ga.select(
+                  link.gaScreenName!,
+                  link.gaSelectedItemDescription!,
+                );
+              }
               await launchUrl(link.url);
             },
         );
@@ -1486,17 +1475,17 @@ class Link {
   const Link({
     required this.display,
     required this.url,
-    required this.gaScreenName,
-    required this.gaSelectedItemDescription,
+    this.gaScreenName,
+    this.gaSelectedItemDescription,
   });
 
   final String display;
 
   final String url;
 
-  final String gaScreenName;
+  final String? gaScreenName;
 
-  final String gaSelectedItemDescription;
+  final String? gaSelectedItemDescription;
 }
 
 class Legend extends StatelessWidget {
@@ -1672,6 +1661,8 @@ class NotifierCheckbox extends StatelessWidget {
   }
 }
 
+/// A widget that represents a check box setting and automatically updates for
+/// value changes to [notifier].
 class CheckboxSetting extends StatelessWidget {
   const CheckboxSetting({
     Key? key,
@@ -1745,34 +1736,29 @@ class CheckboxSetting extends StatelessWidget {
     return maybeWrapWithTooltip(
       tooltip: tooltip,
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           checkboxAndTitle,
           if (description != null) ...[
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(top: denseSpacing),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    RichText(
+              child: Row(
+                children: [
+                  RichText(
+                    text: TextSpan(
+                      text: ' • ',
+                      style: theme.subtleTextStyle,
+                    ),
+                  ),
+                  Flexible(
+                    child: RichText(
+                      maxLines: 4,
+                      overflow: TextOverflow.ellipsis,
                       text: TextSpan(
-                        text: ' • ',
+                        text: description,
                         style: theme.subtleTextStyle,
                       ),
                     ),
-                    Flexible(
-                      child: RichText(
-                        maxLines: 4,
-                        overflow: TextOverflow.ellipsis,
-                        text: TextSpan(
-                          text: description,
-                          style: theme.subtleTextStyle,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ],

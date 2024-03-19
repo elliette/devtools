@@ -29,7 +29,7 @@ class ReleaseHelperCommand extends Command {
   FutureOr? run() async {
     final processManager = ProcessManager();
 
-    final useCurrentBranch = argResults!['use-current-branch']!;
+    final useCurrentBranch = argResults!['use-current-branch'] as bool;
     final currentBranchResult = await processManager.runProcess(
       CliCommand.git(['rev-parse', '--abbrev-ref', 'HEAD']),
     );
@@ -85,7 +85,9 @@ class ReleaseHelperCommand extends Command {
       );
 
       final getNewVersionResult = await processManager.runProcess(
-        CliCommand.tool(['update-version', 'current-version']),
+        CliCommand.tool(
+          ['update-version', 'current-version', '|', 'tail', '-1'],
+        ),
       );
 
       final newVersion = getNewVersionResult.stdout.trim();
