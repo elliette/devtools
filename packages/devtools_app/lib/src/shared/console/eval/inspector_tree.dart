@@ -186,9 +186,13 @@ class InspectorTreeNode {
   /// Use [getCachedRow] wherever possible, as [getRow] is slow and can cause
   /// performance problems.
   InspectorTreeRow? getRow(int index) {
+    print('GET ROW FOR $index, SUBTREE SIZE IS $subtreeSize');
+    // If the subtreeSize of this node is less than the row's index, then return null (why?)
     if (subtreeSize <= index) {
+      print('-- skip it');
       return null;
     }
+    print('-- continue!');
 
     final List<int> ticks = <int>[];
     InspectorTreeNode node = this;
@@ -215,12 +219,16 @@ class InspectorTreeNode {
       assert(index > current);
       current++;
       final List<InspectorTreeNode> children = node._children;
+      // print(
+      //   'Looking at a node with ${children.length} children for current: $current',
+      // );
       int i;
       for (i = 0; i < children.length; ++i) {
         final child = children[i];
         final subtreeSize = child.subtreeSize;
         if (current + subtreeSize > index) {
           node = child;
+          // print(' Node is now child at $i');
           if (children.length > 1 &&
               i + 1 != children.length &&
               !children.last.isProperty) {
@@ -237,6 +245,9 @@ class InspectorTreeNode {
       if (indented && children.length > 1) {
         depth++;
       }
+      // if (children.length == 1) {
+      //   print('Child is ${children[i]}');
+      // }
     }
   }
 

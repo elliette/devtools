@@ -234,6 +234,7 @@ class InspectorTreeController extends DisposableController
   void _populateSearchableCachedRows() {
     _searchableCachedRows.clear();
     for (int i = 0; i < numRows; i++) {
+      print('===== ADDING ROW $i');
       _searchableCachedRows.add(getCachedRow(i));
     }
   }
