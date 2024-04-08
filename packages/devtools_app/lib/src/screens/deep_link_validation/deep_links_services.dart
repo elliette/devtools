@@ -22,7 +22,7 @@ const String _appLinkDomainsKey = 'app_link_domains';
 const String _fingerprintsKey = 'supplemental_sha256_cert_fingerprints';
 const String _validationResultKey = 'validationResult';
 const String _googlePlayFingerprintsAvailabilityKey =
-    '_googlePlayFingerprintsAvailability';
+    'googlePlayFingerprintsAvailability';
 const String _googlePlayFingerprintsAvailableValue = 'FINGERPRINTS_AVAILABLE';
 const String _domainNameKey = 'domainName';
 const String _checkNameKey = 'checkName';
@@ -101,7 +101,7 @@ class DeepLinksServices {
         final List? failedChecks = domainResult[_failedChecksKey];
         if (failedChecks != null) {
           for (final Map<String, dynamic> failedCheck in failedChecks) {
-            final checkName = failedCheck[_checkNameKey];
+            final checkName = failedCheck[_checkNameKey] as String;
             final domainError = checkNameToDomainError[checkName];
             if (domainError != null) {
               domainErrors[domainName]!.add(domainError);

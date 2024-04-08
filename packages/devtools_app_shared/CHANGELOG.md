@@ -1,8 +1,26 @@
+## 0.1.2-wip
+* Add `tooltipWaitExtraLong` to `utils.dart`.
+
+## 0.1.1
+* TODO(kenz): publish with bumped min versions to next Dart and Flutter beta
+releases.
+
+## 0.1.1-dev.0
+* Update `package:dtd` to `^2.1.0`
+* Add `DTDManager.projectRoots` method.
+* Bump the minimum Dart and Flutter SDK versions to `3.4.0-275.0.dev` and
+`3.21.0-15.0.pre` respectively.
+* Bump `devtools_shared` to ^8.1.1-dev.0
+
 ## 0.1.0
 * Remove deprecated `background` and `onBackground` values for `lightColorScheme`
 and `darkColorScheme`.
 * Rename `Split` to `SplitPane`.
 * Add `ServiceManager.serviceUri` field to store the connected VM service URI.
+* Update readme to use `pub add` instead of explicit package version.
+* Update `package:dtd` to `^2.0.0`
+* Update `package:devtools_shared` to `^8.1.0`
+* Add `DTDManager.workspaceRoots` method.
 
 ## 0.0.10
 * Add `DTDManager` class and export from `service.dart`.
