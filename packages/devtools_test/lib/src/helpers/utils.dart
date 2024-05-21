@@ -18,6 +18,7 @@ const shortPumpDuration = Duration(seconds: 1);
 const safePumpDuration = Duration(seconds: 3);
 const longPumpDuration = Duration(seconds: 6);
 const veryLongPumpDuration = Duration(seconds: 9);
+const extremelyLongPumpDuration = Duration(seconds: 12);
 
 final screenIds = <String>[
   AppSizeScreen.id,

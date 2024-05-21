@@ -94,6 +94,12 @@ void main() {
     logStatus('performing a hot restart');
 
     await tester.tap(find.byType(HotRestartButton));
+    await tester.pumpAndSettle(extremelyLongPumpDuration);
+
+    logStatus('verifying breakpoints');
+
+    final bpSetBeforeRestart = findBreakpointWithText('main.dart:57');
+    expect(bpSetBeforeRestart, findsOneWidget);
     await tester.pumpAndSettle(longPumpDuration);
 
     logStatus('Navigating to line 30...');
@@ -125,11 +131,6 @@ void main() {
     // Tap on the gutter for the line to set a breakpoint:
     await tester.tap(gutter30Finder);
     await tester.pumpAndSettle(longPumpDuration);
-
-    logStatus('verifying breakpoints');
-
-    final bpSetBeforeRestart = findBreakpointWithText('main.dart:57');
-    expect(bpSetBeforeRestart, findsOneWidget);
 
     logStatus('pausing at breakpoint');
 

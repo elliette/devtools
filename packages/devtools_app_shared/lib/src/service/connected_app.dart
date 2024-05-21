@@ -107,6 +107,23 @@ class ConnectedApp {
   bool get isDartCliAppNow => isRunningOnDartVM! && !isFlutterAppNow!;
 
   Future<bool> _connectedToProfileBuild() async {
+    print('calling connected to profile build');
+
+    final eval = EvalOnDartLibrary(
+      'dart:core',
+      serviceManager!.service!,
+      serviceManager: serviceManager!,
+    );
+
+    print('async eval');
+    try {
+      await eval.asyncEval('Future.value(42)', isAlive: null);
+    } catch (e) {
+      print('RECEIVED ERROR!');
+    }
+
+
+
     // If Dart or Flutter web, assume profile is false.
     if (!isRunningOnDartVM!) {
       return false;
