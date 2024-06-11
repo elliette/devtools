@@ -73,7 +73,7 @@ TextSpan? findLongestTextSpan(List<TextSpan> spans) {
   int longestLength = 0;
   TextSpan? longestSpan;
   for (final span in spans) {
-    final int currentLength = span.toPlainText().length;
+    final currentLength = span.toPlainText().length;
     if (currentLength > longestLength) {
       longestLength = currentLength;
       longestSpan = span;
@@ -215,6 +215,7 @@ class ColorPair {
 class ThemedColorPair {
   const ThemedColorPair({required this.background, required this.foreground});
 
+  @visibleForTesting
   factory ThemedColorPair.from(ColorPair colorPair) {
     return ThemedColorPair(
       foreground: ThemedColor.fromSingle(colorPair.foreground),
