@@ -601,16 +601,37 @@ class InspectorTreeController extends DisposableController
       );
     }
     if (children != null) {
+      InspectorTreeNode? hideableGroupLeader;
+      final List<InspectorTreeNode> hideableGroupSubordinates =
+          <InspectorTreeNode>[];
       for (final child in children) {
-        appendChild(
-          treeNode,
-          setupInspectorTreeNode(
+        final inHideableGroup = child.isCreatedByLocalProject;
+        final isHideableGroupLeader =
+            inHideableGroup && hideableGroupLeader == null;
+
+        if (hideableGroupLeader != null && !inHideableGroup) {
+          hideableGroupLeader
+              .setHideableGroupSubordinates(hideableGroupSubordinates);
+          hideableGroupLeader = null;
+          hideableGroupSubordinates.clear();
+        }
+
+        final childNode = setupInspectorTreeNode(
             createNode(),
             child,
             expandChildren: expandChildren,
-            expandProperties: expandProperties,
-          ),
+          expandProperties: expandProperties,
         );
+
+        if (inHideableGroup) {
+          if (isHideableGroupLeader) {
+            hideableGroupLeader = childNode;
+          } else {
+            hideableGroupSubordinates.add(childNode);
+          }
+        }
+
+        appendChild(treeNode, childNode);
       }
     }
   }

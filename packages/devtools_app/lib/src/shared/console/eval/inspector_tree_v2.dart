@@ -117,6 +117,44 @@ class InspectorTreeNode {
     }
   }
 
+  bool get isHidden => _isHidden;
+  bool _isHidden = true;
+
+  bool get inHideableGroup {
+    return diagnostic?.isCreatedByLocalProject ?? false;
+  }
+
+  bool get isHideableGroupLeader {
+    return inHideableGroup && _hideableGroupSubordinates != null;
+  }
+
+  List<InspectorTreeNode>? get hideableGroupSubordinates =>
+      _hideableGroupSubordinates;
+  List<InspectorTreeNode>? _hideableGroupSubordinates;
+
+  void setHideableGroupSubordinates(List<InspectorTreeNode>? subordinates) {
+    _hideableGroupSubordinates = subordinates;
+  }
+
+  void hide() {
+    _setHiddenState(shouldHide: true);
+  }
+
+  void unhide() {
+    _setHiddenState(shouldHide: false);
+  }
+
+  void _setHiddenState({required bool shouldHide}) {
+    if (isHidden && shouldHide) return;
+    if (!isHidden && !shouldHide) return;
+    _isHidden = shouldHide;
+    if (isHideableGroupLeader) {
+      for (final InspectorTreeNode node in hideableGroupSubordinates ?? []) {
+        node._setHiddenState(shouldHide: shouldHide);
+      }
+    }
+  }
+
   InspectorTreeNode? get parent => _parent;
   InspectorTreeNode? _parent;
 
