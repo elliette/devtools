@@ -121,7 +121,8 @@ class InspectorTreeNode {
   bool _isHidden = true;
 
   bool get inHideableGroup {
-    return diagnostic?.isCreatedByLocalProject ?? false;
+    final inSummaryTree = diagnostic?.isCreatedByLocalProject ?? false;
+    return !inSummaryTree;
   }
 
   bool get isHideableGroupLeader {

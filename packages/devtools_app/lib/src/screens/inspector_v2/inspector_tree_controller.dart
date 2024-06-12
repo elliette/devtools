@@ -1065,13 +1065,18 @@ class _InspectorTreeState extends State<InspectorTree>
                     offsetController: _scrollControllerX,
                     offsetControllerViewportDimension: viewportWidth,
                     child: ListView.custom(
-                      itemExtent: inspectorRowHeight,
                       childrenDelegate: SliverChildBuilderDelegate(
                         (context, index) {
                           if (index == treeControllerLocal.numRows) {
                             return SizedBox(height: inspectorRowHeight);
                           }
                           final row = treeControllerLocal.getCachedRow(index)!;
+                          final node = row.node;
+                          final shouldHide = node.inHideableGroup &&
+                              !node.isHideableGroupLeader;
+                          if (shouldHide) {
+                            return const SizedBox.shrink();
+                          }
                           final inspectorRef = row.node.diagnostic?.valueRef.id;
                           return _InspectorTreeRowWidget(
                             key: PageStorageKey(row.node),
