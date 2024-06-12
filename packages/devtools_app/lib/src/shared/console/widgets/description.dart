@@ -15,7 +15,8 @@ import '../../primitives/utils.dart';
 import '../../ui/hover.dart';
 import '../../ui/icons.dart';
 import '../../ui/utils.dart';
-import '../eval/inspector_tree.dart';
+import '../eval/inspector_tree.dart' hide InspectorTreeNode;
+import '../eval/inspector_tree_v2.dart' as inspector_v2;
 import 'expandable_variable.dart';
 
 final _colorIconMaker = ColorIconMaker();
@@ -43,6 +44,9 @@ class DiagnosticsNodeDescription extends StatelessWidget {
     this.style,
     this.nodeDescriptionHighlightStyle,
     this.emphasizeNodesFromLocalProject = false,
+    this.isHidden,
+    this.inHideableGroup,
+    this.hideableGroupSubordinates,
   });
 
   final RemoteDiagnosticsNode? diagnostic;
@@ -53,6 +57,9 @@ class DiagnosticsNodeDescription extends StatelessWidget {
   final TextStyle? style;
   final TextStyle? nodeDescriptionHighlightStyle;
   final bool emphasizeNodesFromLocalProject;
+  final bool? isHidden;
+  final bool? inHideableGroup;
+  final List<inspector_v2.InspectorTreeNode>? hideableGroupSubordinates;
 
   static Widget _paddedIcon(Widget icon) {
     return Padding(
@@ -389,8 +396,13 @@ class DiagnosticsNodeDescription extends StatelessWidget {
         textStyle = textStyle.merge(theme.subtleTextStyle);
       }
 
+      String? description;
+      if (hideableGroupSubordinates != null) {
+        description = '<${hideableGroupSubordinates!.length + 1} widgets>';
+      }
+
       var diagnosticDescription = buildDescription(
-        description: diagnosticLocal.description ?? '',
+        description: description ?? diagnosticLocal.description ?? '',
         textStyle: textStyle,
         colorScheme: colorScheme,
         diagnostic: diagnostic,

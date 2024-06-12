@@ -132,8 +132,9 @@ class InspectorTreeNode {
       _hideableGroupSubordinates;
   List<InspectorTreeNode>? _hideableGroupSubordinates;
 
-  void setHideableGroupSubordinates(List<InspectorTreeNode>? subordinates) {
-    _hideableGroupSubordinates = subordinates;
+  void addHideableGroupSubordinate(InspectorTreeNode subordinate) {
+    _hideableGroupSubordinates ??= [];
+    _hideableGroupSubordinates!.add(subordinate);
   }
 
   void hide() {

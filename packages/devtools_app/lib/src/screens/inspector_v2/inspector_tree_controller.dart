@@ -545,11 +545,16 @@ class InspectorTreeController extends DisposableController
     RemoteDiagnosticsNode diagnosticsNode, {
     required bool expandChildren,
     required bool expandProperties,
+    InspectorTreeNode? hideableGroupLeader,
   }) {
     node.diagnostic = diagnosticsNode;
     final configLocal = config;
     if (configLocal.onNodeAdded != null) {
       configLocal.onNodeAdded!(node, diagnosticsNode);
+    }
+    final isHideable = !diagnosticsNode.isCreatedByLocalProject;
+    if (isHideable && hideableGroupLeader != null) {
+      hideableGroupLeader.addHideableGroupSubordinate(node);
     }
 
     if (diagnosticsNode.hasChildren ||
@@ -563,6 +568,8 @@ class InspectorTreeController extends DisposableController
           node.diagnostic!.childrenNow,
           expandChildren: expandChildren && styleIsMultiline,
           expandProperties: expandProperties && styleIsMultiline,
+          hideableGroupLeader:
+              isHideable ? (hideableGroupLeader ?? node) : null,
         );
       } else {
         node.clearChildren();
@@ -578,6 +585,7 @@ class InspectorTreeController extends DisposableController
     List<RemoteDiagnosticsNode>? children, {
     required bool expandChildren,
     required bool expandProperties,
+    InspectorTreeNode? hideableGroupLeader,
   }) {
     treeNode.isExpanded = expandChildren;
     if (treeNode.children.isNotEmpty) {
@@ -601,35 +609,17 @@ class InspectorTreeController extends DisposableController
       );
     }
     if (children != null) {
-      InspectorTreeNode? hideableGroupLeader;
-      final List<InspectorTreeNode> hideableGroupSubordinates =
-          <InspectorTreeNode>[];
       for (final child in children) {
-        final inHideableGroup = child.isCreatedByLocalProject;
-        final isHideableGroupLeader =
-            inHideableGroup && hideableGroupLeader == null;
-
-        if (hideableGroupLeader != null && !inHideableGroup) {
-          hideableGroupLeader
-              .setHideableGroupSubordinates(hideableGroupSubordinates);
-          hideableGroupLeader = null;
-          hideableGroupSubordinates.clear();
-        }
+        final isHideable = !child.isCreatedByLocalProject;
 
         final childNode = setupInspectorTreeNode(
             createNode(),
             child,
             expandChildren: expandChildren,
           expandProperties: expandProperties,
-        );
+          hideableGroupLeader: isHideable ? hideableGroupLeader : null,
 
-        if (inHideableGroup) {
-          if (isHideableGroupLeader) {
-            hideableGroupLeader = childNode;
-          } else {
-            hideableGroupSubordinates.add(childNode);
-          }
-        }
+        );
 
         appendChild(treeNode, childNode);
       }
@@ -1343,6 +1333,10 @@ class InspectorRowContent extends StatelessWidget {
                                   : row.isSelected
                                       ? theme.searchMatchHighlightStyleFocused
                                       : theme.searchMatchHighlightStyle,
+                          isHidden: node.isHidden,
+                          inHideableGroup: node.inHideableGroup,
+                          hideableGroupSubordinates:
+                              node.hideableGroupSubordinates,
                         ),
                       ),
                     ),
