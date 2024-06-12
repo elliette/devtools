@@ -552,7 +552,8 @@ class InspectorTreeController extends DisposableController
     if (configLocal.onNodeAdded != null) {
       configLocal.onNodeAdded!(node, diagnosticsNode);
     }
-    final isHideable = !diagnosticsNode.isCreatedByLocalProject;
+    final isHideable = !diagnosticsNode.isCreatedByLocalProject &&
+        diagnosticsNode.childrenNow.length <= 1;
     if (isHideable && hideableGroupLeader != null) {
       hideableGroupLeader.addHideableGroupSubordinate(node);
     }
