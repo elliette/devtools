@@ -84,7 +84,7 @@ class _InspectorTreeRowState extends State<_InspectorTreeRowWidget>
   }
 
   @override
-  bool get isExpanded => widget.node.isExpanded;
+  bool get isExpanded => widget.node.isExpanded || !widget.node.inHideableGroup;
 
   @override
   void onExpandChanged(bool expanded) {
@@ -99,7 +99,9 @@ class _InspectorTreeRowState extends State<_InspectorTreeRowWidget>
   }
 
   @override
-  bool shouldShow() => widget.node.shouldShow;
+  bool shouldShow() =>
+      widget.node.shouldShow ||
+      (widget.node.inHideableGroup && !widget.node.isHidden);
 }
 
 class InspectorTreeController extends DisposableController
@@ -1075,9 +1077,9 @@ class _InspectorTreeState extends State<InspectorTree>
                           final node = row.node;
                           final shouldHide = node.inHideableGroup &&
                               !node.isHideableGroupLeader;  
-                          if (shouldHide) {
-                            return const SizedBox.shrink();
-                          }
+                          // if (shouldHide) {
+                          //   return const SizedBox.shrink();
+                          // }
                           final inspectorRef = row.node.diagnostic?.valueRef.id;
                           return _InspectorTreeRowWidget(
                             key: PageStorageKey(row.node),
