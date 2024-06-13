@@ -138,6 +138,8 @@ class InspectorTreeNode {
     _hideableGroupSubordinates!.add(subordinate);
   }
 
+  InspectorTreeNode? hideableGroupLeader;
+
   void hide() {
     _setHiddenState(shouldHide: true);
   }

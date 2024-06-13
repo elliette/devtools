@@ -556,6 +556,7 @@ class InspectorTreeController extends DisposableController
         diagnosticsNode.childrenNow.length <= 1;
     if (isHideable && hideableGroupLeader != null) {
       hideableGroupLeader.addHideableGroupSubordinate(node);
+      node.hideableGroupLeader = hideableGroupLeader;
     }
 
     if (diagnosticsNode.hasChildren ||
@@ -1070,10 +1071,27 @@ class _InspectorTreeState extends State<InspectorTree>
                           if (index == treeControllerLocal.numRows) {
                             return SizedBox(height: inspectorRowHeight);
                           }
+                          var shouldHide = false;
                           final row = treeControllerLocal.getCachedRow(index)!;
                           final node = row.node;
-                          final shouldHide = node.inHideableGroup &&
-                              !node.isHideableGroupLeader;
+                          if (sandwichInspectorWidgets) {
+                            shouldHide = node.inHideableGroup &&
+                                !node.isHideableGroupLeader &&
+                                (node.hideableGroupLeader
+                                            ?.hideableGroupSubordinates?.length ??
+                                        0) >
+                                    2 &&
+                                node.hideableGroupLeader
+                                        ?.hideableGroupSubordinates?.last !=
+                                    node &&
+                                node.hideableGroupLeader
+                                        ?.hideableGroupSubordinates?.first !=
+                                    node;
+                          } else {
+                            shouldHide = node.inHideableGroup &&
+                                !node.isHideableGroupLeader;
+                          }
+
                           if (shouldHide) {
                             return const SizedBox.shrink();
                           }
@@ -1204,7 +1222,9 @@ class _RowPainter extends CustomPainter {
       );
     }
 
-    if (row.hasSingleChild && node.isExpanded) {
+    final hasNoChildren =
+        node.hideableGroupSubordinates?.last?.children.length == 0;
+    if (row.hasSingleChild && node.isExpanded && !hasNoChildren) {
       final distanceFromIconCenterToRowStart =
           inspectorColumnIndent * _iconCenterToRowStartXDistancePercentage;
       final iconCenterX = _controller.getDepthIndent(row.depth) -
@@ -1343,6 +1363,7 @@ class InspectorRowContent extends StatelessWidget {
                           inHideableGroup: node.inHideableGroup,
                           hideableGroupSubordinates:
                               node.hideableGroupSubordinates,
+                          hideableGroupLeader: node.hideableGroupLeader,
                         ),
                       ),
                     ),

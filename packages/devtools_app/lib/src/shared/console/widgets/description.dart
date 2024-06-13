@@ -47,6 +47,7 @@ class DiagnosticsNodeDescription extends StatelessWidget {
     this.isHidden,
     this.inHideableGroup,
     this.hideableGroupSubordinates,
+    this.hideableGroupLeader,
   });
 
   final RemoteDiagnosticsNode? diagnostic;
@@ -60,6 +61,7 @@ class DiagnosticsNodeDescription extends StatelessWidget {
   final bool? isHidden;
   final bool? inHideableGroup;
   final List<inspector_v2.InspectorTreeNode>? hideableGroupSubordinates;
+  final inspector_v2.InspectorTreeNode? hideableGroupLeader;
 
   static Widget _paddedIcon(Widget icon) {
     return Padding(
@@ -397,8 +399,21 @@ class DiagnosticsNodeDescription extends StatelessWidget {
       }
 
       String? description;
-      if (hideableGroupSubordinates != null) {
-        description = '<${hideableGroupSubordinates!.length + 1} widgets>';
+      if (sandwichInspectorWidgets) {
+        final firstHideableChild =
+            hideableGroupLeader?.hideableGroupSubordinates?.first.diagnostic ==
+                diagnostic;
+        if (firstHideableChild) {
+          final numSubordinates =
+              hideableGroupLeader?.hideableGroupSubordinates?.length ?? 0;
+          if (numSubordinates - 1 > 1) {
+            description = '<${numSubordinates - 1} widgets>';
+          }
+        }
+      } else {
+        if (hideableGroupSubordinates != null) {
+          description = '<${hideableGroupSubordinates!.length + 1} widgets>';
+        }
       }
 
       var diagnosticDescription = buildDescription(
