@@ -1071,27 +1071,10 @@ class _InspectorTreeState extends State<InspectorTree>
                           if (index == treeControllerLocal.numRows) {
                             return SizedBox(height: inspectorRowHeight);
                           }
-                          var shouldHide = false;
                           final row = treeControllerLocal.getCachedRow(index)!;
                           final node = row.node;
-                          if (sandwichInspectorWidgets) {
-                            shouldHide = node.inHideableGroup &&
-                                !node.isHideableGroupLeader &&
-                                (node.hideableGroupLeader
-                                            ?.hideableGroupSubordinates?.length ??
-                                        0) >
-                                    2 &&
-                                node.hideableGroupLeader
-                                        ?.hideableGroupSubordinates?.last !=
-                                    node &&
-                                node.hideableGroupLeader
-                                        ?.hideableGroupSubordinates?.first !=
-                                    node;
-                          } else {
-                            shouldHide = node.inHideableGroup &&
-                                !node.isHideableGroupLeader;
-                          }
-
+                          final shouldHide = node.inHideableGroup &&
+                              !node.isHideableGroupLeader;  
                           if (shouldHide) {
                             return const SizedBox.shrink();
                           }
@@ -1223,7 +1206,7 @@ class _RowPainter extends CustomPainter {
     }
 
     final hasNoChildren =
-        node.hideableGroupSubordinates?.last?.children.length == 0;
+        node.hideableGroupSubordinates?.last.children.isEmpty ?? false;
     if (row.hasSingleChild && node.isExpanded && !hasNoChildren) {
       final distanceFromIconCenterToRowStart =
           inspectorColumnIndent * _iconCenterToRowStartXDistancePercentage;

@@ -21,8 +21,6 @@ import 'primitives/storage.dart';
 import 'scripts/script_manager.dart';
 import 'survey.dart';
 
-bool sandwichInspectorWidgets = false;
-
 /// Whether this DevTools build is external.
 bool get isExternalBuild => _isExternalBuild;
 bool _isExternalBuild = true;

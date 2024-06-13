@@ -399,21 +399,9 @@ class DiagnosticsNodeDescription extends StatelessWidget {
       }
 
       String? description;
-      if (sandwichInspectorWidgets) {
-        final firstHideableChild =
-            hideableGroupLeader?.hideableGroupSubordinates?.first.diagnostic ==
-                diagnostic;
-        if (firstHideableChild) {
-          final numSubordinates =
-              hideableGroupLeader?.hideableGroupSubordinates?.length ?? 0;
-          if (numSubordinates - 1 > 1) {
-            description = '<${numSubordinates - 1} widgets>';
-          }
-        }
-      } else {
-        if (hideableGroupSubordinates != null) {
-          description = '<${hideableGroupSubordinates!.length + 1} widgets>';
-        }
+
+      if (hideableGroupSubordinates != null) {
+        description = '<${hideableGroupSubordinates!.length + 1} widgets>';
       }
 
       var diagnosticDescription = buildDescription(
