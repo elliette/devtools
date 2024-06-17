@@ -91,7 +91,7 @@ class InspectorTreeNode {
   set isExpanded(bool value) {
     if (value != _isExpanded) {
       _isExpanded = value;
-      isDirty = true;
+      // isDirty = true;
     }
   }
 
@@ -114,7 +114,8 @@ class InspectorTreeNode {
 
   int get childrenCount {
     // IMPORTANT! This is what determines the number or rows in the tree. If we
-    // want to hide the implementation details, should not count them here.
+    // want to hide the implementation details, we should not count them here.
+    // Also need to set isDirty for each node when we expand/collapse it.
     if (!isExpanded) {
       _childrenCount = 0;
     }
