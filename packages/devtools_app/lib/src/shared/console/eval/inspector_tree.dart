@@ -53,7 +53,6 @@ class InspectorTreeNode {
   set isDirty(bool dirty) {
     if (dirty) {
       _isDirty = true;
-      _shouldShow = null;
       if (_childrenCount == null) {
         // Already dirty.
         return;
@@ -66,25 +65,6 @@ class InspectorTreeNode {
       _isDirty = false;
     }
   }
-
-  /// Returns whether the node is currently visible in the tree.
-  void updateShouldShow(bool value) {
-    if (value != _shouldShow) {
-      _shouldShow = value;
-      for (final child in children) {
-        child.updateShouldShow(value);
-      }
-    }
-  }
-
-  bool get shouldShow {
-    final parentLocal = parent;
-    _shouldShow ??=
-        parentLocal == null || parentLocal.isExpanded && parentLocal.shouldShow;
-    return _shouldShow!;
-  }
-
-  bool? _shouldShow;
 
   bool selected = false;
 
@@ -112,11 +92,6 @@ class InspectorTreeNode {
     if (value != _isExpanded) {
       _isExpanded = value;
       isDirty = true;
-      if (_shouldShow ?? false) {
-        for (final child in children) {
-          child.updateShouldShow(value);
-        }
-      }
     }
   }
 

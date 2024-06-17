@@ -88,6 +88,7 @@ class _InspectorTreeRowState extends State<_InspectorTreeRowWidget>
 
   @override
   void onExpandChanged(bool expanded) {
+    // 2) collapsible calls this callback
     setState(() {
       final row = widget.row;
       if (expanded) {
@@ -418,8 +419,10 @@ class InspectorTreeController extends DisposableController
   }
 
   void onExpandRow(InspectorTreeRow row) {
+    // #3 - inpector tree calls this.
     setState(() {
       final onExpand = config.onExpand;
+      print('setting node to expanded!');
       row.node.isExpanded = true;
       if (onExpand != null) {
         onExpand(row.node);
@@ -428,7 +431,9 @@ class InspectorTreeController extends DisposableController
   }
 
   void onCollapseRow(InspectorTreeRow row) {
+    // #3 - inspector tree calls this.
     setState(() {
+      print('on collapse!');
       row.node.isExpanded = false;
     });
   }
@@ -609,12 +614,15 @@ class InspectorTreeController extends DisposableController
 
   Future<void> maybePopulateChildren(InspectorTreeNode treeNode) async {
     final diagnostic = treeNode.diagnostic;
+    print('has children? ${diagnostic?.hasChildren}');
+    print('tree node has children? ${treeNode.children.isNotEmpty}');
     if (diagnostic != null &&
         diagnostic.hasChildren &&
         (treeNode.hasPlaceholderChildren || treeNode.children.isEmpty)) {
       try {
         final children = await diagnostic.children;
         if (treeNode.hasPlaceholderChildren || treeNode.children.isEmpty) {
+          print('populating children...');
           setupChildren(
             diagnostic,
             treeNode,

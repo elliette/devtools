@@ -49,6 +49,7 @@ mixin CollapsibleAnimationMixin<T extends StatefulWidget>
   }
 
   void setExpanded(bool expanded) {
+    // 1) on clicking row, this is called.
     setState(() {
       if (expanded) {
         expandController.forward();

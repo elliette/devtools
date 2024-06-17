@@ -776,6 +776,8 @@ class InspectorController extends DisposableController
   }
 
   void _onExpand(InspectorTreeNode node) {
+    // 4) inspector tree controller calls this
+    print('Expanding!!!');
     unawaited(inspectorTree.maybePopulateChildren(node));
   }
 
