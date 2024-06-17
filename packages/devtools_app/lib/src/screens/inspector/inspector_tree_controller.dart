@@ -237,6 +237,7 @@ class InspectorTreeController extends DisposableController
   }
 
   InspectorTreeRow? getCachedRow(int index) {
+    print('GET CACHED ROW $index');
     if (index < 0) return null;
 
     _maybeClearCache();
@@ -422,7 +423,7 @@ class InspectorTreeController extends DisposableController
     // #3 - inpector tree calls this.
     setState(() {
       final onExpand = config.onExpand;
-      print('setting node to expanded!');
+      // print('setting node to expanded!');
       row.node.isExpanded = true;
       if (onExpand != null) {
         onExpand(row.node);
@@ -433,7 +434,7 @@ class InspectorTreeController extends DisposableController
   void onCollapseRow(InspectorTreeRow row) {
     // #3 - inspector tree calls this.
     setState(() {
-      print('on collapse!');
+      // print('on collapse!');
       row.node.isExpanded = false;
     });
   }
@@ -614,15 +615,15 @@ class InspectorTreeController extends DisposableController
 
   Future<void> maybePopulateChildren(InspectorTreeNode treeNode) async {
     final diagnostic = treeNode.diagnostic;
-    print('has children? ${diagnostic?.hasChildren}');
-    print('tree node has children? ${treeNode.children.isNotEmpty}');
+    // print('has children? ${diagnostic?.hasChildren}');
+    // print('tree node has children? ${treeNode.children.isNotEmpty}');
     if (diagnostic != null &&
         diagnostic.hasChildren &&
         (treeNode.hasPlaceholderChildren || treeNode.children.isEmpty)) {
       try {
         final children = await diagnostic.children;
         if (treeNode.hasPlaceholderChildren || treeNode.children.isEmpty) {
-          print('populating children...');
+          // print('populating children...');
           setupChildren(
             diagnostic,
             treeNode,
@@ -1056,6 +1057,8 @@ class _InspectorTreeState extends State<InspectorTree>
                       itemExtent: inspectorRowHeight,
                       childrenDelegate: SliverChildBuilderDelegate(
                         (context, index) {
+                          print(
+                              'Building row $index of ${treeControllerLocal.numRows}');
                           if (index == treeControllerLocal.numRows) {
                             return SizedBox(height: inspectorRowHeight);
                           }

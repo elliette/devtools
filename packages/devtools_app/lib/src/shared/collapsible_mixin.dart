@@ -52,9 +52,9 @@ mixin CollapsibleAnimationMixin<T extends StatefulWidget>
     // 1) on clicking row, this is called.
     setState(() {
       if (expanded) {
-        expandController.forward();
+        // expandController.forward();
       } else {
-        expandController.reverse();
+        // expandController.reverse();
       }
       onExpandChanged(expanded);
     });
@@ -64,9 +64,9 @@ mixin CollapsibleAnimationMixin<T extends StatefulWidget>
   void didUpdateWidget(Widget oldWidget) {
     super.didUpdateWidget(oldWidget as T);
     if (isExpanded) {
-      expandController.forward();
+      // expandController.forward();
     } else {
-      expandController.reverse();
+      // expandController.reverse();
     }
   }
 }

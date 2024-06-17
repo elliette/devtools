@@ -113,6 +113,8 @@ class InspectorTreeNode {
   }
 
   int get childrenCount {
+    // IMPORTANT! This is what determines the number or rows in the tree. If we
+    // want to hide the implementation details, should not count them here.
     if (!isExpanded) {
       _childrenCount = 0;
     }
