@@ -97,9 +97,6 @@ class _InspectorTreeRowState extends State<_InspectorTreeRowWidget>
       }
     });
   }
-
-  @override
-  bool shouldShow() => widget.node.shouldShow;
 }
 
 class InspectorTreeController extends DisposableController

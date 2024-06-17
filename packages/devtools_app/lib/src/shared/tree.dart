@@ -210,9 +210,6 @@ class _TreeViewItemState<T extends TreeNode<T>> extends State<_TreeViewItem<T>>
   @override
   void onExpandChanged(bool expanded) {}
 
-  @override
-  bool shouldShow() => widget.data.shouldShow();
-
   double nodeIndent(T dataObject) {
     return dataObject.level * defaultSpacing;
   }

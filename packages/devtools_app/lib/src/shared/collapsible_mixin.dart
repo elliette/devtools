@@ -24,11 +24,6 @@ mixin CollapsibleAnimationMixin<T extends StatefulWidget>
   /// Useful for animating the size of a child that is appearing.
   late final Animation<double> expandCurve;
 
-  /// Visibility state of the collapsible.
-  ///
-  /// Implementations can be somewhat slow as the value is cached.
-  bool shouldShow();
-
   /// Callback triggered when whether the collapsible is expanded changes.
   void onExpandChanged(bool expanded);
 

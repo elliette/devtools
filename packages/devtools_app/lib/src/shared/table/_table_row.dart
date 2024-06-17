@@ -610,7 +610,4 @@ class _TableRowState<T> extends State<TableRow<T>>
 
   @override
   void onExpandChanged(bool expanded) {}
-
-  @override
-  bool shouldShow() => widget.isShown;
 }
