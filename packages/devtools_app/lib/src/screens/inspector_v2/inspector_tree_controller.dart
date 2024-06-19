@@ -545,11 +545,17 @@ class InspectorTreeController extends DisposableController
     RemoteDiagnosticsNode diagnosticsNode, {
     required bool expandChildren,
     required bool expandProperties,
+    RemoteDiagnosticsNode? hideableGroupLeader,
   }) {
     node.diagnostic = diagnosticsNode;
     final configLocal = config;
     if (configLocal.onNodeAdded != null) {
       configLocal.onNodeAdded!(node, diagnosticsNode);
+    }
+    final inHideableGroup = diagnosticsNode.inHideableGroup;
+    if (inHideableGroup && hideableGroupLeader != null) {
+      hideableGroupLeader.addHideableGroupSubordinate(diagnosticsNode);
+      // Maybe set the hideable group leader on the diagnostics node here?
     }
 
     if (diagnosticsNode.hasChildren ||
@@ -563,6 +569,8 @@ class InspectorTreeController extends DisposableController
           node.diagnostic!.childrenNow,
           expandChildren: expandChildren && styleIsMultiline,
           expandProperties: expandProperties && styleIsMultiline,
+          hideableGroupLeader:
+              inHideableGroup ? (hideableGroupLeader ?? diagnosticsNode) : null,
         );
       } else {
         node.clearChildren();
@@ -578,6 +586,7 @@ class InspectorTreeController extends DisposableController
     List<RemoteDiagnosticsNode>? children, {
     required bool expandChildren,
     required bool expandProperties,
+    RemoteDiagnosticsNode? hideableGroupLeader,
   }) {
     treeNode.isExpanded = expandChildren;
     if (treeNode.children.isNotEmpty) {
@@ -609,6 +618,8 @@ class InspectorTreeController extends DisposableController
             child,
             expandChildren: expandChildren,
             expandProperties: expandProperties,
+            hideableGroupLeader:
+                child.inHideableGroup ? hideableGroupLeader : null,
           ),
         );
       }
@@ -1053,13 +1064,19 @@ class _InspectorTreeState extends State<InspectorTree>
                     offsetController: _scrollControllerX,
                     offsetControllerViewportDimension: viewportWidth,
                     child: ListView.custom(
-                      itemExtent: inspectorRowHeight,
                       childrenDelegate: SliverChildBuilderDelegate(
                         (context, index) {
                           if (index == treeControllerLocal.numRows) {
                             return SizedBox(height: inspectorRowHeight);
                           }
                           final row = treeControllerLocal.getCachedRow(index)!;
+                          final node = row.node;
+                          final shouldHide = node.inHideableGroup &&
+                              !node.isHideableGroupLeader;
+                          if (shouldHide) {
+                            return const SizedBox.shrink();
+                          }
+
                           final inspectorRef = row.node.diagnostic?.valueRef.id;
                           return _InspectorTreeRowWidget(
                             key: PageStorageKey(row.node),
@@ -1187,7 +1204,12 @@ class _RowPainter extends CustomPainter {
       );
     }
 
-    if (row.hasSingleChild && node.isExpanded) {
+    final expandedWithSingleChild = row.hasSingleChild && node.isExpanded;
+    // TODO: RENAME!
+    final hasNoChildren = (node.diagnostic?.hideableGroupSubordinates ?? [])
+            .isNotEmpty &&
+        node.diagnostic!.hideableGroupSubordinates!.last.childrenNow.isEmpty;
+    if (expandedWithSingleChild && !hasNoChildren) {
       final distanceFromIconCenterToRowStart =
           inspectorColumnIndent * _iconCenterToRowStartXDistancePercentage;
       final iconCenterX = _controller.getDepthIndent(row.depth) -
@@ -1292,7 +1314,8 @@ class InspectorRowContent extends StatelessWidget {
                         ),
                       )
                     : const SizedBox(
-                        width: defaultSpacing,
+                        width: defaultSpacing +
+                            2, // Note: figure out a better way to pad this.
                         height: defaultSpacing,
                       ),
                 Expanded(

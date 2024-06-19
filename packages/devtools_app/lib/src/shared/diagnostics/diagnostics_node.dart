@@ -213,7 +213,12 @@ class RemoteDiagnosticsNode extends DiagnosticableTree {
   /// `parentConfiguration` specifies how the parent is rendered as text art.
   /// For example, if the parent does not line break between properties, the
   /// description of a property should also be a single line if possible.
-  String? get description => getStringMember('description');
+  String? get description {
+    if (hideableGroupSubordinates != null) {
+      return '<${hideableGroupSubordinates!.length + 1} more widgets>';
+    }
+    return getStringMember('description');
+  }
 
   /// Priority level of the diagnostic used to control which diagnostics should
   /// be shown and filtered.
@@ -568,6 +573,25 @@ class RemoteDiagnosticsNode extends DiagnosticableTree {
     return _children ?? [];
   }
 
+  bool get inHideableGroup {
+    final hasAtMostOneChild = childrenNow.length <= 1;
+    final isOnlyChild = (parent?.childrenNow ?? []).length == 1;
+    return !isCreatedByLocalProject && hasAtMostOneChild && isOnlyChild;
+  }
+
+  bool get isHideableGroupLeader {
+    return inHideableGroup && _hideableGroupSubordinates != null;
+  }
+
+  List<RemoteDiagnosticsNode>? get hideableGroupSubordinates =>
+      _hideableGroupSubordinates;
+  List<RemoteDiagnosticsNode>? _hideableGroupSubordinates;
+
+  void addHideableGroupSubordinate(RemoteDiagnosticsNode subordinate) {
+    _hideableGroupSubordinates ??= [];
+    _hideableGroupSubordinates!.add(subordinate);
+  }
+
   Future<void> _computeChildren() async {
     _maybePopulateChildren();
     if (!hasChildren || _children != null) {
@@ -641,7 +665,10 @@ class RemoteDiagnosticsNode extends DiagnosticableTree {
   Widget? get icon {
     if (isProperty) return null;
 
-    return iconMaker.fromWidgetName(widgetRuntimeType);
+    return iconMaker.fromWidgetName(
+      widgetRuntimeType,
+      isHideableGroupLeader: isHideableGroupLeader,
+    );
   }
 
   /// Returns true if two diagnostic nodes are indistinguishable from
