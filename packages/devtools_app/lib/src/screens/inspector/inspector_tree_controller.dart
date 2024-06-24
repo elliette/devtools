@@ -228,8 +228,11 @@ class InspectorTreeController extends DisposableController
       _cachedSelectedRow = null;
       rootLocal.isDirty = false;
       lastContentWidth = null;
+      _refreshCache();
     }
   }
+
+  void _refreshCache() {}
 
   void _populateSearchableCachedRows() {
     _searchableCachedRows.clear();
@@ -412,6 +415,8 @@ class InspectorTreeController extends DisposableController
     if (rootLocal == null) return null;
     return getCachedRow(rootLocal.getRowIndex(node));
   }
+
+  int getRowIndexForNode(InspectorTreeNode node) {}
 
   InspectorTreeRow? getRow(Offset offset) {
     final rootLocal = root;

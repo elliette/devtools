@@ -154,7 +154,7 @@ class InspectorTreeNode {
     }
     int count = 0;
     for (final child in _children) {
-      count += child.subtreeSize;
+      count += child.subtreeSize; // this is fine
     }
     return _childrenCount = count;
   }
@@ -165,7 +165,7 @@ class InspectorTreeNode {
 
   int? _childrenCount;
 
-  int get subtreeSize => childrenCount + 1;
+  int get subtreeSize => childrenCount + 1; // this is fine
 
   // TODO(jacobr): move getRowIndex to the InspectorTree class.
   int getRowIndex(InspectorTreeNode node) {
@@ -179,7 +179,7 @@ class InspectorTreeNode {
         if (sibling == node) {
           break;
         }
-        index += sibling.subtreeSize;
+        index += sibling.subtreeSize; // need to handle this
       }
       index += 1; // For parent itself.
       node = parent;
@@ -193,6 +193,7 @@ class InspectorTreeNode {
   /// performance problems.
   InspectorTreeRow? getRow(int index) {
     if (subtreeSize <= index) {
+      // handle this case
       return null;
     }
 
@@ -224,7 +225,7 @@ class InspectorTreeNode {
       int i;
       for (i = 0; i < children.length; ++i) {
         final child = children[i];
-        final subtreeSize = child.subtreeSize;
+        final subtreeSize = child.subtreeSize; // handle this case as well
         if (current + subtreeSize > index) {
           node = child;
           if (children.length > 1 &&
