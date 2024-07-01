@@ -108,7 +108,7 @@ class BuildCommand extends Command {
               '--web-renderer',
               'canvaskit',
               // Do not minify stack traces in debug mode.
-              if (buildMode == 'debug') '--dart2js-optimization=O1',
+              '--dart2js-optimization=O1',
               if (buildMode != 'debug') '--$buildMode',
             ],
             '--pwa-strategy=offline-first',

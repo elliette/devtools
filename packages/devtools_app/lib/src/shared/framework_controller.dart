@@ -35,6 +35,7 @@ class FrameworkController {
 
   /// Notify the controller of a connect to VM event.
   void notifyConnectToVmEvent(Uri serviceProtocolUri, {bool notify = false}) {
+    print('Creating new VM CONNECT EVENT');
     _connectVmController.add(
       ConnectVmEvent(
         serviceProtocolUri: serviceProtocolUri,

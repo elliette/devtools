@@ -245,14 +245,20 @@ class DevToolsRouterDelegate extends RouterDelegate<DevToolsRouteConfiguration>
   /// Existing arguments (for example &uri=) will be preserved unless
   /// overwritten by [argUpdates].
   void updateArgsIfChanged(Map<String, String?> argUpdates) {
+    print('in update args if changed...');
+    print(1);
     final argsChanged = _changesArgs(argUpdates);
     if (!argsChanged) {
       return;
     }
 
+    print(2);
+    print('current config? $currentConfiguration');
     final currentConfig = currentConfiguration!;
     final currentPage = currentConfig.page;
+    print(3);
     final newArgs = currentConfig.params.withUpdates(argUpdates);
+    print('4');
     _replaceStack(
       DevToolsRouteConfiguration(
         currentPage,
@@ -260,6 +266,7 @@ class DevToolsRouterDelegate extends RouterDelegate<DevToolsRouteConfiguration>
         currentConfig.state,
       ),
     );
+    print(5);
     notifyListeners();
   }
 

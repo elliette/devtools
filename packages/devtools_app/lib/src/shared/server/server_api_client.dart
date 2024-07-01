@@ -22,10 +22,19 @@ final _log = Logger('lib/src/shared/server_api_client');
 /// See `package:dds/src/devtools/client.dart`.
 class DevToolsServerConnection {
   DevToolsServerConnection._(this.sseClient) {
+    print('IN DEVTOOLS SERVER CONNECTION');
     sseClient.stream!.listen((msg) {
       _handleMessage(msg);
     });
     initFrameworkController();
+
+    Timer.periodic(const Duration(seconds: 10), (Timer _) {
+      print('reconnecting to http://127.0.0.1:64054/ZFrTZRHrcDY=');
+      frameworkController.notifyConnectToVmEvent(
+        Uri.parse('http://127.0.0.1:64054/ZFrTZRHrcDY='),
+        notify: true,
+      );
+    });
   }
 
   /// Returns a URI for the backend ./api folder for a DevTools page being hosted

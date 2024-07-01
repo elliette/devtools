@@ -55,6 +55,7 @@ import 'shared/analytics/metrics.dart';
 import 'shared/common_widgets.dart';
 import 'shared/console/primitives/simple_items.dart';
 import 'shared/feature_flags.dart';
+import 'shared/framework_controller.dart';
 import 'shared/globals.dart';
 import 'shared/offline_data.dart';
 import 'shared/offline_screen.dart';
@@ -140,6 +141,10 @@ class DevToolsAppState extends State<DevToolsApp> with AutoDisposeMixin {
     super.initState();
     setGlobal(GlobalKey<NavigatorState>, routerDelegate.navigatorKey);
 
+    autoDisposeStreamSubscription(
+      frameworkController.onConnectVmEvent.listen(_connectVm),
+    );
+
     // TODO(https://github.com/flutter/devtools/issues/6018): Once
     // https://github.com/flutter/flutter/issues/129692 is fixed, disable the
     // browser's native context menu on secondary-click, and instead use the
@@ -189,6 +194,24 @@ class DevToolsAppState extends State<DevToolsApp> with AutoDisposeMixin {
     super.didUpdateWidget(oldWidget);
     _clearCachedRoutes();
   }
+
+  /// Connects to the VM with the given URI.
+  ///
+  /// This request usually comes from the IDE via the server API to reuse the
+  /// DevTools window after being disconnected (for example if the user stops
+  /// a debug session then launches a new one).
+  void _connectVm(ConnectVmEvent event) {
+    print('GOT A CONNECT VM EVENT: $event');
+    print('uri is: ${event.serviceProtocolUri.toString()}');
+    print('notify is: ${event.notify}');
+    print('router delegate is $routerDelegate');
+
+    routerDelegate.updateArgsIfChanged({
+      'uri': event.serviceProtocolUri.toString(),
+      if (event.notify) 'notify': 'true',
+    });
+  }
+
 
   /// Gets the page for a given page/path and args.
   Page _getPage(
