@@ -145,6 +145,10 @@ class DevToolsAppState extends State<DevToolsApp> with AutoDisposeMixin {
       frameworkController.onConnectVmEvent.listen(_connectVm),
     );
 
+    Timer.periodic(const Duration(seconds: 5), (Timer _) {
+      _connectVm2();
+    });
+
     // TODO(https://github.com/flutter/devtools/issues/6018): Once
     // https://github.com/flutter/flutter/issues/129692 is fixed, disable the
     // browser's native context menu on secondary-click, and instead use the
@@ -211,6 +215,21 @@ class DevToolsAppState extends State<DevToolsApp> with AutoDisposeMixin {
       if (event.notify) 'notify': 'true',
     });
   }
+
+  void _connectVm2() {
+    print('navigate home');
+    routerDelegate.navigateHome(
+      vmServiceUri: 'http://127.0.0.1:54374/C615s6AE1qU=',
+      clearScreenParam: true,
+    );
+
+    // print('navigate to uri');
+    // routerDelegate.updateArgsIfChanged({
+    //   'uri': 'http://127.0.0.1:54374/C615s6AE1qU=',
+    //   'notify': 'true',
+    // });
+  }
+
 
 
   /// Gets the page for a given page/path and args.

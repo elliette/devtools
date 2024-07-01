@@ -48,6 +48,7 @@ class DevToolsRouteInformationParser
     RouteInformation routeInformation,
   ) async {
     var uri = routeInformation.uri;
+    print('PARSE ROUTE INFORMATION: $uri');
     if (_testQueryParams != null) {
       uri = uri.copyWith(queryParameters: _testQueryParams!.params);
     }
@@ -202,8 +203,15 @@ class DevToolsRouterDelegate extends RouterDelegate<DevToolsRouteConfiguration>
     // Ensure we disconnect from any previously connected applications if we do
     // not have a vm service uri as a query parameter, unless we are loading an
     // offline file.
-    if (page != snapshotScreenId && newParams.vmServiceUri == null) {
+    final vmServiceUri = newParams.vmServiceUri;
+    if (page != snapshotScreenId && vmServiceUri == null) {
       unawaited(serviceConnection.serviceManager.manuallyDisconnect());
+    }
+    if (page != snapshotScreenId && vmServiceUri != null) {
+      print('opening a vm service conneciton...');
+      final connected =
+          serviceConnection.serviceManager.connectedState.value.connected;
+      unawaited(FrameworkCore.initVmService(serviceUriAsString: vmServiceUri));
     }
 
     _replaceStack(
@@ -215,10 +223,12 @@ class DevToolsRouterDelegate extends RouterDelegate<DevToolsRouteConfiguration>
   void navigateHome({
     bool clearUriParam = false,
     required bool clearScreenParam,
+    String? vmServiceUri,
   }) {
     navigate(
       homeScreenId,
       {
+        if (vmServiceUri != null) 'uri': vmServiceUri,
         if (clearUriParam) 'uri': null,
         if (clearScreenParam) 'screen': null,
       },

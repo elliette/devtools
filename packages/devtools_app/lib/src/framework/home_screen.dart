@@ -62,6 +62,7 @@ class _HomeScreenBodyState extends State<HomeScreenBody> with AutoDisposeMixin {
 
   @override
   Widget build(BuildContext context) {
+    print('REBUILD HOME SCREEN!!!');
     final connected =
         serviceConnection.serviceManager.connectedState.value.connected &&
             serviceConnection.serviceManager.connectedAppInitialized;
@@ -286,6 +287,7 @@ class _ConnectInputState extends State<ConnectInput> with BlockingActionMixin {
     // intuitive that we don't want to just cancel the route change or
     // notification if we are already on a different screen.
     final routerDelegate = DevToolsRouterDelegate.of(context);
+    print('CAlling init vm service');
     final connected =
         await FrameworkCore.initVmService(serviceUriAsString: uri);
     if (connected) {
