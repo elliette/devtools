@@ -443,6 +443,7 @@ class InspectorController extends DisposableController
     bool setSubtreeRoot, {
     int subtreeDepth = 2,
   }) async {
+    print('called recompute tree root!');
     assert(!_disposed);
     final treeGroups = _treeGroups;
     if (_disposed || treeGroups == null) {
@@ -464,6 +465,8 @@ class InspectorController extends DisposableController
       treeGroups.promoteNext();
       _clearValueToInspectorTreeNodeMapping();
 
+      // Note: as part of setUpInpsectorTreeNode, appendChild is called which
+      // calls update rows
       final rootNode = inspectorTree.setupInspectorTreeNode(
         inspectorTree.createNode(),
         node,
@@ -514,6 +517,8 @@ class InspectorController extends DisposableController
 
     // Clear now to eliminate frame of highlighted nodes flicker.
     _clearValueToInspectorTreeNodeMapping();
+    print('setSubTreeRoot -> _recomputeTreeRoot');
+    print(StackTrace.current);
     unawaited(_recomputeTreeRoot(selection, null, false));
   }
 
@@ -689,6 +694,9 @@ class InspectorController extends DisposableController
     if (nodeInTree == null) {
       // The tree has probably changed since we last updated. Do a full refresh
       // so that the tree includes the new node we care about.
+      print('applyNewSelection -> _recomputeTreeRoot');
+      print(StackTrace.current);
+      // this calls refreshSelection -> syncTreeSelection -> expandPath -> updateRows
       unawaited(
         _recomputeTreeRoot(newSelection, detailsSelection, setSubtreeRoot),
       );
@@ -922,13 +930,13 @@ class InspectorController extends DisposableController
 
   Future<void> expandAllNodesInDetailsTree() async {
     final detailsLocal = details!;
-    await detailsLocal._recomputeTreeRoot(
-      inspectorTree.selection?.diagnostic,
-      detailsLocal.inspectorTree.selection?.diagnostic ??
-          detailsLocal.inspectorTree.root?.diagnostic,
-      false,
-      subtreeDepth: maxJsInt,
-    );
+    // await detailsLocal._recomputeTreeRoot(
+    //   inspectorTree.selection?.diagnostic,
+    //   detailsLocal.inspectorTree.selection?.diagnostic ??
+    //       detailsLocal.inspectorTree.root?.diagnostic,
+    //   false,
+    //   subtreeDepth: maxJsInt,
+    // );
   }
 
   void collapseDetailsToSelected() {
