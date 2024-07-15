@@ -122,7 +122,7 @@ class InspectorTreeController extends DisposableController
 
   /// Identifier used when sending Google Analytics about events in this
   /// [InspectorTreeController].
-  final int? gaId;
+  final int? gaId; // ignore
 
   InspectorTreeNode createNode() =>
       InspectorTreeNode(whenDirty: _handleDirtyNode);
