@@ -464,12 +464,17 @@ class InspectorController extends DisposableController
       treeGroups.promoteNext();
       _clearValueToInspectorTreeNodeMapping();
 
+      print('calling set up inspector tree node');
+      // note: as part of this, appendChild is called which calls update rows
       final rootNode = inspectorTree.setupInspectorTreeNode(
         inspectorTree.createNode(),
         node,
         expandChildren: true,
         expandProperties: false,
       );
+      print('done calling set up inspector tree node');
+
+      print('setting root, which should trigger update rows');
       inspectorTree.root = rootNode;
 
       refreshSelection(newSelection, detailsSelection, setSubtreeRoot);

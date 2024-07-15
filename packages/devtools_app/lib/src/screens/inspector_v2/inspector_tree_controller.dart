@@ -225,6 +225,7 @@ class InspectorTreeController extends DisposableController
     InspectorTreeNode? node,
     bool updateSearchableRows = false,
   }) {
+    print('   calling update rows...');
     // TODO(elliette): Consider only updating an [InspectorTreeNode]'s branch
     // when it is marked as dirty, instead of the entire tree. See:
     // https://github.com/flutter/devtools/issues/7980
@@ -629,6 +630,7 @@ class InspectorTreeController extends DisposableController
         );
       } else {
         node.clearChildren();
+        print('appending children for ${node.diagnostic?.description}');
         node.appendChild(createNode());
       }
     }
