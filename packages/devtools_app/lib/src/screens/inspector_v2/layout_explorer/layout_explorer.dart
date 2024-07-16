@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'dart:async';
+
 import 'package:devtools_app_shared/utils.dart';
 import 'package:flutter/widgets.dart';
 
@@ -30,12 +32,33 @@ class _LayoutExplorerTabState extends State<LayoutExplorerTab>
   RemoteDiagnosticsNode? previousSelection;
 
   Widget rootWidget(RemoteDiagnosticsNode? node) {
+    Widget? layoutExplorer;
     if (node != null && FlexLayoutExplorerWidget.shouldDisplay(node)) {
-      return FlexLayoutExplorerWidget(controller);
+      layoutExplorer = FlexLayoutExplorerWidget(controller);
     }
     if (node != null && BoxLayoutExplorerWidget.shouldDisplay(node)) {
-      return BoxLayoutExplorerWidget(controller);
+      layoutExplorer = BoxLayoutExplorerWidget(controller);
     }
+
+    if (layoutExplorer != null) {
+      return Flex(
+        direction: Axis.horizontal,
+        children: [
+          Expanded(
+            flex: 3,
+            child: layoutExplorer,
+          ),
+          Expanded(
+            flex: 2,
+            child: WidgetProperties(
+              controller: controller,
+              node: node!,
+            ),
+          ),
+        ],
+      );
+    }
+
     return Center(
       child: Text(
         node != null
@@ -68,4 +91,56 @@ class _LayoutExplorerTabState extends State<LayoutExplorerTab>
 
   @override
   bool get wantKeepAlive => true;
+}
+
+class WidgetProperties extends StatefulWidget {
+  const WidgetProperties({
+    super.key,
+    required this.controller,
+    required this.node,
+  });
+
+  final InspectorController controller;
+  final RemoteDiagnosticsNode node;
+
+  @override
+  State<WidgetProperties> createState() => _WidgetPropertiesState();
+}
+
+class _WidgetPropertiesState extends State<WidgetProperties> {
+  List<RemoteDiagnosticsNode>? widgetProperties;
+
+  Future<void> loadProperties() async {
+    try {
+      final api = widget.node.objectGroupApi;
+      if (api != null) {
+        final properties = await widget.node.getProperties(api);
+        setState(() {
+          widgetProperties = properties;
+        });
+      }
+    } catch (err) {
+      print(err);
+      // handle error.
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(loadProperties());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    print('widget properties are $widgetProperties');
+
+    return const Center(
+      child: Text(
+        'Widget properties!',
+        textAlign: TextAlign.center,
+        overflow: TextOverflow.clip,
+      ),
+    );
+  }
 }

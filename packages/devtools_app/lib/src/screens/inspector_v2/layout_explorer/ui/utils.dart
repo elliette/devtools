@@ -149,90 +149,83 @@ class WidgetVisualizer extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final hintLocal = hint;
-        return OverflowBox(
-          minWidth: constraints.minWidth + boxAdjust,
-          maxWidth: constraints.maxWidth + boxAdjust,
-          maxHeight: constraints.maxHeight + boxAdjust,
-          minHeight: constraints.minHeight + boxAdjust,
-          child: Container(
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: borderColor,
-                width:
-                    isSelected ? _borderSelectedWidth : _borderUnselectedWidth,
-              ),
-              color: isSelected
-                  ? theme.canvasColor.brighten()
-                  : theme.canvasColor.darken(),
-              boxShadow: isSelected
-                  ? [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.5),
-                        blurRadius: 20,
-                      ),
-                    ]
-                  : null,
+        return Container(
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: borderColor,
+              width: isSelected ? _borderSelectedWidth : _borderUnselectedWidth,
             ),
-            child: Stack(
-              children: [
-                if (drawOverflow)
-                  Positioned.fill(
-                    child: CustomPaint(
-                      painter: OverflowIndicatorPainter(
-                        overflowSide!,
-                        _overflowIndicatorSize,
-                      ),
+            color: isSelected
+                ? theme.canvasColor.brighten()
+                : theme.canvasColor.darken(),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.5),
+                      blurRadius: 20,
+                    ),
+                  ]
+                : null,
+          ),
+          child: Stack(
+            children: [
+              if (drawOverflow)
+                Positioned.fill(
+                  child: CustomPaint(
+                    painter: OverflowIndicatorPainter(
+                      overflowSide!,
+                      _overflowIndicatorSize,
                     ),
                   ),
-                Container(
-                  margin: EdgeInsets.only(
-                    right: overflowSide == OverflowSide.right
-                        ? _overflowIndicatorSize
-                        : 0.0,
-                    bottom: overflowSide == OverflowSide.bottom
-                        ? _overflowIndicatorSize
-                        : 0.0,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IntrinsicHeight(
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Flexible(
-                              child: Container(
-                                constraints: BoxConstraints(
-                                  maxWidth: largeTitle
-                                      ? defaultMaxRenderWidth
-                                      : minRenderWidth *
-                                          widgetTitleMaxWidthPercentage,
-                                ),
-                                decoration: BoxDecoration(color: borderColor),
-                                padding: const EdgeInsets.all(4.0),
-                                child: Center(
-                                  child: Text(
-                                    title,
-                                    style: theme.regularTextStyleWithColor(
-                                      colorScheme.widgetNameColor,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
+                ),
+              Container(
+                margin: EdgeInsets.only(
+                  right: overflowSide == OverflowSide.right
+                      ? _overflowIndicatorSize
+                      : 0.0,
+                  bottom: overflowSide == OverflowSide.bottom
+                      ? _overflowIndicatorSize
+                      : 0.0,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IntrinsicHeight(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Flexible(
+                            child: Container(
+                              constraints: BoxConstraints(
+                                maxWidth: largeTitle
+                                    ? defaultMaxRenderWidth
+                                    : minRenderWidth *
+                                        widgetTitleMaxWidthPercentage,
+                              ),
+                              decoration: BoxDecoration(color: borderColor),
+                              padding: const EdgeInsets.all(4.0),
+                              child: Center(
+                                child: Text(
+                                  title,
+                                  style: theme.regularTextStyleWithColor(
+                                    colorScheme.widgetNameColor,
                                   ),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ),
-                            if (hintLocal != null) Flexible(child: hintLocal),
-                          ],
-                        ),
+                          ),
+                          if (hintLocal != null) Flexible(child: hintLocal),
+                        ],
                       ),
-                      Expanded(child: child),
-                    ],
-                  ),
+                    ),
+                    Expanded(child: child),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         );
       },
