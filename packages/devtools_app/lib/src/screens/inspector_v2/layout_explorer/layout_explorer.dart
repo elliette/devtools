@@ -4,9 +4,11 @@
 
 import 'dart:async';
 
+import 'package:devtools_app_shared/ui.dart';
 import 'package:devtools_app_shared/utils.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 
+import '../../../shared/console/eval/inspector_tree_v2.dart';
 import '../../../shared/diagnostics/diagnostics_node.dart';
 import '../inspector_controller.dart';
 import '../layout_explorer/box/box.dart';
@@ -23,7 +25,7 @@ class LayoutExplorerTab extends StatefulWidget {
 }
 
 class _LayoutExplorerTabState extends State<LayoutExplorerTab>
-    with AutomaticKeepAliveClientMixin<LayoutExplorerTab>, AutoDisposeMixin {
+    with AutoDisposeMixin {
   InspectorController get controller => widget.controller;
 
   RemoteDiagnosticsNode? get selected =>
@@ -70,30 +72,19 @@ class _LayoutExplorerTabState extends State<LayoutExplorerTab>
     );
   }
 
-  void onSelectionChanged() {
-    if (rootWidget(previousSelection).runtimeType !=
-        rootWidget(selected).runtimeType) {
-      setState(() => previousSelection = selected);
-    }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    addAutoDisposeListener(controller.selectedNode, onSelectionChanged);
-  }
-
   @override
   Widget build(BuildContext context) {
-    super.build(context);
-    return rootWidget(selected);
+    return ValueListenableBuilder<InspectorTreeNode?>(
+      valueListenable: controller.selectedNode,
+      builder: (context, _, __) {
+        return rootWidget(selected);
+      },
+    );
   }
 
-  @override
-  bool get wantKeepAlive => true;
 }
 
-class WidgetProperties extends StatefulWidget {
+class WidgetProperties extends StatelessWidget {
   const WidgetProperties({
     super.key,
     required this.controller,
@@ -103,43 +94,63 @@ class WidgetProperties extends StatefulWidget {
   final InspectorController controller;
   final RemoteDiagnosticsNode node;
 
-  @override
-  State<WidgetProperties> createState() => _WidgetPropertiesState();
-}
-
-class _WidgetPropertiesState extends State<WidgetProperties> {
-  List<RemoteDiagnosticsNode>? widgetProperties;
-
-  Future<void> loadProperties() async {
+  Future<List<RemoteDiagnosticsNode>> loadProperties() {
     try {
-      final api = widget.node.objectGroupApi;
+      final api = node.objectGroupApi;
       if (api != null) {
-        final properties = await widget.node.getProperties(api);
-        setState(() {
-          widgetProperties = properties;
-        });
+        return node.getProperties(api);
       }
+      return Future.value(<RemoteDiagnosticsNode>[]);
     } catch (err) {
-      print(err);
+      return Future.value(<RemoteDiagnosticsNode>[]);
       // handle error.
-    }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    unawaited(loadProperties());
+    }    
   }
 
   @override
   Widget build(BuildContext context) {
-    print('widget properties are $widgetProperties');
+    return FutureBuilder<List<RemoteDiagnosticsNode>>(
+      // ignore: discarded_futures, FutureBuilder requires a future.
+      future: loadProperties(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const CircularProgressIndicator();
+        }
 
-    return const Center(
-      child: Text(
-        'Widget properties!',
-        textAlign: TextAlign.center,
-        overflow: TextOverflow.clip,
+        final properties = snapshot.data!;
+        return ListView.builder(
+          itemCount: properties.length,
+          itemBuilder: (context, index) {
+            return PropertyItem(property: properties[index]);
+          },
+        );
+      },
+    );
+  }
+}
+
+class PropertyItem extends StatelessWidget {
+  const PropertyItem({
+    super.key,
+    required this.property,
+  });
+
+  final RemoteDiagnosticsNode property;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return RichText(
+      text: TextSpan(
+        text: '${property.name!}: ',
+        style: theme.boldTextStyle,
+        children: <TextSpan>[
+          TextSpan(
+            text: property.description ?? 'null',
+            style: theme.subtleTextStyle,
+          ),
+        ],
       ),
     );
   }
