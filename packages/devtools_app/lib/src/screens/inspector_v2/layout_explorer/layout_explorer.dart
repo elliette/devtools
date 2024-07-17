@@ -93,15 +93,23 @@ class WidgetProperties extends StatelessWidget {
   final InspectorController controller;
   final RemoteDiagnosticsNode node;
 
-  Future<List<RemoteDiagnosticsNode>> loadProperties() {
+  Future<List<RemoteDiagnosticsNode>> loadProperties() async {
+    final properties = <RemoteDiagnosticsNode>[];
+    final api = node.objectGroupApi;
+    if (api == null) return properties;
     try {
-      final api = node.objectGroupApi;
-      if (api != null) {
-        return node.getProperties(api);
+      final nodeProperties = await node.getProperties(api);
+      properties.addAll(nodeProperties);
+
+      for (final p in nodeProperties) {
+        if (p.propertyType == 'RenderObject') {
+          final renderProperties = await p.getProperties(api);
+          properties.addAll(renderProperties);
+        }
       }
-      return Future.value(<RemoteDiagnosticsNode>[]);
+      return Future.value(properties);
     } catch (err) {
-      return Future.value(<RemoteDiagnosticsNode>[]);
+      return Future.value(properties);
       // TODO: handle error.
     }
   }
