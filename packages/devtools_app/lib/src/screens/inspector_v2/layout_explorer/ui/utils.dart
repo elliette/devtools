@@ -132,6 +132,7 @@ class WidgetVisualizer extends StatelessWidget {
   final OverflowSide? overflowSide;
 
   static const _overflowIndicatorSize = 20.0;
+  // TODO: share this with the layout_exporer container width.
   static const _borderUnselectedWidth = 1.0;
   static const _borderSelectedWidth = 3.0;
   static const _selectedPadding = 4.0;

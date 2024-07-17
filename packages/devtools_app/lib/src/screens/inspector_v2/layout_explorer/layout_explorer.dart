@@ -9,8 +9,11 @@ import 'package:devtools_app_shared/utils.dart';
 import 'package:flutter/material.dart';
 
 import '../../../shared/console/eval/inspector_tree_v2.dart';
+import '../../../shared/console/widgets/description.dart';
 import '../../../shared/diagnostics/diagnostics_node.dart';
+import '../../inspector/layout_explorer/ui/widgets_theme.dart';
 import '../inspector_controller.dart';
+import '../inspector_screen.dart';
 import '../layout_explorer/box/box.dart';
 import '../layout_explorer/flex/flex.dart';
 
@@ -43,20 +46,17 @@ class _LayoutExplorerTabState extends State<LayoutExplorerTab>
     }
 
     if (layoutExplorer != null) {
-      return Flex(
-        direction: Axis.horizontal,
+      return SplitPane(
+        axis: isScreenWiderThan(
+          context,
+          InspectorScreenBodyState.minScreenWidthForTextBeforeScaling,
+        )
+            ? Axis.horizontal
+            : Axis.vertical,
+        initialFractions: const [0.7, 0.3],
         children: [
-          Expanded(
-            flex: 3,
-            child: layoutExplorer,
-          ),
-          Expanded(
-            flex: 2,
-            child: WidgetProperties(
-              controller: controller,
-              node: node!,
-            ),
-          ),
+          layoutExplorer,
+          WidgetProperties(controller: controller, node: node!),
         ],
       );
     }
@@ -81,7 +81,6 @@ class _LayoutExplorerTabState extends State<LayoutExplorerTab>
       },
     );
   }
-
 }
 
 class WidgetProperties extends StatelessWidget {
@@ -103,8 +102,8 @@ class WidgetProperties extends StatelessWidget {
       return Future.value(<RemoteDiagnosticsNode>[]);
     } catch (err) {
       return Future.value(<RemoteDiagnosticsNode>[]);
-      // handle error.
-    }    
+      // TODO: handle error.
+    }
   }
 
   @override
@@ -118,11 +117,20 @@ class WidgetProperties extends StatelessWidget {
         }
 
         final properties = snapshot.data!;
-        return ListView.builder(
-          itemCount: properties.length,
-          itemBuilder: (context, index) {
-            return PropertyItem(property: properties[index]);
-          },
+        final borderColor = WidgetTheme.fromName(node.description).color;
+
+        return Container(
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: borderColor,
+            ),
+          ),
+          child: ListView.builder(
+            itemCount: properties.length,
+            itemBuilder: (context, index) {
+              return PropertyItem(property: properties[index]);
+            },
+          ),
         );
       },
     );
@@ -139,19 +147,8 @@ class PropertyItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return RichText(
-      text: TextSpan(
-        text: '${property.name!}: ',
-        style: theme.boldTextStyle,
-        children: <TextSpan>[
-          TextSpan(
-            text: property.description ?? 'null',
-            style: theme.subtleTextStyle,
-          ),
-        ],
-      ),
+    return DiagnosticsNodeDescription(
+      property,
     );
   }
 }
