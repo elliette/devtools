@@ -117,14 +117,9 @@ class WidgetProperties extends StatelessWidget {
         }
 
         final properties = snapshot.data!;
-        final borderColor = WidgetTheme.fromName(node.description).color;
 
         return Container(
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: borderColor,
-            ),
-          ),
+          margin: const EdgeInsets.all(denseSpacing),
           child: ListView.builder(
             itemCount: properties.length,
             itemBuilder: (context, index) {
