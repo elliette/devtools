@@ -11,9 +11,9 @@ import '../../../../shared/common_widgets.dart';
 import '../../../../shared/diagnostics/diagnostics_node.dart';
 import '../../../../shared/primitives/utils.dart';
 import '../../inspector_data_models.dart';
-import '../../widget_details/ui/overflow_indicator_painter.dart';
-import '../../widget_details/ui/theme.dart';
-import '../../widget_details/ui/widgets_theme.dart';
+import 'overflow_indicator_painter.dart';
+import 'theme.dart';
+import 'widgets_theme.dart';
 
 /// A widget for positioning sized widgets that follows layout as follows:
 ///      | top    |
@@ -135,6 +135,7 @@ class WidgetVisualizer extends StatelessWidget {
   // TODO: share this with the layout_exporer container width.
   static const _borderUnselectedWidth = 1.0;
   static const _borderSelectedWidth = 3.0;
+  static const _selectedPadding = 4.0;
 
   bool get drawOverflow => overflowSide != null;
 
@@ -144,6 +145,7 @@ class WidgetVisualizer extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final properties = layoutProperties;
     final borderColor = WidgetTheme.fromName(properties.node.description).color;
+    final boxAdjust = isSelected ? _selectedPadding : 0.0;
 
     return LayoutBuilder(
       builder: (context, constraints) {

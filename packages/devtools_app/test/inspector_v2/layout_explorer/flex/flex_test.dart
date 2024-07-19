@@ -4,7 +4,7 @@
 
 import 'dart:convert';
 
-import 'package:devtools_app/src/screens/inspector_v2/layout_explorer/flex/flex.dart';
+import 'package:devtools_app/src/screens/inspector_v2/widget_details/flex/flex.dart';
 import 'package:devtools_app/src/shared/console/eval/inspector_tree_v2.dart';
 import 'package:devtools_app/src/shared/diagnostics/diagnostics_node.dart';
 import 'package:devtools_test/devtools_test.dart';

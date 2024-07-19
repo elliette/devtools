@@ -20,6 +20,13 @@ class DiagnosticsTextStyles {
         color: colorScheme.onSurface,
       );
 
+  static TextStyle alternate(ColorScheme colorScheme) => TextStyle(
+        // The font size when not specified seems to be 14, but specify here since we
+        // are scaling based on this font size in [IdeTheme].
+        fontSize: defaultFontSize,
+        color: colorScheme.surfaceContainerHighest,
+      );
+
   static TextStyle warning(ColorScheme colorScheme) => TextStyle(
         color: colorScheme.isLight
             ? Colors.orange.shade900

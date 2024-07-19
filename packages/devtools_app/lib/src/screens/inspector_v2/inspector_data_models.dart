@@ -10,7 +10,7 @@ import '../../shared/diagnostics/diagnostics_node.dart';
 import '../../shared/primitives/enum_utils.dart';
 import '../../shared/primitives/math_utils.dart';
 import '../../shared/primitives/utils.dart';
-import 'layout_explorer/flex/utils.dart';
+import 'widget_details/flex/utils.dart';
 
 const overflowEpsilon = 0.1;
 

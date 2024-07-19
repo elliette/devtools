@@ -6,7 +6,7 @@ import 'package:devtools_app_shared/ui.dart';
 import 'package:flutter/material.dart';
 
 import 'inspector_controller.dart';
-import 'layout_explorer/layout_explorer.dart';
+import 'widget_details/widget_details.dart';
 
 class InspectorDetails extends StatelessWidget {
   const InspectorDetails({
@@ -23,7 +23,7 @@ class InspectorDetails extends StatelessWidget {
       child: Column(
         children: [
           Expanded(
-            child: LayoutExplorerTab(
+            child: WidgetDetails(
               controller: controller,
             ),
           ),
