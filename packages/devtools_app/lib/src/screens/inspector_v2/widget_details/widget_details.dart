@@ -16,7 +16,8 @@ import 'widget_properties/properties_view.dart';
 
 /// Pane showing details pertaining to the selected widget.
 ///
-/// Includes both the [LayoutExplorer] and the [PropertiesView].
+/// Includes both the [FlexLayoutExplorerWidget] or [BoxLayoutExplorerWidget]
+/// and the [PropertiesView].
 class WidgetDetails extends StatefulWidget {
   const WidgetDetails({super.key, required this.controller});
 
@@ -35,32 +36,39 @@ class _WidgetDetailsState extends State<WidgetDetails> with AutoDisposeMixin {
   RemoteDiagnosticsNode? previousSelection;
 
   Widget rootWidget(RemoteDiagnosticsNode? node) {
-    final layoutExplorer = node != null ? _layoutExplorerForNode(node) : null;
-
-    if (layoutExplorer != null) {
-      return SplitPane(
-        axis: isScreenWiderThan(
-          context,
-          InspectorScreenBodyState.minScreenWidthForTextBeforeScaling,
-        )
-            ? Axis.horizontal
-            : Axis.vertical,
-        initialFractions: const [0.7, 0.3],
-        children: [
-          layoutExplorer,
-          PropertiesView(controller: controller, node: node!),
-        ],
+    if (node == null) {
+      return const Center(
+        child: Text(
+          'Select a widget to view its layout.',
+          textAlign: TextAlign.center,
+          overflow: TextOverflow.clip,
+        ),
       );
     }
 
-    return Center(
-      child: Text(
-        node != null
-            ? 'Currently, Layout Explorer only supports Box and Flex-based widgets.'
-            : 'Select a widget to view its layout.',
-        textAlign: TextAlign.center,
-        overflow: TextOverflow.clip,
-      ),
+    final layoutExplorer = _layoutExplorerForNode(node);
+    return SplitPane(
+      axis: isScreenWiderThan(
+        context,
+        InspectorScreenBodyState.minScreenWidthForTextBeforeScaling,
+      )
+          ? Axis.horizontal
+          : Axis.vertical,
+      initialFractions: const [0.5, 0.5],
+      children: [
+        layoutExplorer != null
+            ? RoundedOutlinedBorder(child: layoutExplorer)
+            : const Center(
+                child: Text(
+                  'Currently, the Layout Explorer only supports Box and Flex-based widgets.',
+                  textAlign: TextAlign.center,
+                  overflow: TextOverflow.clip,
+                ),
+              ),
+        RoundedOutlinedBorder(
+          child: PropertiesView(controller: controller, node: node),
+        ),
+      ],
     );
   }
 

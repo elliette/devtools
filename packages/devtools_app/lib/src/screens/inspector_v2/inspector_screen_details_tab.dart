@@ -2,7 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import 'package:devtools_app_shared/ui.dart';
 import 'package:flutter/material.dart';
 
 import 'inspector_controller.dart';
@@ -18,17 +17,8 @@ class InspectorDetails extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RoundedOutlinedBorder(
-      clip: true,
-      child: Column(
-        children: [
-          Expanded(
-            child: WidgetDetails(
-              controller: controller,
-            ),
-          ),
-        ],
-      ),
+    return WidgetDetails(
+      controller: controller,
     );
   }
 }
