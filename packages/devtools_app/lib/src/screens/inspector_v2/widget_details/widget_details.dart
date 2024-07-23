@@ -14,7 +14,7 @@ import 'box/box.dart';
 import 'flex/flex.dart';
 import 'widget_properties/properties_view.dart';
 
-/// Pane showing details pertaining to the selected widget.
+/// Panes showing details pertaining to the selected widget.
 ///
 /// Includes both the [FlexLayoutExplorerWidget] or [BoxLayoutExplorerWidget]
 /// and the [PropertiesView].
