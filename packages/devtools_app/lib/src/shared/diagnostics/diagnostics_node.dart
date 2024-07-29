@@ -55,7 +55,7 @@ class RemoteDiagnosticsNode extends DiagnosticableTree {
   /// area using the right style.
   TextStyle? descriptionTextStyleFromBuild;
 
-  static final CustomIconMaker iconMaker = CustomIconMaker();
+  static final iconMaker = CustomIconMaker();
 
   static BoxConstraints deserializeConstraints(Map<String, Object?> json) {
     return BoxConstraints(
@@ -568,6 +568,57 @@ class RemoteDiagnosticsNode extends DiagnosticableTree {
     return _children ?? [];
   }
 
+  RemoteDiagnosticsNode? get hideableGroupLeader =>
+      isHideableGroupLeader ? this : _hideableGroupLeader;
+
+  RemoteDiagnosticsNode? _hideableGroupLeader;
+
+  set hideableGroupLeader(RemoteDiagnosticsNode? newLeader) {
+    _hideableGroupLeader = newLeader;
+  }
+
+  bool get groupIsHidden => inHideableGroup && _groupIsHidden;
+
+  bool _groupIsHidden = true;
+
+  set groupIsHidden(bool newValue) {
+    _groupIsHidden = newValue;
+  }
+
+  bool get isHidden =>
+      inHideableGroup && !isHideableGroupLeader && groupIsHidden;
+
+  bool get inHideableGroup {
+    final hasAtMostOneChild = childrenNow.length <= 1;
+    final isOnlyChild = (parent?.childrenNow ?? []).length == 1;
+    return !isCreatedByLocalProject && hasAtMostOneChild && isOnlyChild;
+  }
+
+  bool get isHideableGroupLeader {
+    return inHideableGroup && _hideableGroupSubordinates != null;
+  }
+
+  List<RemoteDiagnosticsNode>? get hideableGroupSubordinates =>
+      _hideableGroupSubordinates;
+  List<RemoteDiagnosticsNode>? _hideableGroupSubordinates;
+
+  void addHideableGroupSubordinate(RemoteDiagnosticsNode subordinate) {
+    (_hideableGroupSubordinates ??= <RemoteDiagnosticsNode>[]).add(subordinate);
+    subordinate.hideableGroupLeader = this;
+  }
+
+  void toggleHiddenGroup() {
+    // Only the hideable group leader can change the group's hidden state:
+    assert(isHideableGroupLeader);
+
+    final newHiddenValue = !_groupIsHidden;
+    _groupIsHidden = newHiddenValue;
+    if (isHideableGroupLeader) {
+      _hideableGroupSubordinates
+          ?.forEach((node) => node.groupIsHidden = newHiddenValue);
+    }
+  }
+
   Future<void> _computeChildren() async {
     _maybePopulateChildren();
     if (!hasChildren || _children != null) {
@@ -603,7 +654,7 @@ class RemoteDiagnosticsNode extends DiagnosticableTree {
     final jsonArray = json['children'] as List<Object?>?;
     if (jsonArray?.isNotEmpty == true) {
       final nodes = <RemoteDiagnosticsNode>[];
-      for (var element in jsonArray!.cast<Map<String, Object?>>()) {
+      for (final element in jsonArray!.cast<Map<String, Object?>>()) {
         final child =
             RemoteDiagnosticsNode(element, objectGroupApi, false, parent);
         child.parent = this;
@@ -622,7 +673,7 @@ class RemoteDiagnosticsNode extends DiagnosticableTree {
       cachedProperties = [];
       if (json.containsKey('properties')) {
         final jsonArray = json['properties'] as List<Object?>;
-        for (var element in jsonArray.cast<Map<String, Object?>>()) {
+        for (final element in jsonArray.cast<Map<String, Object?>>()) {
           cachedProperties!.add(
             RemoteDiagnosticsNode(element, objectGroupApi, true, parent),
           );
@@ -657,8 +708,8 @@ class RemoteDiagnosticsNode extends DiagnosticableTree {
     if (entries.length != node.json.entries.length) {
       return false;
     }
-    for (var entry in entries) {
-      final String key = entry.key;
+    for (final entry in entries) {
+      final key = entry.key;
       if (key == 'valueId') {
         continue;
       }
@@ -672,7 +723,7 @@ class RemoteDiagnosticsNode extends DiagnosticableTree {
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
     super.debugFillProperties(properties);
-    for (var property in inlineProperties) {
+    for (final property in inlineProperties) {
       properties.add(DiagnosticsProperty(property.name, property));
     }
   }
@@ -682,7 +733,7 @@ class RemoteDiagnosticsNode extends DiagnosticableTree {
     final children = childrenNow;
     if (children.isEmpty) return const <DiagnosticsNode>[];
     final regularChildren = <DiagnosticsNode>[];
-    for (var child in children) {
+    for (final child in children) {
       regularChildren.add(child.toDiagnosticsNode());
     }
     return regularChildren;

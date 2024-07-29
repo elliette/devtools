@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../service/service_extension_widgets.dart';
 import '../../../../service/service_extensions.dart' as extensions;
+import '../../../../service/vm_service_wrapper.dart';
 import '../../../../shared/analytics/constants.dart' as gac;
 import '../../../../shared/common_widgets.dart';
 import '../../../../shared/globals.dart';
@@ -104,13 +105,15 @@ class _RebuildStatsViewState extends State<RebuildStatsView>
                   gaSelection: gac.PerformanceEvents.clearRebuildStats.name,
                   onPressed: widget.model.clearAllCounts,
                 ),
-                const SizedBox(width: denseSpacing),
-                Flexible(
-                  child: ServiceExtensionCheckbox(
-                    serviceExtension: extensions.trackRebuildWidgets,
+                Expanded(
+                  child: Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: denseSpacing),
+                    child: ServiceExtensionCheckbox(
+                      serviceExtension: extensions.countWidgetBuilds,
+                    ),
                   ),
                 ),
-                const Spacer(),
               ],
             ),
           ),
@@ -120,13 +123,13 @@ class _RebuildStatsViewState extends State<RebuildStatsView>
             valueListenable: serviceConnection
                 .serviceManager.serviceExtensionManager
                 .getServiceExtensionState(
-              extensions.trackRebuildWidgets.extension,
+              extensions.countWidgetBuilds.extension,
             ),
             builder: (context, state, _) {
               if (metrics.isEmpty && !state.enabled) {
                 return const Center(
                   child: Text(
-                    'Track widget build counts must be enabled to see data.',
+                    'Count widget builds must be enabled to see data.',
                   ),
                 );
               }
@@ -141,6 +144,7 @@ class _RebuildStatsViewState extends State<RebuildStatsView>
                 key: const Key('Rebuild Table'),
                 metricNames: metricNames,
                 metrics: metrics,
+                includeBorder: false,
               );
             },
           ),
@@ -155,10 +159,12 @@ class RebuildTable extends StatefulWidget {
     super.key,
     required this.metricNames,
     required this.metrics,
+    this.includeBorder = true,
   });
 
   final List<String> metricNames;
   final List<RebuildLocationStats> metrics;
+  final bool includeBorder;
 
   @override
   State<RebuildTable> createState() => _RebuildTableState();
@@ -170,6 +176,8 @@ class _RebuildTableState extends State<RebuildTable> {
   /// Cache of columns so we don't confuse the Table by returning different
   /// column objects for the same column.
   final _columnCache = <String, _RebuildCountColumn>{};
+
+  VmServiceWrapper? get _service => serviceConnection.serviceManager.service;
 
   List<_RebuildCountColumn> get _metricsColumns {
     final columns = <_RebuildCountColumn>[];
@@ -193,25 +201,27 @@ class _RebuildTableState extends State<RebuildTable> {
 
   @override
   Widget build(BuildContext context) {
-    final borderSide = defaultBorderSide(Theme.of(context));
-    return Container(
-      decoration: BoxDecoration(
-        border: Border(right: borderSide),
-      ),
-      child: FlatTable<RebuildLocationStats>(
-        dataKey: 'RebuildMetricsTable',
-        columns: _columns,
-        data: widget.metrics,
-        keyFactory: (RebuildLocationStats location) =>
-            ValueKey<String?>('${location.location.id}'),
-        defaultSortColumn: _metricsColumns.first,
-        defaultSortDirection: sortDirection,
-        onItemSelected: (item) {
-          // TODO(jacobr): navigate to selected widget in IDE or display the
-          // content side by side with the rebuild table.
-        },
-      ),
+    final table = FlatTable<RebuildLocationStats>(
+      dataKey: 'RebuildMetricsTable',
+      columns: _columns,
+      data: widget.metrics,
+      keyFactory: (RebuildLocationStats location) =>
+          ValueKey<String?>('${location.location.id}'),
+      defaultSortColumn: _metricsColumns.first,
+      defaultSortDirection: sortDirection,
+      onItemSelected: (item) async {
+        final location = item?.location;
+        if (location?.fileUriString != null) {
+          await _service?.navigateToCode(
+            fileUriString: location?.fileUriString ?? '',
+            line: location?.line ?? 0,
+            column: location?.column ?? 0,
+            source: 'devtools.rebuildStats',
+          );
+        }
+      },
     );
+    return widget.includeBorder ? OutlineDecoration(child: table) : table;
   }
 }
 
@@ -233,21 +243,21 @@ class _LocationColumn extends ColumnData<RebuildLocationStats> {
 
   @override
   String getValue(RebuildLocationStats dataObject) {
-    final path = dataObject.location.path;
-    if (path == null) {
+    final fileUriString = dataObject.location.fileUriString;
+    if (fileUriString == null) {
       return '<resolving location>';
     }
 
-    return '${path.split('/').last}:${dataObject.location.line}';
+    return '${fileUriString.split('/').last}:${dataObject.location.line}';
   }
 
   @override
   String getTooltip(RebuildLocationStats dataObject) {
-    if (dataObject.location.path == null) {
+    if (dataObject.location.fileUriString == null) {
       return '<resolving location>';
     }
 
-    return '${dataObject.location.path}:${dataObject.location.line}';
+    return '${dataObject.location.fileUriString}:${dataObject.location.line}';
   }
 }
 

@@ -9,7 +9,7 @@ import 'package:intl/intl.dart';
 import '../../../../shared/primitives/utils.dart';
 
 /// All Raw data received from the VM or offline data.
-class MemoryTimeline {
+class MemoryTimeline with Serializable {
   MemoryTimeline({List<HeapSample>? data}) {
     this.data = data ?? []; // Not using const because data is mutable.
   }
@@ -22,9 +22,10 @@ class MemoryTimeline {
     );
   }
 
+  @override
   Map<String, dynamic> toJson() {
     return {
-      _jsonData: data.map((e) => e.toJson()).toList(),
+      _jsonData: data,
     };
   }
 
@@ -67,7 +68,7 @@ class MemoryTimeline {
     data.clear();
   }
 
-  static final DateFormat _milliFormat = DateFormat('HH:mm:ss.SSS');
+  static final _milliFormat = DateFormat('HH:mm:ss.SSS');
 
   static String fineGrainTimestampFormat(int timestamp) =>
       _milliFormat.format(DateTime.fromMillisecondsSinceEpoch(timestamp));
@@ -103,9 +104,7 @@ class MemoryTimeline {
 
   /// Grab and remove the event to be posted.
   EventSample pullEventSample() {
-    final result = _eventSamples.first;
-    _eventSamples.removeAt(0);
-    return result;
+    return _eventSamples.removeAt(0);
   }
 
   void addSnapshotEvent({bool auto = false}) {

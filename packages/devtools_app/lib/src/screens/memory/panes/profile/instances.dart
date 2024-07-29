@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../../shared/analytics/constants.dart';
@@ -23,11 +25,13 @@ class ProfileInstanceTableCell extends StatelessWidget {
     required this.count,
   }) : _shouldShowMenu = isSelected && count > 0;
 
+  // TODO(https://github.com/flutter/devtools/issues/7905): this is a bug that
+  // this is unused.
   final MemoryAreas gaContext;
   final int count;
   final bool _shouldShowMenu;
   final HeapClassName heapClass;
-  late final LiveClassSampler _sampler = LiveClassSampler(heapClass);
+  late final _sampler = LiveClassSampler(heapClass);
 
   @override
   Widget build(BuildContext context) {
@@ -91,7 +95,9 @@ class _StoreAsOneVariableMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MenuItemButton(
-      onPressed: sampler.oneLiveToConsole,
+      onPressed: () => unawaited(
+        sampler.oneLiveToConsole(sourceFeature: MemoryAreas.profile.name),
+      ),
       child: const Text('Store one instance as a console variable'),
     );
   }

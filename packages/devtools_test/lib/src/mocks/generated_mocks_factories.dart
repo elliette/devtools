@@ -36,10 +36,6 @@ MockPerformanceController createMockPerformanceControllerWithDefaults() {
   when(flutterFramesController.displayRefreshRate)
       .thenReturn(ValueNotifier<double>(defaultRefreshRate));
 
-  // Stubs for Raster Stats feature.
-  when(controller.rasterStatsController)
-      .thenReturn(RasterStatsController(controller));
-
   // Stubs for Timeline Events feature.
   when(controller.timelineEventsController)
       .thenReturn(timelineEventsController);
@@ -49,6 +45,8 @@ MockPerformanceController createMockPerformanceControllerWithDefaults() {
 
   // Stubs for Rebuild Count feature
   when(controller.rebuildCountModel).thenReturn(RebuildCountModel());
+  when(controller.rebuildStatsController)
+      .thenReturn(RebuildStatsController(controller));
 
   return controller;
 }
@@ -176,6 +174,8 @@ MockServiceManager<VmServiceWrapper> _createMockServiceManagerWithDefaults() {
   when(mockServiceManager.isolateManager).thenReturn(fakeIsolateManager);
   when(mockServiceManager.serviceExtensionManager)
       .thenReturn(fakeServiceExtensionManager);
+  when(mockServiceManager.connectedState)
+      .thenReturn(ValueNotifier(const ConnectedState(true)));
   return mockServiceManager;
 }
 
@@ -200,5 +200,16 @@ MockLoggingController createMockLoggingControllerWithDefaults({
   when(mockLoggingController.searchInProgressNotifier)
       .thenReturn(const FixedValueListenable(false));
   when(mockLoggingController.matchIndex).thenReturn(ValueNotifier<int>(0));
+  return mockLoggingController;
+}
+
+MockLoggingControllerV2 createMockLoggingControllerV2WithDefaults() {
+  provideDummy<ListValueNotifier<LogDataV2>>(
+    ListValueNotifier<LogDataV2>([]),
+  );
+  final mockLoggingController = MockLoggingControllerV2();
+  when(mockLoggingController.loggingModel).thenReturn(LoggingTableModel());
+  when(mockLoggingController.selectedLog)
+      .thenReturn(ValueNotifier<LogDataV2?>(null));
   return mockLoggingController;
 }

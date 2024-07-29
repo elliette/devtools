@@ -3,6 +3,8 @@
 // found in the LICENSE file.
 
 @TestOn('vm')
+library;
+
 import 'package:devtools_app/devtools_app.dart';
 import 'package:devtools_app/src/shared/ui/colors.dart';
 import 'package:devtools_app_shared/ui.dart';
@@ -154,8 +156,7 @@ void main() {
       });
 
       void verifyScrollOffset(WidgetTester tester, double expectedOffset) {
-        final Scrollbar scrollbar =
-            tester.widget<Scrollbar>(find.byType(Scrollbar));
+        final scrollbar = tester.widget<Scrollbar>(find.byType(Scrollbar));
         final scrollController = scrollbar.controller!;
         expect(scrollController.offset, equals(expectedOffset));
       }

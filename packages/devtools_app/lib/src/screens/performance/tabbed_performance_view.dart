@@ -17,7 +17,6 @@ import '../../shared/utils.dart';
 import 'panes/flutter_frames/flutter_frame_model.dart';
 import 'panes/flutter_frames/flutter_frames_controller.dart';
 import 'panes/frame_analysis/frame_analysis.dart';
-import 'panes/raster_stats/raster_stats.dart';
 import 'panes/rebuild_stats/rebuild_stats.dart';
 import 'panes/timeline_events/timeline_events_view.dart';
 import 'performance_controller.dart';
@@ -63,15 +62,12 @@ class _TabbedPerformanceViewState extends State<TabbedPerformanceView>
         serviceConnection.serviceManager.connectedApp!.isFlutterAppNow!;
 
     var showFrameAnalysis = isFlutterApp;
-    var showRasterStats = isFlutterApp;
     var showRebuildStats = FeatureFlags.widgetRebuildStats && isFlutterApp;
     final offlineData = controller.offlinePerformanceData;
     if (isOffline) {
       final hasOfflineData = offlineData != null;
       showFrameAnalysis =
           showFrameAnalysis && hasOfflineData && offlineData.frames.isNotEmpty;
-      showRasterStats =
-          showRasterStats && hasOfflineData && offlineData.rasterStats != null;
       showRebuildStats = showRebuildStats &&
           hasOfflineData &&
           offlineData.rebuildCountModel != null;
@@ -79,7 +75,6 @@ class _TabbedPerformanceViewState extends State<TabbedPerformanceView>
 
     final tabsAndControllers = _generateTabs(
       showFrameAnalysis: showFrameAnalysis,
-      showRasterStats: showRasterStats,
       showRebuildStats: showRebuildStats,
     );
     final tabs = tabsAndControllers
@@ -121,10 +116,9 @@ class _TabbedPerformanceViewState extends State<TabbedPerformanceView>
         PerformanceFeatureController? featureController,
       })> _generateTabs({
     required bool showFrameAnalysis,
-    required bool showRasterStats,
     required bool showRebuildStats,
   }) {
-    if (showFrameAnalysis || showRasterStats || showRebuildStats) {
+    if (showFrameAnalysis || showRebuildStats) {
       assert(serviceConnection.serviceManager.connectedApp!.isFlutterAppNow!);
     }
     return [
@@ -134,7 +128,7 @@ class _TabbedPerformanceViewState extends State<TabbedPerformanceView>
           tabView: KeepAliveWrapper(
             child: _selectedFlutterFrame != null
                 ? FlutterFrameAnalysisView(
-                    frameAnalysis: _selectedFlutterFrame!.frameAnalysis,
+                    frame: _selectedFlutterFrame!,
                     enhanceTracingController:
                         controller.enhanceTracingController,
                     rebuildCountModel: controller.rebuildCountModel,
@@ -147,19 +141,6 @@ class _TabbedPerformanceViewState extends State<TabbedPerformanceView>
           ),
           featureController: null,
         ),
-      if (showRasterStats)
-        (
-          tab: _buildTab(tabName: 'Raster Stats'),
-          tabView: KeepAliveWrapper(
-            child: Center(
-              child: RasterStatsView(
-                rasterStatsController: controller.rasterStatsController,
-                impellerEnabled: controller.impellerEnabled,
-              ),
-            ),
-          ),
-          featureController: controller.rasterStatsController,
-        ),
       if (showRebuildStats)
         (
           tab: _buildTab(tabName: 'Rebuild Stats'),
@@ -169,7 +150,7 @@ class _TabbedPerformanceViewState extends State<TabbedPerformanceView>
               selectedFrame: controller.flutterFramesController.selectedFrame,
             ),
           ),
-          featureController: null,
+          featureController: controller.rebuildStatsController,
         ),
       (
         tab: _buildTab(

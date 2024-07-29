@@ -12,7 +12,7 @@ import '../../../../../shared/memory/simple_items.dart';
 import '../../../../../shared/primitives/byte_utils.dart';
 import '../../../shared/primitives/simple_elements.dart';
 import '../controller/diff_pane_controller.dart';
-import '../controller/item_controller.dart';
+import '../controller/snapshot_item.dart';
 
 class SnapshotControlPane extends StatelessWidget {
   const SnapshotControlPane({super.key, required this.controller});
@@ -40,7 +40,7 @@ class SnapshotControlPane extends StatelessWidget {
                 minScreenWidthForTextBeforeScaling:
                     memoryControlsMinVerboseWidth,
                 gaScreen: gac.memory,
-                gaSelection: gac.MemoryEvent.diffSnapshotDownloadCsv,
+                gaSelection: gac.MemoryEvents.diffSnapshotDownloadCsv.name,
                 onPressed: controller.downloadCurrentItemToCsv,
               ),
             ],
@@ -76,8 +76,8 @@ class _DiffDropdown extends StatelessWidget {
 
   List<DropdownMenuItem<SnapshotDataItem>> items() =>
       controller.core.snapshots.value
-          .where((item) => item.hasData)
-          .cast<SnapshotDataItem>()
+          .whereType<SnapshotDataItem>()
+          .where((item) => item.isProcessed)
           .map(
         (item) {
           return DropdownMenuItem<SnapshotDataItem>(
@@ -103,13 +103,13 @@ class _DiffDropdown extends StatelessWidget {
               if ((value ?? current) == current) {
                 ga.select(
                   gac.memory,
-                  gac.MemoryEvent.diffSnapshotDiffOff,
+                  gac.MemoryEvents.diffSnapshotDiffSelectOff.name,
                 );
                 newDiffWith = null;
               } else {
                 ga.select(
                   gac.memory,
-                  gac.MemoryEvent.diffSnapshotDiffSelect,
+                  gac.MemoryEvents.diffSnapshotDiffSelect.name,
                 );
                 newDiffWith = value;
               }

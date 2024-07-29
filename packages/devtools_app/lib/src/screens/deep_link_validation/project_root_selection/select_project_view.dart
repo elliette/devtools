@@ -5,10 +5,12 @@
 import 'dart:async';
 
 import 'package:devtools_app_shared/ui.dart';
+import 'package:devtools_shared/devtools_deeplink.dart';
 import 'package:flutter/material.dart';
 
 import '../../../shared/analytics/analytics.dart' as ga;
 import '../../../shared/analytics/constants.dart' as gac;
+import '../../../shared/feature_flags.dart';
 import '../../../shared/globals.dart';
 import '../../../shared/primitives/utils.dart';
 import '../../../shared/server/server.dart' as server;
@@ -59,48 +61,91 @@ class _SelectProjectViewState extends State<SelectProjectView>
     });
   }
 
+  Future<List<String>> _requestAndridVariants(String directory) async {
+    ga.timeStart(gac.deeplink, gac.AnalyzeFlutterProject.loadVariants.name);
+    final androidVariants = await server.requestAndroidBuildVariants(directory);
+    if (androidVariants.isEmpty || !mounted) {
+      // If the project is not a Flutter project, cancel timing and return an empty list.
+      ga.cancelTimingOperation(
+        gac.deeplink,
+        gac.AnalyzeFlutterProject.loadVariants.name,
+      );
+      return [];
+    } else {
+      ga.timeEnd(gac.deeplink, gac.AnalyzeFlutterProject.loadVariants.name);
+      return androidVariants;
+    }
+  }
+
+  Future<XcodeBuildOptions> _requestiOSBuildOptions(String directory) async {
+    ga.timeStart(
+      gac.deeplink,
+      gac.AnalyzeFlutterProject.loadIosBuildOptions.name,
+    );
+    final iosBuildOptions = await server.requestIosBuildOptions(directory);
+    ga.timeEnd(
+      gac.deeplink,
+      gac.AnalyzeFlutterProject.loadIosBuildOptions.name,
+    );
+    return iosBuildOptions;
+  }
+
+  Future<void> showNonFlutterProjectDialog() async {
+    await showDialog(
+      context: context,
+      builder: (_) {
+        return const DevToolsDialog(
+          title: Text('You selected a non Flutter project'),
+          content: Text(
+            'It looks like you have selected a non-Flutter project. Please select a Flutter project instead.',
+          ),
+          actions: [
+            DialogCloseButton(),
+          ],
+        );
+      },
+    );
+    setState(() {
+      _retrievingFlutterProject = false;
+    });
+  }
+
   void _handleValidateProject(String directory) async {
     setState(() {
       _retrievingFlutterProject = true;
     });
-    ga.timeStart(gac.deeplink, gac.AnalyzeFlutterProject.loadVariants.name);
-    final List<String> androidVariants =
-        await server.requestAndroidBuildVariants(directory);
+    final connected =
+        serviceConnection.serviceManager.connectedState.value.connected;
+    if (connected &&
+        !serviceConnection.serviceManager.connectedApp!.isFlutterAppNow!) {
+      await showNonFlutterProjectDialog();
+      return;
+    }
+
+    final androidVariants = await _requestAndridVariants(directory);
     if (!mounted) {
-      ga.cancelTimingOperation(
-        gac.deeplink,
-        gac.AnalyzeFlutterProject.loadVariants.name,
-      );
       return;
     }
     if (androidVariants.isEmpty) {
-      ga.cancelTimingOperation(
+      ga.select(
         gac.deeplink,
-        gac.AnalyzeFlutterProject.loadVariants.name,
+        gac.AnalyzeFlutterProject.flutterInvalidAndroidProjectSelected.name,
       );
-      await showDialog(
-        context: context,
-        builder: (_) {
-          return const DevToolsDialog(
-            title: Text('You selected a non Flutter project'),
-            content: Text(
-              'It looks like you have selected a non-Flutter project. Please select a Flutter project instead.',
-            ),
-            actions: [
-              DialogCloseButton(),
-            ],
-          );
-        },
-      );
-    } else {
-      ga.timeEnd(gac.deeplink, gac.AnalyzeFlutterProject.loadVariants.name);
+      await showNonFlutterProjectDialog();
+    }
+    XcodeBuildOptions iosBuildOptions = XcodeBuildOptions.empty;
+    if (FeatureFlags.deepLinkIosCheck) {
+      iosBuildOptions = await _requestiOSBuildOptions(directory);
       ga.select(
         gac.deeplink,
         gac.AnalyzeFlutterProject.flutterProjectSelected.name,
       );
-      controller.selectedProject.value =
-          FlutterProject(path: directory, androidVariants: androidVariants);
     }
+    controller.selectedProject.value = FlutterProject(
+      path: directory,
+      androidVariants: androidVariants,
+      iosBuildOptions: iosBuildOptions,
+    );
     setState(() {
       _retrievingFlutterProject = false;
     });
@@ -120,7 +165,7 @@ class _SelectProjectViewState extends State<SelectProjectView>
           child: Text(
             'Select a local flutter project to check the status of all deep links.',
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleSmall,
+            style: Theme.of(context).textTheme.titleMedium,
           ),
         ),
         if (!projectRoots.isNullOrEmpty) ...[
@@ -165,7 +210,7 @@ class _LoadingProjectView extends StatelessWidget {
             child: const LinearProgressIndicator(),
           ),
           Text(
-            'The first load will take longer than usual',
+            'Loading your project usually takes about a minute.',
             style: theme.subtleTextStyle,
           ),
         ],

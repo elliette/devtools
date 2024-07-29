@@ -9,16 +9,14 @@ import 'dart:math';
 import 'package:devtools_app_shared/ui.dart';
 import 'package:devtools_app_shared/utils.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:vm_service/vm_service.dart';
 
 import '../screens/debugger/debugger_controller.dart';
-import '../screens/inspector/layout_explorer/ui/theme.dart';
 import 'analytics/analytics.dart' as ga;
 import 'analytics/constants.dart' as gac;
 import 'config_specific/copy_to_clipboard/copy_to_clipboard.dart';
-import 'config_specific/launch_url/launch_url.dart';
 import 'console/widgets/expandable_variable.dart';
 import 'diagnostics/dart_object_node.dart';
 import 'diagnostics/tree_builder.dart';
@@ -28,14 +26,10 @@ import 'primitives/utils.dart';
 import 'routing.dart';
 import 'utils.dart';
 
-/// The width of the package:flutter_test debugger device.
-const debuggerDeviceWidth = 800.0;
-
-const defaultDialogRadius = 20.0;
-
 double get assumedMonospaceCharacterWidth =>
     scaleByFontFactor(_assumedMonospaceCharacterWidth);
 double _assumedMonospaceCharacterWidth = 9.0;
+
 @visibleForTesting
 void setAssumedMonospaceCharacterWidth(double width) {
   _assumedMonospaceCharacterWidth = width;
@@ -259,10 +253,13 @@ class StartStopRecordingButton extends GaDevToolsButton {
 
   static IconData _icon(bool recording) =>
       recording ? Icons.stop : Icons.fiber_manual_record;
+
   static String _label(bool recording) =>
       recording ? 'Stop recording' : 'Start recording';
+
   static String _tooltip(bool recording) =>
       recording ? 'Stop recording' : 'Start recording';
+
   static Color? _color(bool recording) => recording ? Colors.red : null;
 
   final bool recording;
@@ -722,237 +719,10 @@ class InformationButton extends StatelessWidget {
       message: tooltip,
       child: IconButton(
         icon: const Icon(Icons.help_outline),
-        onPressed: () async => await launchUrl(link),
+        onPressed: () async => await launchUrlWithErrorHandling(link),
       ),
     );
   }
-}
-
-class RoundedCornerOptions {
-  const RoundedCornerOptions({
-    this.showTopLeft = true,
-    this.showTopRight = true,
-    this.showBottomLeft = true,
-    this.showBottomRight = true,
-  });
-
-  /// Static constant instance with all borders hidden
-  static const RoundedCornerOptions empty = RoundedCornerOptions(
-    showTopLeft: false,
-    showTopRight: false,
-    showBottomLeft: false,
-    showBottomRight: false,
-  );
-
-  final bool showTopLeft;
-  final bool showTopRight;
-  final bool showBottomLeft;
-  final bool showBottomRight;
-}
-
-class RoundedDropDownButton<T> extends StatelessWidget {
-  const RoundedDropDownButton({
-    super.key,
-    this.value,
-    this.onChanged,
-    this.isDense = false,
-    this.isExpanded = false,
-    this.style,
-    this.selectedItemBuilder,
-    this.items,
-    this.roundedCornerOptions,
-  });
-
-  final T? value;
-
-  final ValueChanged<T?>? onChanged;
-
-  final bool isDense;
-
-  final bool isExpanded;
-
-  final TextStyle? style;
-
-  final DropdownButtonBuilder? selectedItemBuilder;
-
-  final List<DropdownMenuItem<T>>? items;
-
-  final RoundedCornerOptions? roundedCornerOptions;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final bgColor = theme.colorScheme.backgroundColorSelected;
-
-    Radius selectRadius(bool show) {
-      return show ? defaultRadius : Radius.zero;
-    }
-
-    final style = this.style ?? theme.regularTextStyle;
-    final showTopLeft = roundedCornerOptions?.showTopLeft ?? true;
-    final showTopRight = roundedCornerOptions?.showTopRight ?? true;
-    final showBottomLeft = roundedCornerOptions?.showBottomLeft ?? true;
-    final showBottomRight = roundedCornerOptions?.showBottomRight ?? true;
-
-    final button = Center(
-      child: SizedBox(
-        height: defaultButtonHeight - 2.0, // subtract 2.0 for width of border
-        child: DropdownButtonHideUnderline(
-          child: DropdownButton<T>(
-            padding: const EdgeInsets.only(
-              left: defaultSpacing,
-              right: borderPadding,
-            ),
-            value: value,
-            onChanged: onChanged,
-            isDense: isDense,
-            isExpanded: isExpanded,
-            borderRadius: BorderRadius.only(
-              topLeft: selectRadius(showTopLeft),
-              topRight: selectRadius(showTopRight),
-              bottomLeft: selectRadius(showBottomLeft),
-              bottomRight: selectRadius(showBottomRight),
-            ),
-            style: style,
-            selectedItemBuilder: selectedItemBuilder,
-            items: items,
-            focusColor: bgColor,
-          ),
-        ),
-      ),
-    );
-
-    if (roundedCornerOptions == RoundedCornerOptions.empty) return button;
-
-    return RoundedOutlinedBorder(
-      showTopLeft: showTopLeft,
-      showTopRight: showTopRight,
-      showBottomLeft: showBottomLeft,
-      showBottomRight: showBottomRight,
-      child: button,
-    );
-  }
-}
-
-class DevToolsClearableTextField extends StatelessWidget {
-  DevToolsClearableTextField({
-    super.key,
-    required this.labelText,
-    TextEditingController? controller,
-    this.hintText,
-    this.prefixIcon,
-    this.additionalSuffixActions = const <Widget>[],
-    this.onChanged,
-    this.onSubmitted,
-    this.autofocus = false,
-    this.enabled,
-    this.roundedBorder = false,
-  }) : controller = controller ?? TextEditingController();
-
-  final TextEditingController controller;
-  final String? hintText;
-  final Widget? prefixIcon;
-  final List<Widget> additionalSuffixActions;
-  final String labelText;
-  final void Function(String)? onChanged;
-  final void Function(String)? onSubmitted;
-  final bool autofocus;
-  final bool? enabled;
-  final bool roundedBorder;
-
-  static const _contentVerticalPadding = 6.0;
-
-  /// This is the default border radius used by the [OutlineInputBorder]
-  /// constructor.
-  static const _defaultInputBorderRadius =
-      BorderRadius.all(Radius.circular(4.0));
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return SizedBox(
-      height: defaultTextFieldHeight,
-      child: TextField(
-        autofocus: autofocus,
-        controller: controller,
-        enabled: enabled,
-        onChanged: onChanged,
-        onSubmitted: onSubmitted,
-        style: theme.regularTextStyle,
-        decoration: InputDecoration(
-          isDense: true,
-          contentPadding: const EdgeInsets.only(
-            top: _contentVerticalPadding,
-            bottom: _contentVerticalPadding,
-            left: denseSpacing,
-            right: densePadding,
-          ),
-          constraints: BoxConstraints(
-            minHeight: defaultTextFieldHeight,
-            maxHeight: defaultTextFieldHeight,
-          ),
-          border: OutlineInputBorder(
-            borderRadius: roundedBorder
-                ? const BorderRadius.all(defaultRadius)
-                : _defaultInputBorderRadius,
-          ),
-          labelText: labelText,
-          labelStyle: theme.subtleTextStyle,
-          hintText: hintText,
-          hintStyle: theme.subtleTextStyle,
-          prefixIcon: prefixIcon,
-          suffix: SizedBox(
-            height: inputDecorationElementHeight,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                clearInputButton(
-                  () {
-                    controller.clear();
-                    onChanged?.call('');
-                  },
-                ),
-                ...additionalSuffixActions,
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-Widget clearInputButton(VoidCallback onPressed) {
-  return inputDecorationSuffixButton(
-    icon: Icons.clear,
-    onPressed: onPressed,
-    tooltip: 'Clear',
-  );
-}
-
-Widget closeSearchDropdownButton(VoidCallback? onPressed) {
-  return inputDecorationSuffixButton(icon: Icons.close, onPressed: onPressed);
-}
-
-Widget inputDecorationSuffixButton({
-  required IconData icon,
-  required VoidCallback? onPressed,
-  String? tooltip,
-}) {
-  return maybeWrapWithTooltip(
-    tooltip: tooltip,
-    child: SizedBox(
-      height: inputDecorationElementHeight,
-      width: inputDecorationElementHeight + denseSpacing,
-      child: IconButton(
-        padding: EdgeInsets.zero,
-        onPressed: onPressed,
-        iconSize: defaultIconSize,
-        splashRadius: defaultIconSize,
-        icon: Icon(icon),
-      ),
-    ),
-  );
 }
 
 class OutlinedRowGroup extends StatelessWidget {
@@ -991,7 +761,7 @@ class OutlinedRowGroup extends StatelessWidget {
 class ThickDivider extends StatelessWidget {
   const ThickDivider({super.key});
 
-  static const double thickDividerHeight = 5;
+  static const thickDividerHeight = 5.0;
 
   @override
   Widget build(BuildContext context) {
@@ -1279,6 +1049,7 @@ class TextViewer extends StatelessWidget {
   });
 
   final String text;
+
   // TODO: change the maxLength if we determine a more appropriate limit
   // in https://github.com/flutter/devtools/issues/6263.
   final int maxLength;
@@ -1466,7 +1237,7 @@ class MoreInfoLink extends StatelessWidget {
   }
 
   void _onLinkTap() {
-    unawaited(launchUrl(url));
+    unawaited(launchUrlWithErrorHandling(url));
     ga.select(gaScreenName, gaSelectedItemDescription);
   }
 }
@@ -1480,7 +1251,7 @@ class LinkIconLabel extends StatelessWidget {
   });
 
   final IconData icon;
-  final Link link;
+  final GaLink link;
   final Color? color;
 
   @override
@@ -1511,49 +1282,41 @@ class LinkIconLabel extends StatelessWidget {
   }
 
   void _onLinkTap() {
-    unawaited(launchUrl(link.url));
+    unawaited(launchUrlWithErrorHandling(link.url));
     if (link.gaScreenName != null && link.gaSelectedItemDescription != null) {
       ga.select(link.gaScreenName!, link.gaSelectedItemDescription!);
     }
   }
 }
 
-class LinkTextSpan extends TextSpan {
-  LinkTextSpan({
-    required Link link,
-    required BuildContext context,
+class GaLinkTextSpan extends LinkTextSpan {
+  GaLinkTextSpan({
+    required GaLink link,
+    required super.context,
     TextStyle? style,
   }) : super(
-          text: link.display,
-          style: style ?? Theme.of(context).linkTextStyle,
-          recognizer: TapGestureRecognizer()
-            ..onTap = () async {
-              if (link.gaScreenName != null &&
-                  link.gaSelectedItemDescription != null) {
-                ga.select(
-                  link.gaScreenName!,
-                  link.gaSelectedItemDescription!,
-                );
-              }
-              await launchUrl(link.url);
-            },
+          link: link,
+          onTap: () {
+            if (link.gaScreenName != null &&
+                link.gaSelectedItemDescription != null) {
+              ga.select(
+                link.gaScreenName!,
+                link.gaSelectedItemDescription!,
+              );
+            }
+          },
         );
 }
 
-class Link {
-  const Link({
-    required this.display,
-    required this.url,
+class GaLink extends Link {
+  const GaLink({
+    required super.display,
+    required super.url,
     this.gaScreenName,
     this.gaSelectedItemDescription,
   });
 
-  final String display;
-
-  final String url;
-
   final String? gaScreenName;
-
   final String? gaSelectedItemDescription;
 }
 
@@ -1574,7 +1337,7 @@ class Legend extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textStyle = dense ? Theme.of(context).legendTextStyle : null;
-    final List<Widget> legendItems = entries
+    final legendItems = entries
         .map(
           (entry) => _legendItem(
             entry.description,
@@ -2230,8 +1993,8 @@ class ContextMenuButton extends StatelessWidget {
     double? iconSize,
   }) : iconSize = iconSize ?? tableIconSize;
 
-  static const double defaultWidth = 14.0;
-  static const double densePadding = 2.0;
+  static const defaultWidth = 14.0;
+  static const densePadding = 2.0;
 
   final Color? color;
   final String? gaScreen;
@@ -2266,6 +2029,88 @@ class ContextMenuButton extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// A Widget for displaying a setting field, that sets and integer value.
+class PositiveIntegerSetting extends StatefulWidget {
+  const PositiveIntegerSetting({
+    super.key,
+    required this.title,
+    required this.subTitle,
+    required this.notifier,
+  });
+
+  final String title;
+  final String subTitle;
+  final ValueNotifier<int> notifier;
+
+  @override
+  State<PositiveIntegerSetting> createState() => _PositiveIntegerSettingState();
+}
+
+class _PositiveIntegerSettingState extends State<PositiveIntegerSetting>
+    with AutoDisposeMixin {
+  late final TextEditingController _textEditingController;
+
+  @override
+  void initState() {
+    super.initState();
+
+    addAutoDisposeListener(
+      widget.notifier,
+      () => _textEditingController.text = widget.notifier.value.toString(),
+    );
+
+    _textEditingController = TextEditingController()
+      ..text = widget.notifier.value.toString();
+  }
+
+  @override
+  void dispose() {
+    _textEditingController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(widget.title),
+              Text(
+                widget.subTitle,
+                style: theme.subtleTextStyle,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: defaultSpacing),
+        SizedBox(
+          height: defaultTextFieldHeight,
+          width: defaultTextFieldNumberWidth,
+          child: TextField(
+            textAlignVertical: TextAlignVertical.top,
+            style: theme.regularTextStyle,
+            decoration: singleLineDialogTextFieldDecoration,
+            controller: _textEditingController,
+            inputFormatters: <TextInputFormatter>[
+              // Only positive integers.
+              FilteringTextInputFormatter.allow(
+                RegExp(r'^[1-9][0-9]*'),
+              ),
+            ],
+            onChanged: (String text) {
+              widget.notifier.value = int.parse(text);
+            },
+          ),
+        ),
+      ],
     );
   }
 }

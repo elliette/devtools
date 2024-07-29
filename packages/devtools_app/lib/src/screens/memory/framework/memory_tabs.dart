@@ -14,9 +14,8 @@ import 'memory_controller.dart';
 
 @visibleForTesting
 class MemoryScreenKeys {
-  static const dartHeapTableProfileTab = Key('Dart Heap Profile Tab');
-  static const dartHeapAllocationTracingTab =
-      Key('Dart Heap Allocation Tracing Tab');
+  static const profileTab = Key('Dart Heap Profile Tab');
+  static const traceTab = Key('Trace Tab');
   static const diffTab = Key('Diff Tab');
 }
 
@@ -33,7 +32,7 @@ class MemoryTabView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnalyticsTabbedView(
-      tabs: _generateTabRecords(),
+      tabs: [_profile(), _diff(), _trace()],
       initialSelectedIndex: controller.selectedFeatureTabIndex,
       gaScreen: gac.memory,
       onTabChanged: (int index) {
@@ -42,21 +41,7 @@ class MemoryTabView extends StatelessWidget {
     );
   }
 
-  List<({DevToolsTab tab, Widget tabView})> _generateTabRecords() {
-    return [
-      (
-        tab: DevToolsTab.create(
-          key: MemoryScreenKeys.dartHeapTableProfileTab,
-          tabName: 'Profile Memory',
-          gaPrefix: _gaPrefix,
-        ),
-        tabView: KeepAliveWrapper(
-          child: AllocationProfileTableView(
-            controller: controller.profile,
-          ),
-        ),
-      ),
-      (
+  TabAndView _diff() => (
         tab: DevToolsTab.create(
           key: MemoryScreenKeys.diffTab,
           gaPrefix: _gaPrefix,
@@ -67,17 +52,29 @@ class MemoryTabView extends StatelessWidget {
             diffController: controller.diff,
           ),
         ),
-      ),
-      (
+      );
+
+  TabAndView _profile() => (
         tab: DevToolsTab.create(
-          key: MemoryScreenKeys.dartHeapAllocationTracingTab,
+          key: MemoryScreenKeys.profileTab,
+          tabName: 'Profile Memory',
+          gaPrefix: _gaPrefix,
+        ),
+        tabView: KeepAliveWrapper(
+          child: AllocationProfileTableView(
+            controller: controller.profile!,
+          ),
+        ),
+      );
+
+  TabAndView _trace() => (
+        tab: DevToolsTab.create(
+          key: MemoryScreenKeys.traceTab,
           tabName: 'Trace Instances',
           gaPrefix: _gaPrefix,
         ),
         tabView: KeepAliveWrapper(
-          child: TracingPane(controller: controller.tracing),
+          child: TracingPane(controller: controller.trace!),
         ),
-      ),
-    ];
-  }
+      );
 }

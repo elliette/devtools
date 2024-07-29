@@ -7,10 +7,11 @@ import 'dart:convert';
 import 'package:devtools_app_shared/service.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../devtools.dart';
 import '../../globals.dart';
+import '../../primitives/encoding.dart';
 import '../../primitives/utils.dart';
 import '../../screen.dart';
+import '../../utils.dart';
 import '_export_desktop.dart' if (dart.library.js_interop) '_export_web.dart';
 
 const nonDevToolsFileMessage = 'The imported file is not a Dart DevTools file.'
@@ -58,7 +59,7 @@ class ImportController {
     previousImportTime = now;
 
     final json = jsonFile.data;
-    final isDevToolsSnapshot = json is Map<String, dynamic> &&
+    final isDevToolsSnapshot = json is Map<String, Object?> &&
         json[DevToolsExportKeys.devToolsSnapshot.name] == true;
     if (!isDevToolsSnapshot) {
       notificationService.push(nonDevToolsFileMessage);
@@ -156,13 +157,13 @@ abstract class ExportController {
     required String fileName,
   });
 
-  Map<String, dynamic> generateDataForExport({
-    required Map<String, dynamic> offlineScreenData,
+  Map<String, Object?> generateDataForExport({
+    required Map<String, Object?> offlineScreenData,
     ConnectedApp? connectedApp,
   }) {
     final contents = {
       DevToolsExportKeys.devToolsSnapshot.name: true,
-      DevToolsExportKeys.devToolsVersion.name: version,
+      DevToolsExportKeys.devToolsVersion.name: devToolsVersion,
       DevToolsExportKeys.connectedApp.name: connectedApp?.toJson() ??
           serviceConnection.serviceManager.connectedApp!.toJson(),
       ...offlineScreenData,
@@ -172,8 +173,11 @@ abstract class ExportController {
     return contents;
   }
 
-  String encode(Map<String, dynamic> offlineScreenData) {
+  String encode(Map<String, Object?> offlineScreenData) {
     final data = generateDataForExport(offlineScreenData: offlineScreenData);
-    return jsonEncode(data);
+    return jsonEncode(
+      data,
+      toEncodable: toEncodable,
+    );
   }
 }

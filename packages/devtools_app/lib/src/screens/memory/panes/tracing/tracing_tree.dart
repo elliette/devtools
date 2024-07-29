@@ -17,14 +17,14 @@ import '../../../profiler/panes/cpu_profile_columns.dart';
 import 'tracing_data.dart';
 import 'tracing_pane_controller.dart';
 
-const double _countColumnWidth = 100;
+const _countColumnWidth = 100.0;
 
 /// Displays an allocation profile as a tree of stack frames, displaying
 /// inclusive and exclusive allocation counts.
 class AllocationTracingTree extends StatefulWidget {
   const AllocationTracingTree({super.key, required this.controller});
 
-  final TracingPaneController controller;
+  final TracePaneController controller;
 
   static final _bottomUpTab = _buildTab(tabName: 'Bottom Up');
   static final _callTreeTab = _buildTab(tabName: 'Call Tree');
@@ -67,26 +67,26 @@ class _AllocationTracingTreeState extends State<AllocationTracingTree>
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<TracingIsolateState>(
-      valueListenable: widget.controller.stateForIsolate,
+      valueListenable: widget.controller.selection,
       builder: (context, state, _) {
         return ValueListenableBuilder<TracedClass?>(
-          valueListenable: state.selectedTracedClass,
+          valueListenable: state.selectedClass,
           builder: (context, selection, _) {
+            final data = state.selectedClassProfile;
+
             if (selection == null) {
               return const _TracingInstructions();
             } else if (!selection.traceAllocations) {
               return _TracingInstructions(
                 prefix: 'Allocation tracing is not enabled for class '
-                    '${selection.cls.name}.',
+                    '${selection.clazz.name}.',
               );
             } else if (selection.traceAllocations &&
-                (state.selectedTracedClassAllocationData == null ||
-                    state.selectedTracedClassAllocationData!.bottomUpRoots
-                        .isEmpty)) {
+                (data == null || data.bottomUpRoots.isEmpty)) {
               return Padding(
                 padding: const EdgeInsets.all(largeSpacing),
                 child: Text(
-                  'No allocation samples have been collected for class ${selection.cls.name}.\n',
+                  'No allocation samples have been collected for class ${selection.clazz.name}.\n',
                 ),
               );
             }
@@ -105,13 +105,11 @@ class _AllocationTracingTreeState extends State<AllocationTracingTree>
                     children: [
                       // Bottom-up tree view
                       TracingTable(
-                        dataRoots: state
-                            .selectedTracedClassAllocationData!.bottomUpRoots,
+                        dataRoots: state.selectedClassProfile!.bottomUpRoots,
                       ),
                       // Call tree view
                       TracingTable(
-                        dataRoots: state
-                            .selectedTracedClassAllocationData!.callTreeRoots,
+                        dataRoots: state.selectedClassProfile!.callTreeRoots,
                       ),
                     ],
                   ),
@@ -169,7 +167,7 @@ class _TracingTreeHeader extends StatelessWidget {
     required this.updateTreeStateCallback,
   });
 
-  final TracingPaneController controller;
+  final TracePaneController controller;
   final void Function(VoidCallback) updateTreeStateCallback;
   final TabController tabController;
   final List<DevToolsTab> tabs;
@@ -177,7 +175,6 @@ class _TracingTreeHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final textTheme = theme.textTheme;
     final colorScheme = theme.colorScheme;
     return AreaPaneHeader(
       title: Text.rich(
@@ -188,8 +185,7 @@ class _TracingTreeHeader extends StatelessWidget {
             ),
             TextSpan(
               style: theme.fixedFontStyle,
-              text: controller
-                  .stateForIsolate.value.selectedTracedClass.value?.cls.name!,
+              text: controller.selection.value.selectedClass.value?.clazz.name!,
             ),
           ],
         ),
@@ -199,7 +195,7 @@ class _TracingTreeHeader extends StatelessWidget {
       actions: [
         const Spacer(),
         TabBar(
-          labelColor: textTheme.bodyLarge?.color ?? colorScheme.primary,
+          labelColor: colorScheme.primary,
           tabs: tabs,
           isScrollable: true,
           controller: tabController,
@@ -207,7 +203,7 @@ class _TracingTreeHeader extends StatelessWidget {
         const SizedBox(width: denseSpacing),
         ExpandAllButton(
           gaScreen: gac.memory,
-          gaSelection: gac.MemoryEvent.tracingTreeExpandAll,
+          gaSelection: gac.MemoryEvents.tracingTreeExpandAll.name,
           onPressed: () => updateTreeStateCallback(
             () {
               for (final root in _currentDataRoots) {
@@ -219,7 +215,7 @@ class _TracingTreeHeader extends StatelessWidget {
         const SizedBox(width: denseSpacing),
         CollapseAllButton(
           gaScreen: gac.memory,
-          gaSelection: gac.MemoryEvent.tracingTreeCollapseAll,
+          gaSelection: gac.MemoryEvents.tracingTreeCollapseAll.name,
           onPressed: () => updateTreeStateCallback(
             () {
               for (final root in _currentDataRoots) {
@@ -235,8 +231,7 @@ class _TracingTreeHeader extends StatelessWidget {
   List<CpuStackFrame> get _currentDataRoots {
     final isBottomUp =
         tabs[tabController.index] == AllocationTracingTree._bottomUpTab;
-    final data =
-        controller.stateForIsolate.value.selectedTracedClassAllocationData!;
+    final data = controller.selection.value.selectedClassProfile!;
     return isBottomUp ? data.bottomUpRoots : data.callTreeRoots;
   }
 }
@@ -257,7 +252,7 @@ class _InclusiveCountColumn extends ColumnData<CpuStackFrame> {
 
   @override
   int compare(CpuStackFrame a, CpuStackFrame b) {
-    final int result = super.compare(a, b);
+    final result = super.compare(a, b);
     if (result == 0) {
       return a.name.compareTo(b.name);
     }
@@ -290,7 +285,7 @@ class _ExclusiveCountColumn extends ColumnData<CpuStackFrame> {
 
   @override
   int compare(CpuStackFrame a, CpuStackFrame b) {
-    final int result = super.compare(a, b);
+    final result = super.compare(a, b);
     if (result == 0) {
       return a.name.compareTo(b.name);
     }

@@ -4,6 +4,10 @@
 
 import 'package:collection/collection.dart';
 
+// TODO(https://github.com/flutter/devtools/issues/7955): let extensions declare
+// the type of tool they are providing: 'static-only', 'runtime-only', or
+// 'static-and-runtime'.
+
 /// Describes an extension that can be dynamically loaded into a custom screen
 /// in DevTools.
 class DevToolsExtensionConfig implements Comparable<DevToolsExtensionConfig> {
@@ -56,7 +60,7 @@ class DevToolsExtensionConfig implements Comparable<DevToolsExtensionConfig> {
 
       // Defaults to the code point for [Icons.extensions_outlined] if parsing
       // fails.
-      late int codePoint;
+      final int codePoint;
       const defaultCodePoint = 0xf03f;
       if (codePointFromJson is String) {
         codePoint = int.tryParse(codePointFromJson) ?? defaultCodePoint;

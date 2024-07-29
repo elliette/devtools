@@ -12,6 +12,7 @@ import 'package:vm_service/vm_service.dart' hide Error;
 
 import '../utils/auto_dispose.dart';
 import 'connected_app.dart';
+import 'constants.dart';
 import 'isolate_manager.dart';
 import 'service_extensions.dart' as extensions;
 import 'service_utils.dart';
@@ -66,21 +67,21 @@ final class ServiceExtensionManager with DisposerMixin {
 
   Future<void> _handleExtensionEvent(Event event) async {
     switch (event.extensionKind) {
-      case 'Flutter.FirstFrame':
-      case 'Flutter.Frame':
+      case FlutterEvent.firstFrame:
+      case FlutterEvent.frame:
         await _onFrameEventReceived();
         break;
-      case 'Flutter.ServiceExtensionStateChanged':
+      case FlutterEvent.serviceExtensionStateChanged:
         final name = event.rawExtensionData['extension'].toString();
         final encodedValue = event.rawExtensionData['value'].toString();
         await _updateServiceExtensionForStateChange(name, encodedValue);
         break;
-      case 'HttpTimelineLoggingStateChange':
+      case DeveloperServiceEvent.httpTimelineLoggingStateChange:
         final name = extensions.httpEnableTimelineLogging.extension;
         final encodedValue = event.rawExtensionData['enabled'].toString();
         await _updateServiceExtensionForStateChange(name, encodedValue);
         break;
-      case 'SocketProfilingStateChange':
+      case DeveloperServiceEvent.socketProfilingStateChange:
         final name = extensions.socketProfiling.extension;
         final encodedValue = event.rawExtensionData['enabled'].toString();
         await _updateServiceExtensionForStateChange(name, encodedValue);
@@ -129,10 +130,10 @@ final class ServiceExtensionManager with DisposerMixin {
     final expectedValueType =
         extensions.serviceExtensionsAllowlist[name]!.values.first.runtimeType;
     switch (expectedValueType) {
-      case bool:
+      case const (bool):
         return encodedValue == 'true';
-      case int:
-      case double:
+      case const (int):
+      case const (double):
         return num.parse(encodedValue);
       default:
         return encodedValue;
@@ -149,7 +150,7 @@ final class ServiceExtensionManager with DisposerMixin {
     final extensionsToProcess = _pendingServiceExtensions.toList();
     _pendingServiceExtensions.clear();
     await Future.wait([
-      for (String extension in extensionsToProcess)
+      for (final extension in extensionsToProcess)
         _addServiceExtension(extension),
     ]);
   }
@@ -162,8 +163,7 @@ final class ServiceExtensionManager with DisposerMixin {
     _checkForFirstFrameStarted = false;
 
     final isolateRef = _isolateManager.mainIsolate.value!;
-    final Isolate? isolate =
-        await _isolateManager.isolateState(isolateRef).isolate;
+    final isolate = await _isolateManager.isolateState(isolateRef).isolate;
 
     if (isolate == null) return;
 
@@ -186,12 +186,12 @@ final class ServiceExtensionManager with DisposerMixin {
           return;
         }
         await Future.wait([
-          for (String extension in mainIsolate.extensionRPCs!)
+          for (final extension in mainIsolate.extensionRPCs!)
             _maybeAddServiceExtension(extension),
         ]);
       } else {
         await Future.wait([
-          for (String extension in mainIsolate.extensionRPCs!)
+          for (final extension in mainIsolate.extensionRPCs!)
             _addServiceExtension(extension),
         ]);
       }
@@ -199,7 +199,7 @@ final class ServiceExtensionManager with DisposerMixin {
   }
 
   Future<void> _maybeCheckForFirstFlutterFrame() async {
-    final IsolateRef? lastMainIsolate = _isolateManager.mainIsolate.value;
+    final lastMainIsolate = _isolateManager.mainIsolate.value;
     if (_checkForFirstFrameStarted ||
         _firstFrameEventReceived ||
         lastMainIsolate == null) return;
@@ -289,18 +289,17 @@ final class ServiceExtensionManager with DisposerMixin {
         if (isolateRef != _mainIsolate) return;
 
         switch (expectedValueType) {
-          case bool:
-            final bool enabled =
-                response.json!['enabled'] == 'true' ? true : false;
+          case const (bool):
+            final enabled = response.json!['enabled'] == 'true' ? true : false;
             await _maybeRestoreExtension(name, enabled);
             return;
-          case String:
+          case const (String):
             final String? value = response.json!['value'];
             await _maybeRestoreExtension(name, value);
             return;
-          case int:
-          case double:
-            final num value = num.parse(
+          case const (int):
+          case const (double):
+            final value = num.parse(
               response.json![name.substring(name.lastIndexOf('.') + 1)],
             );
             await _maybeRestoreExtension(name, value);
@@ -320,8 +319,7 @@ final class ServiceExtensionManager with DisposerMixin {
 
     if (isolateRef != _mainIsolate) return;
 
-    final Isolate? isolate =
-        await _isolateManager.isolateState(isolateRef).isolate;
+    final isolate = await _isolateManager.isolateState(isolateRef).isolate;
     if (isolateRef != _mainIsolate) return;
 
     // Do not try to restore Dart IO extensions for a paused isolate.
@@ -403,8 +401,7 @@ final class ServiceExtensionManager with DisposerMixin {
     }
 
     if (mainIsolate == null) return;
-    final Isolate? isolate =
-        await _isolateManager.isolateState(mainIsolate).isolate;
+    final isolate = await _isolateManager.isolateState(mainIsolate).isolate;
     if (_isolateManager.mainIsolate.value != mainIsolate) return;
 
     // Do not try to call Dart IO extensions for a paused isolate.

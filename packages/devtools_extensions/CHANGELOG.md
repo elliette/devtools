@@ -1,3 +1,13 @@
+## 0.2.2-wip
+* Load the IDE Theme from the extension URL instead of creating
+a placeholder `IdeTheme` object.
+
+## 0.2.1
+* Add testimonies from extension authors to the `README.md`.
+* Add an integration test to the example app, `app_that_uses_foo`.
+* Bump minimum Dart SDK version to Dart stable `3.4.3` and minimum Flutter SDK
+version to Flutter stable `3.22.2`.
+
 ## 0.2.0-dev.0
 * Deprecate the `DevToolsExtension.requiresRunningApplication` field.
 * Update `extension_config_spec.md` to include an optional field `requiresConnection`.
@@ -6,6 +16,9 @@
 * Bump `vm_service` dependency to `^14.2.1`.
 * Dispose `DTDManager` when the `DevToolsExtension` widget state is disposed.
 * Add an example of a standalone extension.
+* Add examples of Dart and Flutter tests that can be ran and connected to
+available DevTools extensions.
+* Add an example of interacting with the Dart Tooling Daemon from a DevTools extension.
 
 ## 0.1.1
 * Update the simulated environment help dialogs with information about the

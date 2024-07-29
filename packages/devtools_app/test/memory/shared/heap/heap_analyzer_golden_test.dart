@@ -11,7 +11,7 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../../test_infra/test_data/memory/heap/heap_data.dart';
 
 void main() {
-  for (var t in goldenHeapTests) {
+  for (final t in goldenHeapTests) {
     group(t.fileName, () {
       late HeapData heap;
       late int appClassId;
@@ -19,7 +19,8 @@ void main() {
       setUp(() async {
         PathFromRoot.resetSingletons();
 
-        heap = await HeapData.calculate(await t.loadHeap(), DateTime.now());
+        heap = HeapData(await t.loadHeap(), created: DateTime.now());
+        await heap.calculate;
         expect(PathFromRoot.debugUsage.stored, isPositive);
         expect(
           PathFromRoot.debugUsage.constructed,

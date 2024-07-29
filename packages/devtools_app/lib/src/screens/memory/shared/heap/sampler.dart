@@ -24,10 +24,11 @@ class _HeapObjects {
   ///
   /// CPU and memory heavy to calculate,
   /// so avoid calling this member unless necessary.
-  late final Set<int> codes = objects.indexes
-      .map((index) => heap.graph.objects[index].identityHashCode)
-      .where((code) => code > 0)
-      .toSet();
+  late final codes = Set<int>.of(
+    objects.indexes
+        .map((index) => heap.graph.objects[index].identityHashCode)
+        .where((code) => code > 0),
+  );
 }
 
 class LiveClassSampler {
@@ -118,7 +119,7 @@ class LiveClassSampler {
   }) async {
     ga.select(
       gac.memory,
-      gac.MemoryEvent.dropAllLiveToConsole(
+      gac.MemoryEvents.dropAllLiveToConsole(
         includeImplementers: includeImplementers,
         includeSubclasses: includeSubclasses,
       ),
@@ -136,7 +137,7 @@ class LiveClassSampler {
     final selection = _objects;
 
     // drop to console
-    serviceConnection.consoleService.appendBrowsableInstance(
+    await serviceConnection.consoleService.appendBrowsableInstance(
       instanceRef: list,
       isolateRef: _mainIsolateRef,
       heapSelection:
@@ -144,11 +145,14 @@ class LiveClassSampler {
     );
   }
 
-  Future<void> oneLiveToConsole() async {
-    ga.select(gac.memory, gac.MemoryEvent.dropOneLiveVariable);
+  Future<void> oneLiveToConsole({required String sourceFeature}) async {
+    ga.select(
+      gac.memory,
+      gac.MemoryEvents.dropOneLiveVariable(sourceFeature: sourceFeature),
+    );
 
     // drop to console
-    serviceConnection.consoleService.appendBrowsableInstance(
+    await serviceConnection.consoleService.appendBrowsableInstance(
       instanceRef: await _liveInstance(),
       isolateRef: _mainIsolateRef,
       heapSelection: null,
@@ -163,8 +167,11 @@ class SnapshotClassSampler extends LiveClassSampler {
     HeapData heap,
   ) : super(heap: heap, objects: objects);
 
-  Future<void> oneLiveStaticToConsole() async {
-    ga.select(gac.memory, gac.MemoryEvent.dropOneLiveVariable);
+  Future<void> oneLiveStaticToConsole({required String sourceFeature}) async {
+    ga.select(
+      gac.memory,
+      gac.MemoryEvents.dropOneLiveVariable(sourceFeature: sourceFeature),
+    );
 
     final heapObjects = _objects!;
     final instances = (await _liveInstances())?.instances;
@@ -189,22 +196,25 @@ class SnapshotClassSampler extends LiveClassSampler {
     );
 
     // drop to console
-    serviceConnection.consoleService.appendBrowsableInstance(
+    await serviceConnection.consoleService.appendBrowsableInstance(
       instanceRef: instanceRef,
       isolateRef: _mainIsolateRef,
       heapSelection: heapSelection,
     );
   }
 
-  void oneStaticToConsole() {
+  Future<void> oneStaticToConsole({required String sourceFeature}) async {
     final heapObjects = _objects!;
-    ga.select(gac.memory, gac.MemoryEvent.dropOneStaticVariable);
+    ga.select(
+      gac.memory,
+      gac.MemoryEvents.dropOneStaticVariable(sourceFeature: sourceFeature),
+    );
 
     final index = heapObjects.objects.indexes.first;
     final heapObject = HeapObject(heapObjects.heap, index: index);
 
     // drop to console
-    serviceConnection.consoleService.appendBrowsableInstance(
+    await serviceConnection.consoleService.appendBrowsableInstance(
       instanceRef: null,
       isolateRef: _mainIsolateRef,
       heapSelection: heapObject,

@@ -10,6 +10,8 @@ import '../analytics/analytics.dart' as ga;
 double get _tabHeight => scaleByFontFactor(46.0);
 double get _textAndIconTabHeight => scaleByFontFactor(72.0);
 
+typedef TabAndView = ({DevToolsTab tab, Widget tabView});
+
 class DevToolsTab extends Tab {
   /// Creates a material design [TabBar] tab styled for DevTools.
   ///
@@ -59,7 +61,7 @@ class DevToolsTab extends Tab {
   @override
   Widget build(BuildContext context) {
     return DefaultTextStyle(
-      style: Theme.of(context).textTheme.titleSmall!,
+      style: Theme.of(context).textTheme.titleMedium!,
       child: super.build(context),
     );
   }
@@ -89,7 +91,7 @@ class AnalyticsTabbedView extends StatefulWidget {
           (index) => tabs[index].tab.trailing ?? const SizedBox(),
         );
 
-  final List<({DevToolsTab tab, Widget tabView})> tabs;
+  final List<TabAndView> tabs;
 
   final String gaScreen;
 
@@ -209,7 +211,7 @@ class _AnalyticsTabbedViewState extends State<AnalyticsTabbedView>
           children: [
             Expanded(
               child: TabBar(
-                labelColor: Theme.of(context).textTheme.bodyLarge?.color,
+                labelColor: Theme.of(context).colorScheme.onSurface,
                 controller: _tabController,
                 tabs: widget.tabs.map((t) => t.tab).toList(),
                 isScrollable: true,

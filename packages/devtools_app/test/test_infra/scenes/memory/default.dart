@@ -3,6 +3,7 @@
 // in the LICENSE file.
 
 import 'package:devtools_app/devtools_app.dart';
+import 'package:devtools_app/src/screens/memory/framework/memory_tabs.dart';
 import 'package:devtools_app/src/screens/memory/panes/diff/controller/diff_pane_controller.dart';
 import 'package:devtools_app/src/screens/memory/panes/profile/profile_pane_controller.dart';
 import 'package:devtools_app/src/screens/memory/shared/heap/class_filter.dart';
@@ -48,7 +49,7 @@ abstract class MemoryDefaultSceneHeaps {
     return result;
   }
 
-  static final List<HeapProvider> forDiffTesting = [
+  static final forDiffTesting = [
     {'A': 1, 'B': 2, 'C': 1},
     {'A': 1, 'B': 2},
     {'B': 1, 'C': 2, 'D': 3},
@@ -75,7 +76,7 @@ class MemoryDefaultScene extends Scene {
   @override
   Widget build(BuildContext context) {
     return wrapWithControllers(
-      const MemoryBody(),
+      const MemoryScreenBody(),
       memory: controller,
     );
   }
@@ -84,7 +85,7 @@ class MemoryDefaultScene extends Scene {
     await tester.pumpSceneAsync(this);
     // Delay to ensure the memory profiler has collected data.
     await tester.pumpAndSettle(const Duration(seconds: 1));
-    expect(find.byType(MemoryBody), findsOneWidget);
+    expect(find.byType(MemoryScreenBody), findsOneWidget);
   }
 
   @override
@@ -143,13 +144,15 @@ class MemoryDefaultScene extends Scene {
       only: '',
     );
 
-    final diffController =
-        DiffPaneController(loader: HeapGraphLoaderProvided(heapProviders))
-          ..derived.applyFilter(showAllFilter);
+    final diffController = DiffPaneController(
+      loader: HeapGraphLoaderProvided(heapProviders),
+      rootPackage: 'root',
+    )..derived.applyFilter(showAllFilter);
 
-    final profileController =
-        ProfilePaneController(mode: ControllerCreationMode.connected)
-          ..setFilter(showAllFilter);
+    final profileController = ProfilePaneController(
+      mode: MemoryControllerCreationMode.connected,
+      rootPackage: 'root',
+    )..setFilter(showAllFilter);
 
     controller = MemoryController(
       connectedDiff: diffController,
@@ -165,6 +168,24 @@ class MemoryDefaultScene extends Scene {
 
   @override
   String get title => '$MemoryDefaultScene';
+
+  Future<void> takeSnapshot(WidgetTester tester) async {
+    final snapshots = controller.diff.core.snapshots;
+    final length = snapshots.value.length;
+    await tester.tap(find.byIcon(Icons.fiber_manual_record).first);
+    await tester.pumpAndSettle();
+    expect(snapshots.value.length, equals(length + 1));
+  }
+
+  Future<void> goToDiffTab(WidgetTester tester) async {
+    await tester.tap(find.byKey(MemoryScreenKeys.diffTab));
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> goToTraceTab(WidgetTester tester) async {
+    await tester.tap(find.byKey(MemoryScreenKeys.traceTab));
+    await tester.pumpAndSettle();
+  }
 
   void tearDown() {}
 }

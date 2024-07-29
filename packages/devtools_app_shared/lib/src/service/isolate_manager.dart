@@ -13,6 +13,7 @@ import 'package:vm_service/vm_service.dart' hide Error;
 
 import '../utils/auto_dispose.dart';
 import '../utils/list.dart';
+import '../utils/utils.dart';
 import 'isolate_state.dart';
 import 'service_extensions.dart' as extensions;
 
@@ -24,6 +25,10 @@ base mixin TestIsolateManager implements IsolateManager {}
 final class IsolateManager with DisposerMixin {
   final _isolateStates = <IsolateRef, IsolateState>{};
 
+  /// The amount of time we will wait for the main isolate to become non-null
+  /// when calling [waitForMainIsolateState].
+  static const _waitForMainIsolateStateTimeout = Duration(seconds: 3);
+
   /// Signifies whether the main isolate should be selected if it is started.
   ///
   /// This is used to make sure the the main isolate remains selected after
@@ -32,16 +37,14 @@ final class IsolateManager with DisposerMixin {
 
   VmService? _service;
 
-  final StreamController<IsolateRef?> _isolateCreatedController =
-      StreamController<IsolateRef?>.broadcast();
-  final StreamController<IsolateRef?> _isolateExitedController =
-      StreamController<IsolateRef?>.broadcast();
+  final _isolateCreatedController = StreamController<IsolateRef?>.broadcast();
+  final _isolateExitedController = StreamController<IsolateRef?>.broadcast();
 
   ValueListenable<IsolateRef?> get selectedIsolate => _selectedIsolate;
   final _selectedIsolate = ValueNotifier<IsolateRef?>(null);
 
   int _lastIsolateIndex = 0;
-  final Map<String?, int> _isolateIndexMap = {};
+  final _isolateIndexMap = <String?, int>{};
 
   ValueListenable<List<IsolateRef>> get isolates => _isolates;
   final _isolates = ListValueNotifier(const <IsolateRef>[]);
@@ -63,6 +66,17 @@ final class IsolateManager with DisposerMixin {
     return _mainIsolate.value != null
         ? _isolateStates[_mainIsolate.value!]
         : null;
+  }
+
+  Future<IsolateState?> waitForMainIsolateState() async {
+    final mainIsolateRef = await whenValueNonNull<IsolateRef?>(
+      mainIsolate,
+      timeout: _waitForMainIsolateStateTimeout,
+    );
+    if (mainIsolateRef == null) return null;
+    final state = mainIsolateState;
+    await state?.waitForIsolateLoad();
+    return state;
   }
 
   /// Return a unique, monotonically increasing number for this Isolate.
@@ -186,8 +200,7 @@ final class IsolateManager with DisposerMixin {
         _mainIsolate.value = null;
       }
       if (_selectedIsolate.value == event.isolate) {
-        _selectedIsolate.value =
-            _isolateStates.isEmpty ? null : _isolateStates.keys.first;
+        _selectedIsolate.value = _isolateStates.keys.firstOrNull;
       }
       _isolateRunnableCompleters.remove(event.isolate!.id);
     }
@@ -209,11 +222,11 @@ final class IsolateManager with DisposerMixin {
     if (_isolateStates.isEmpty) return null;
 
     final service = _service;
-    for (var isolateState in _isolateStates.values) {
+    for (final isolateState in _isolateStates.values) {
       if (_selectedIsolate.value == null) {
         final isolate = await isolateState.isolate;
         if (service != _service) return null;
-        for (String extensionName in isolate?.extensionRPCs ?? []) {
+        for (final extensionName in isolate?.extensionRPCs ?? <String>[]) {
           if (extensions.isFlutterExtension(extensionName)) {
             return isolateState.isolateRef;
           }
@@ -221,8 +234,7 @@ final class IsolateManager with DisposerMixin {
       }
     }
 
-    final IsolateRef? ref =
-        _isolateStates.keys.firstWhereOrNull((IsolateRef ref) {
+    final ref = _isolateStates.keys.firstWhereOrNull((IsolateRef ref) {
       // 'foo.dart:main()'
       return ref.name!.contains(':main(');
     });
@@ -273,7 +285,7 @@ final class IsolateManager with DisposerMixin {
   }
 
   void _clearIsolateStates() {
-    for (var isolateState in _isolateStates.values) {
+    for (final isolateState in _isolateStates.values) {
       isolateState.dispose();
     }
     _isolateStates.clear();

@@ -31,20 +31,20 @@ void main() {
     });
 
     test('has value', () {
-      expect(controller.darkModeTheme.value, isNotNull);
+      expect(controller.darkModeEnabled.value, isNotNull);
     });
 
     test('toggleDarkModeTheme', () {
       bool valueChanged = false;
-      final originalValue = controller.darkModeTheme.value;
+      final originalValue = controller.darkModeEnabled.value;
 
-      controller.darkModeTheme.addListener(() {
+      controller.darkModeEnabled.addListener(() {
         valueChanged = true;
       });
 
-      controller.toggleDarkModeTheme(!controller.darkModeTheme.value);
+      controller.toggleDarkModeTheme(!controller.darkModeEnabled.value);
       expect(valueChanged, isTrue);
-      expect(controller.darkModeTheme.value, isNot(originalValue));
+      expect(controller.darkModeEnabled.value, isNot(originalValue));
     });
 
     test('toggleVmDeveloperMode', () {
@@ -385,7 +385,7 @@ void main() {
       );
 
       // Flip the values in storage.
-      for (var key in storage.values.keys) {
+      for (final key in storage.values.keys) {
         storage.values[key] = (!(storage.values[key] == 'true')).toString();
       }
 
@@ -445,7 +445,7 @@ void main() {
       );
 
       // Flip the values in storage.
-      for (var key in storage.values.keys) {
+      for (final key in storage.values.keys) {
         storage.values[key] = (!(storage.values[key] == 'true')).toString();
       }
 
@@ -500,7 +500,7 @@ void main() {
       );
 
       // Flip the values in storage.
-      for (var key in storage.values.keys) {
+      for (final key in storage.values.keys) {
         storage.values[key] = (!(storage.values[key] == 'true')).toString();
       }
 

@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 @TestOn('vm')
+library;
 
 import 'dart:io';
 
@@ -18,9 +19,10 @@ void main() {
       final snapshots = <String, HeapData>{};
 
       final before = ProcessInfo.currentRss;
-      for (var t in goldenHeapTests) {
+      for (final t in goldenHeapTests) {
         snapshots[t.fileName] =
-            await HeapData.calculate(await t.loadHeap(), DateTime.now());
+            HeapData(await t.loadHeap(), created: DateTime.now());
+        await snapshots[t.fileName]!.calculate;
       }
 
       final after = ProcessInfo.currentRss;

@@ -24,9 +24,9 @@ class ChartControlPane extends StatefulWidget {
 
 @visibleForTesting
 class ChartPaneTooltips {
-  static const String pauseTooltip =
+  static const pauseTooltip =
       'Pause the chart. Data will be still collected and shown when you resume.';
-  static const String resumeTooltip = 'Resume the chart';
+  static const resumeTooltip = 'Resume the chart';
 }
 
 class _ChartControlPaneState extends State<ChartControlPane>
@@ -55,33 +55,35 @@ class _ChartControlPaneState extends State<ChartControlPane>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Row(
-          children: [
-            ValueListenableBuilder<bool>(
-              valueListenable: widget.chart.paused,
-              builder: (context, paused, _) {
-                return PauseResumeButtonGroup(
-                  paused: paused,
-                  onPause: _onPause,
-                  onResume: _onResume,
-                  pauseTooltip: ChartPaneTooltips.pauseTooltip,
-                  resumeTooltip: ChartPaneTooltips.resumeTooltip,
-                  gaScreen: gac.memory,
-                  gaSelectionPause: gac.MemoryEvent.pauseChart,
-                  gaSelectionResume: gac.MemoryEvent.resumeChart,
-                );
-              },
-            ),
-            const SizedBox(width: defaultSpacing),
-            ClearButton(
-              onPressed: _clearTimeline,
-              tooltip: 'Clear memory chart.',
-              gaScreen: gac.memory,
-              gaSelection: gac.MemoryEvent.clearChart,
-              iconOnly: true,
-            ),
-          ],
-        ),
+        if (widget.chart.mode == MemoryControllerCreationMode.connected) ...[
+          Row(
+            children: [
+              ValueListenableBuilder<bool>(
+                valueListenable: widget.chart.paused,
+                builder: (context, paused, _) {
+                  return PauseResumeButtonGroup(
+                    paused: paused,
+                    onPause: _onPause,
+                    onResume: _onResume,
+                    pauseTooltip: ChartPaneTooltips.pauseTooltip,
+                    resumeTooltip: ChartPaneTooltips.resumeTooltip,
+                    gaScreen: gac.memory,
+                    gaSelectionPause: gac.MemoryEvents.pauseChart.name,
+                    gaSelectionResume: gac.MemoryEvents.resumeChart.name,
+                  );
+                },
+              ),
+              const SizedBox(width: defaultSpacing),
+              ClearButton(
+                onPressed: _clearTimeline,
+                tooltip: 'Clear memory chart.',
+                gaScreen: gac.memory,
+                gaSelection: gac.MemoryEvents.clearChart.name,
+                iconOnly: true,
+              ),
+            ],
+          ),
+        ],
         const SizedBox(height: denseSpacing),
         Row(
           children: [
@@ -110,8 +112,8 @@ class _LegendButton extends StatelessWidget {
         onPressed: chartController.data.toggleLegendVisibility,
         gaScreen: gac.memory,
         gaSelection: legendVisible
-            ? gac.MemoryEvent.hideChartLegend
-            : gac.MemoryEvent.showChartLegend,
+            ? gac.MemoryEvents.hideChartLegend.name
+            : gac.MemoryEvents.showChartLegend.name,
         icon: legendVisible ? Icons.close : Icons.storage,
         label: 'Legend',
         tooltip: 'Toggle visibility of the chart legend',
@@ -124,7 +126,7 @@ class _LegendButton extends StatelessWidget {
 class _ChartHelpLink extends StatelessWidget {
   const _ChartHelpLink();
 
-  static const _documentationTopic = gac.MemoryEvent.chartHelp;
+  static final _documentationTopic = gac.MemoryEvents.chartHelp.name;
 
   @override
   Widget build(BuildContext context) {

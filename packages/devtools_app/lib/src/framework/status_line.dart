@@ -37,11 +37,9 @@ class StatusLine extends StatelessWidget {
   static const deviceInfoTooltip = 'Device Info';
 
   /// The padding around the footer in the DevTools UI.
-  EdgeInsets get padding => const EdgeInsets.fromLTRB(
-        defaultSpacing,
-        densePadding,
-        defaultSpacing,
-        densePadding,
+  EdgeInsets get padding => const EdgeInsets.symmetric(
+        horizontal: defaultSpacing,
+        vertical: densePadding,
       );
 
   @override
@@ -78,7 +76,7 @@ class StatusLine extends StatelessWidget {
     final theme = Theme.of(context);
     final color = highlightForConnection ? theme.colorScheme.onPrimary : null;
     final screenWidth = ScreenSize(context).width;
-    final Widget? pageStatus = currentScreen.buildStatus(context);
+    final pageStatus = currentScreen.buildStatus(context);
     final widerThanXxs = screenWidth > MediaSize.xxs;
     final screenMetaData = ScreenMetaData.lookup(currentScreen.screenId);
     final showVideoTutorial = screenMetaData?.tutorialVideoTimestamp != null;
@@ -216,7 +214,7 @@ class DocumentationLink extends StatelessWidget {
     final docPageId = screen.docPageId ?? '';
     return LinkIconLabel(
       icon: Icons.library_books_outlined,
-      link: Link(
+      link: GaLink(
         display: screenWidth <= MediaSize.xs ? 'Docs' : 'Read docs',
         url: screen.docsUrl ??
             'https://docs.flutter.dev/tools/devtools/$docPageId',
@@ -252,7 +250,7 @@ class VideoTutorialLink extends StatelessWidget {
         highlightForConnection ? Theme.of(context).colorScheme.onPrimary : null;
     return LinkIconLabel(
       icon: Icons.ondemand_video_rounded,
-      link: Link(
+      link: GaLink(
         display: screenWidth <= MediaSize.xs ? 'Tutorial' : 'Watch tutorial',
         url:
             '$_devToolsYouTubeVideoUrl${screenMetaData.tutorialVideoTimestamp}',
@@ -270,8 +268,7 @@ class IsolateSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final IsolateManager isolateManager =
-        serviceConnection.serviceManager.isolateManager;
+    final isolateManager = serviceConnection.serviceManager.isolateManager;
     return MultiValueListenableBuilder(
       listenables: [
         isolateManager.isolates,

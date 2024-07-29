@@ -18,11 +18,10 @@ import 'http/http_service.dart' as http_service;
 import 'primitives/utils.dart';
 import 'screen.dart';
 
-const _runInProfileModeDocsUrl =
-    'https://flutter.dev/docs/testing/ui-performance#run-in-profile-mode';
+const _runInProfileModeDocsUrl = 'https://flutter.dev/to/use-profile-mode';
 
 const _cpuSamplingRateDocsUrl =
-    'https://flutter.dev/docs/development/tools/devtools/performance#profile-granularity';
+    'https://docs.flutter.dev/tools/devtools/cpu-profiler#cpu-sampling-rate';
 
 class BannerMessagesController {
   final _messages = <String, ListValueNotifier<BannerMessage>>{};
@@ -336,8 +335,8 @@ class ShaderJankMessage {
               '$jankDurationText spent in shader compilation. To pre-compile '
               'shaders, see the instructions at ',
         ),
-        LinkTextSpan(
-          link: Link(
+        GaLinkTextSpan(
+          link: GaLink(
             display: preCompileShadersDocsUrl,
             url: preCompileShadersDocsUrl,
             gaScreenName: screenId,
@@ -353,8 +352,8 @@ class ShaderJankMessage {
             text: '\n\nNote: this is a legacy solution with many pitfalls. '
                 'Try ',
           ),
-          LinkTextSpan(
-            link: Link(
+          GaLinkTextSpan(
+            link: GaLink(
               display: 'Impeller',
               url: impellerDocsUrl,
               gaScreenName: screenId,
@@ -391,8 +390,8 @@ class HighCpuSamplingRateMessage {
           text: '''
 You are opting in to a high CPU sampling rate. This may affect the performance of your application. Please read our ''',
         ),
-        LinkTextSpan(
-          link: Link(
+        GaLinkTextSpan(
+          link: GaLink(
             display: 'documentation',
             url: _cpuSamplingRateDocsUrl,
             gaScreenName: screenId,
@@ -480,6 +479,36 @@ For the most accurate absolute memory stats, relaunch your application in ''',
   }
 }
 
+class DebuggerIdeRecommendationMessage {
+  const DebuggerIdeRecommendationMessage(this.screenId);
+
+  final String screenId;
+
+  BannerMessage build(BuildContext context) {
+    final isFlutterApp =
+        serviceConnection.serviceManager.connectedApp?.isFlutterAppNow ?? false;
+    final codeType = isFlutterApp ? 'Flutter' : 'Dart';
+    final recommendedDebuggers = devToolsEnvironmentParameters
+        .recommendedDebuggers(context, isFlutterApp: isFlutterApp);
+
+    return BannerWarning(
+      key: Key('DebuggerIdeRecommendationMessage - $screenId'),
+      textSpans: [
+        TextSpan(
+          text: '''
+The $codeType DevTools debugger is in maintenance mode. For the best debugging experience, we recommend debugging your $codeType code in a supported IDE''',
+        ),
+        if (recommendedDebuggers != null) ...[
+          const TextSpan(text: ', such as '),
+          ...recommendedDebuggers,
+        ],
+        const TextSpan(text: '.'),
+      ],
+      screenId: screenId,
+    );
+  }
+}
+
 void maybePushDebugModePerformanceMessage(
   BuildContext context,
   String screenId,
@@ -515,6 +544,15 @@ void maybePushHttpLoggingMessage(
   }
 }
 
+void pushDebuggerIdeRecommendationMessage(
+  BuildContext context,
+  String screenId,
+) {
+  bannerMessages.addMessage(
+    DebuggerIdeRecommendationMessage(screenId).build(context),
+  );
+}
+
 extension BannerMessageThemeExtension on ThemeData {
   TextStyle get warningMessageLinkStyle => regularTextStyle.copyWith(
         decoration: TextDecoration.underline,
@@ -527,13 +565,13 @@ extension BannerMessageThemeExtension on ThemeData {
       );
 }
 
-LinkTextSpan _runInProfileModeTextSpan(
+GaLinkTextSpan _runInProfileModeTextSpan(
   BuildContext context, {
   required String screenId,
   required TextStyle style,
 }) {
-  return LinkTextSpan(
-    link: Link(
+  return GaLinkTextSpan(
+    link: GaLink(
       display: 'profile mode',
       url: _runInProfileModeDocsUrl,
       gaScreenName: screenId,

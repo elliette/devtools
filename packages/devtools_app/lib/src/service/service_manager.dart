@@ -5,9 +5,7 @@
 import 'dart:async';
 
 import 'package:collection/collection.dart';
-import 'package:devtools_app_shared/service.dart';
-import 'package:devtools_app_shared/utils.dart';
-import 'package:devtools_shared/devtools_shared.dart';
+import 'package:devtools_app_shared/service.dart' hide SentinelException;
 import 'package:logging/logging.dart';
 import 'package:vm_service/vm_service.dart' hide Error;
 
@@ -35,10 +33,6 @@ final _log = Logger('service_manager');
 const debugLogServiceProtocolEvents = false;
 
 const defaultRefreshRate = 60.0;
-
-/// The amount of time we will wait for the main isolate to become non-null when
-/// calling [ServiceConnectionManager.rootLibraryForMainIsolate].
-const _waitForRootLibraryTimeout = Duration(seconds: 3);
 
 class ServiceConnectionManager {
   ServiceConnectionManager() {
@@ -119,7 +113,8 @@ class ServiceConnectionManager {
     // Set up analytics dimensions for the connected app.
     ga.setupUserApplicationDimensions();
 
-    _inspectorService = devToolsExtensionPoints.inspectorServiceProvider();
+    _inspectorService =
+        devToolsEnvironmentParameters.inspectorServiceProvider();
 
     _appState?.dispose();
     _appState = AppState(serviceManager.isolateManager.selectedIsolate);
@@ -178,50 +173,6 @@ class ServiceConnectionManager {
           .selectIsolate(serviceManager.isolateManager.isolates.value.first);
     }
     await serviceManager.isolateManager.init(isolates);
-  }
-
-  // TODO(kenz): consider caching this value for the duration of the VM service
-  // connection.
-  Future<String?> rootLibraryForMainIsolate() async {
-    final mainIsolateRef = await whenValueNonNull(
-      serviceManager.isolateManager.mainIsolate,
-      timeout: _waitForRootLibraryTimeout,
-    );
-    if (mainIsolateRef == null) return null;
-
-    final isolateState =
-        serviceManager.isolateManager.isolateState(mainIsolateRef);
-    await isolateState.waitForIsolateLoad();
-    final rootLib = isolateState.rootInfo?.library;
-    if (rootLib == null) return null;
-
-    final selectedIsolateRefId = mainIsolateRef.id!;
-    await serviceManager.resolvedUriManager
-        .fetchFileUris(selectedIsolateRefId, [rootLib]);
-    final fileUriString = serviceManager.resolvedUriManager.lookupFileUri(
-      selectedIsolateRefId,
-      rootLib,
-    );
-    _log.fine('rootLibraryForMainIsolate: $fileUriString');
-    return fileUriString;
-  }
-
-  // TODO(kenz): consider caching this value for the duration of the VM service
-  // connection.
-  /// Returns the root package directory for the main isolate.
-  ///
-  /// If a non-null value is returned, the value will be a file URI String and
-  /// it will NOT have a trailing slash.
-  Future<String?> rootPackageDirectoryForMainIsolate() async {
-    final fileUriString = await serviceConnection.rootLibraryForMainIsolate();
-    final packageUriString = fileUriString != null
-        ? await packageRootFromFileUriString(
-            fileUriString,
-            dtd: dtdManager.connection.value,
-          )
-        : null;
-    _log.fine('rootPackageDirectoryForMainIsolate: $packageUriString');
-    return packageUriString;
   }
 
   Future<Response> get adbMemoryInfo async {

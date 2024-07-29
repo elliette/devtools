@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import '../../../shared/banner_messages.dart';
 import '../../../shared/common_widgets.dart';
 import '../../../shared/http/http_service.dart' as http_service;
+import '../../../shared/primitives/simple_items.dart';
 import '../../../shared/screen.dart';
 import '../../../shared/utils.dart';
 import '../panes/chart/widgets/chart_pane.dart';
@@ -28,8 +29,6 @@ class _ConnectedMemoryBodyState extends State<ConnectedMemoryBody>
         AutoDisposeMixin,
         SingleTickerProviderStateMixin,
         ProvidedControllerMixin<MemoryController, ConnectedMemoryBody> {
-  MemoryController get memoryController => controller;
-
   final _focusNode = FocusNode(debugLabel: 'memory');
 
   @override
@@ -41,20 +40,23 @@ class _ConnectedMemoryBodyState extends State<ConnectedMemoryBody>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    maybePushDebugModeMemoryMessage(context, ScreenMetaData.memory.id);
-    maybePushHttpLoggingMessage(context, ScreenMetaData.memory.id);
 
     if (!initController()) return;
 
-    addAutoDisposeListener(http_service.httpLoggingState, () {
+    if (controller.mode == MemoryControllerCreationMode.connected) {
+      maybePushDebugModeMemoryMessage(context, ScreenMetaData.memory.id);
       maybePushHttpLoggingMessage(context, ScreenMetaData.memory.id);
-    });
+
+      addAutoDisposeListener(http_service.httpLoggingState, () {
+        maybePushHttpLoggingMessage(context, ScreenMetaData.memory.id);
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<void>(
-      future: memoryController.initialized,
+      future: controller.initialized,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.done) {
           return Column(
@@ -69,7 +71,7 @@ class _ConnectedMemoryBodyState extends State<ConnectedMemoryBody>
                 keyFocusNode: _focusNode,
               ),
               Expanded(
-                child: MemoryTabView(memoryController),
+                child: MemoryTabView(controller),
               ),
             ],
           );

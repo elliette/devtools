@@ -5,22 +5,26 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../../../shared/globals.dart';
+import '../../../../../shared/primitives/simple_items.dart';
 import '../../../shared/primitives/memory_timeline.dart';
 
 class MemoryControlPaneController {
   MemoryControlPaneController(
-    this.memoryTimeline, {
+    this.memoryTimeline,
+    this.mode, {
     required this.exportData,
   });
 
+  final MemoryControllerCreationMode mode;
   final MemoryTimeline memoryTimeline;
   final VoidCallback exportData;
-  final ValueNotifier<bool> isChartVisible = preferences.memory.showChart;
+  final isChartVisible = preferences.memory.showChart;
 
   bool get isGcing => _gcing;
   bool _gcing = false;
 
   Future<void> gc() async {
+    assert(mode == MemoryControllerCreationMode.connected);
     _gcing = true;
     try {
       await serviceConnection.serviceManager.service!.getAllocationProfile(

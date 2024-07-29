@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'package:devtools_shared/devtools_shared.dart';
 import 'package:vm_service/vm_service.dart';
 
 import '../../../../shared/memory/class_name.dart';
@@ -18,7 +19,7 @@ class _ProfileJson {
   static const totalGC = 'totalGC';
 }
 
-class AdaptedProfile {
+class AdaptedProfile with Serializable {
   AdaptedProfile._({
     required ProfileRecord total,
     required List<ProfileRecord> items,
@@ -81,22 +82,19 @@ class AdaptedProfile {
     );
   }
 
+  @override
   Map<String, dynamic> toJson() {
     return {
-      _ProfileJson.total: _total.toJson(),
-      _ProfileJson.items: _items.map((e) => e.toJson()).toList(),
-      _ProfileJson.newGC: newSpaceGCStats.toJson(),
-      _ProfileJson.oldGC: oldSpaceGCStats.toJson(),
-      _ProfileJson.totalGC: totalGCStats.toJson(),
+      _ProfileJson.total: _total,
+      _ProfileJson.items: _items,
+      _ProfileJson.newGC: newSpaceGCStats,
+      _ProfileJson.oldGC: oldSpaceGCStats,
+      _ProfileJson.totalGC: totalGCStats,
     };
   }
 
   /// A record per class plus one total record, with applied filter.
-  late final List<ProfileRecord> records = _records ??= [
-    _total,
-    ..._itemsFiltered,
-  ];
-  List<ProfileRecord>? _records;
+  late final records = <ProfileRecord>[_total, ..._itemsFiltered];
 
   /// Record for totals.
   late final ProfileRecord _total;
@@ -133,7 +131,7 @@ class _RecordJson {
   static const oldSpaceExternalSize = 'oes';
 }
 
-class ProfileRecord with PinnableListEntry {
+class ProfileRecord with PinnableListEntry, Serializable {
   ProfileRecord._({
     required this.isTotal,
     required this.heapClass,
@@ -218,10 +216,11 @@ class ProfileRecord with PinnableListEntry {
     );
   }
 
+  @override
   Map<String, dynamic> toJson() {
     return {
       _RecordJson.isTotal: isTotal,
-      _RecordJson.heapClass: heapClass.toJson(),
+      _RecordJson.heapClass: heapClass,
       _RecordJson.totalInstances: totalInstances,
       _RecordJson.totalSize: totalSize,
       _RecordJson.totalDartHeapSize: totalDartHeapSize,

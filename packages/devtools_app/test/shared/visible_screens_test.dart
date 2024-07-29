@@ -232,7 +232,7 @@ void main() {
           // InspectorScreen,
           PerformanceScreen, // Works offline, so appears regardless of web flag
           ProfilerScreen, // Works offline, so appears regardless of web flag
-          // MemoryScreen,
+          MemoryScreen,
           // DebuggerScreen,
           // NetworkScreen,
           // LoggingScreen,
@@ -274,6 +274,6 @@ void main() {
 
 List<Type> get visibleScreenTypes => defaultScreens()
     .map((s) => s.screen)
-    .where(shouldShowScreen)
+    .where((s) => shouldShowScreen(s).show)
     .map((s) => s.runtimeType)
     .toList();

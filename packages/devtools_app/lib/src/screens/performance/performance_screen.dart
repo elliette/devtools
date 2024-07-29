@@ -9,7 +9,6 @@ import 'package:devtools_app_shared/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../shared/analytics/analytics.dart' as ga;
 import '../../shared/analytics/constants.dart' as gac;
@@ -78,7 +77,6 @@ class PerformanceScreenBodyState extends State<PerformanceScreenBody>
 
     cancelListeners();
     addAutoDisposeListener(controller.loadingOfflineData);
-    addAutoDisposeListener(controller.flutterFramesController.selectedFrame);
   }
 
   @override
@@ -135,11 +133,7 @@ class WebPerformanceScreenBody extends StatelessWidget {
       data: isFlutterWebApp ? flutterWebInstructionsMd : dartWebInstructionsMd,
       onTapLink: (_, url, __) {
         if (url != null) {
-          unawaited(
-            launchUrl(
-              Uri.parse(url),
-            ),
-          );
+          unawaited(launchUrlWithErrorHandling(url));
         }
       },
     );
@@ -180,7 +174,7 @@ const debugLayoutsLink =
     'https://api.flutter.dev/flutter/rendering/debugProfileLayoutsEnabled.html';
 const debugPaintsLink =
     'https://api.flutter.dev/flutter/rendering/debugProfilePaintsEnabled.html';
-const profileModeLink = 'https://docs.flutter.dev/testing/build-modes#profile';
+const profileModeLink = 'https://flutter.dev/to/profile-mode';
 const performancePanelLink =
     'https://developer.chrome.com/docs/devtools/performance';
 

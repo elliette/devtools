@@ -2,30 +2,32 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'package:devtools_shared/devtools_shared.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../../../../shared/primitives/simple_items.dart';
 import '../../../shared/primitives/memory_timeline.dart';
 import '../data/primitives.dart';
 
-class _Json {
-  static const isDeviceAndroid = 'isAndroid';
-  static const timeline = 'timeline';
-  static const interval = 'interval';
-  static const isLegendVisible = 'isLegendVisible';
+@visibleForTesting
+enum Json {
+  isDeviceAndroid,
+  timeline,
+  interval,
+  isLegendVisible;
 }
 
 /// Chart data, that should be saved when transferred to offline data mode.
-class ChartData {
+class ChartData with Serializable {
   ChartData({
-    required ControllerCreationMode mode,
+    required MemoryControllerCreationMode mode,
     this.isDeviceAndroid,
     MemoryTimeline? timeline,
     ChartInterval? interval,
     bool? isLegendVisible,
   })  : assert(
-          mode == ControllerCreationMode.connected ||
-              (mode == ControllerCreationMode.offlineData &&
+          mode == MemoryControllerCreationMode.connected ||
+              (mode == MemoryControllerCreationMode.offlineData &&
                   isDeviceAndroid != null &&
                   timeline != null &&
                   interval != null &&
@@ -39,23 +41,26 @@ class ChartData {
 
   factory ChartData.fromJson(Map<String, dynamic> json) {
     final result = ChartData(
-      mode: ControllerCreationMode.offlineData,
-      isDeviceAndroid: json[_Json.isDeviceAndroid] as bool? ?? false,
-      timeline:
-          MemoryTimeline.fromJson(json[_Json.timeline] as Map<String, dynamic>),
-      interval: ChartInterval.byName(json[_Json.interval]) ??
+      mode: MemoryControllerCreationMode.offlineData,
+      isDeviceAndroid: json[Json.isDeviceAndroid.name] as bool? ?? false,
+      timeline: deserialize<MemoryTimeline>(
+        json[Json.timeline.name],
+        MemoryTimeline.fromJson,
+      ),
+      interval: ChartInterval.byName(json[Json.interval.name]) ??
           ChartInterval.theDefault,
-      isLegendVisible: json[_Json.isLegendVisible] as bool?,
+      isLegendVisible: json[Json.isLegendVisible.name] as bool?,
     );
     return result;
   }
 
+  @override
   Map<String, dynamic> toJson() {
     return {
-      _Json.isDeviceAndroid: isDeviceAndroid ?? false,
-      _Json.timeline: timeline.toJson(),
-      _Json.interval: displayInterval.name,
-      _Json.isLegendVisible: isLegendVisible.value,
+      Json.isDeviceAndroid.name: isDeviceAndroid ?? false,
+      Json.timeline.name: timeline,
+      Json.interval.name: displayInterval.name,
+      Json.isLegendVisible.name: isLegendVisible.value,
     };
   }
 

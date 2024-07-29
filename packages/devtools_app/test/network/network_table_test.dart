@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 @TestOn('vm')
+library;
 
 import 'package:devtools_app/devtools_app.dart';
 import 'package:devtools_app_shared/ui.dart';
@@ -56,7 +57,7 @@ void main() {
     }
 
     test('UriColumn', () {
-      final column = UriColumn();
+      final column = AddressColumn();
       for (final request in requests) {
         expect(column.getDisplayValue(request), request.uri.toString());
       }

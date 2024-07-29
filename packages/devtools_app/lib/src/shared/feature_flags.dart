@@ -23,7 +23,7 @@ bool get enableExperiments =>
 ///   "args": [
 ///     "--dart-define=enable_experiments=true"
 ///   ]
-const bool _experimentsEnabledByEnvironment =
+const _experimentsEnabledByEnvironment =
     bool.fromEnvironment('enable_experiments');
 
 bool _experimentsEnabledFromMain = false;
@@ -35,8 +35,8 @@ void setEnableExperiments() {
 @visibleForTesting
 bool get enableBeta => enableExperiments || !isExternalBuild;
 
-const bool _kMemoryOfflineExperiment =
-    bool.fromEnvironment('memory_offline_experiment');
+const _kMemoryOfflineExperiment =
+    bool.fromEnvironment('memory_offline_experiment', defaultValue: true);
 
 // It is ok to have enum-like static only classes.
 // ignore: avoid_classes_with_only_static_members
@@ -54,19 +54,28 @@ abstract class FeatureFlags {
   /// Flag to enable widget rebuild stats ui.
   ///
   /// https://github.com/flutter/devtools/issues/4564.
-  static bool widgetRebuildStats = enableExperiments;
+  static bool widgetRebuildStats = true;
 
   /// Flag to enable offline data on memory screen.
   ///
   /// https://github.com/flutter/devtools/issues/5606
-  static const bool memoryOffline =
-      _kMemoryOfflineExperiment; // requires special handling because it needs to be const
+  static const memoryOffline = _kMemoryOfflineExperiment;
+
+  /// Flag to enable save/load.
+  ///
+  /// https://github.com/flutter/devtools/issues/8019
+  static bool memorySaveLoad = enableExperiments;
 
   /// Flag to enable the deep link validation tooling in DevTools, both for the
   /// DevTools screen and the standalone tool for IDE embedding.
   ///
   /// https://github.com/flutter/devtools/issues/6013
   static bool deepLinkValidation = true;
+
+  /// Flag to enable ios checks in deep link validation.
+  ///
+  /// https://github.com/flutter/devtools/issues/7799
+  static bool deepLinkIosCheck = false;
 
   /// Flag to enable DevTools extensions.
   ///
@@ -84,6 +93,11 @@ abstract class FeatureFlags {
   /// https://github.com/flutter/devtools/issues/6056
   static bool dapDebugging = enableExperiments;
 
+  /// Flag to enable the new Inspector panel.
+  ///
+  /// https://github.com/flutter/devtools/issues/7854
+  static bool inspectorV2 = enableExperiments;
+
   /// Stores a map of all the feature flags for debugging purposes.
   ///
   /// When adding a new flag, you are responsible for adding it to this map as
@@ -93,6 +107,8 @@ abstract class FeatureFlags {
     'memoryOffline': memoryOffline,
     'dapDebugging': dapDebugging,
     'loggingV2': loggingV2,
+    'deepLinkIosCheck': deepLinkIosCheck,
+    'inspectorV2': inspectorV2,
   };
 
   /// A helper to print the status of all the feature flags.
