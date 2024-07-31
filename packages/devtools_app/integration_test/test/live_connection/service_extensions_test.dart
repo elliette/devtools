@@ -39,40 +39,48 @@ void main() {
     'can call services and service extensions',
     ignoreAllowedExceptions(
       (tester) async {
-        await pumpAndConnectDevTools(tester, testApp);
-        await tester.pump(longDuration);
+        final int outstandingHandles =
+            tester.binding.debugOutstandingSemanticsHandles;
+        tester.binding.ensureSemantics();
+        expect(tester.binding.debugOutstandingSemanticsHandles,
+            outstandingHandles + 1);
+        // SemanticsHandle is not disposed on purpose to verify in tearDown that
+        // the test failed due to an active SemanticsHandle.
 
-        // TODO(kenz): re-work this integration test so that we do not have to be
-        // on the inspector screen for this to pass.
-        await switchToScreen(
-          tester,
-          tabIcon: ScreenMetaData.inspector.icon!,
-          screenId: ScreenMetaData.inspector.id,
-        );
-        await tester.pump(longDuration);
+        // await pumpAndConnectDevTools(tester, testApp);
+        // await tester.pump(longDuration);
 
-        // Ensure all futures are completed before running checks.
-        await serviceConnection.serviceManager.service!.allFuturesCompleted;
+        // // TODO(kenz): re-work this integration test so that we do not have to be
+        // // on the inspector screen for this to pass.
+        // await switchToScreen(
+        //   tester,
+        //   tabIcon: ScreenMetaData.inspector.icon!,
+        //   screenId: ScreenMetaData.inspector.id,
+        // );
+        // await tester.pump(longDuration);
 
-        logStatus('verify Flutter framework service extensions');
-        await _verifyBooleanExtension(tester);
-        await _verifyNumericExtension(tester);
-        await _verifyStringExtension(tester);
+        // // Ensure all futures are completed before running checks.
+        // await serviceConnection.serviceManager.service!.allFuturesCompleted;
 
-        logStatus('verify Flutter engine service extensions');
-        expect(
-          await serviceConnection.queryDisplayRefreshRate,
-          equals(60),
-        );
+        // logStatus('verify Flutter framework service extensions');
+        // await _verifyBooleanExtension(tester);
+        // await _verifyNumericExtension(tester);
+        // await _verifyStringExtension(tester);
 
-        logStatus('verify services that are registered to exactly one client');
-        await _verifyHotReloadAndHotRestart();
-        await expectLater(
-          serviceConnection.serviceManager.callService('fakeMethod'),
-          throwsException,
-        );
+        // logStatus('verify Flutter engine service extensions');
+        // expect(
+        //   await serviceConnection.queryDisplayRefreshRate,
+        //   equals(60),
+        // );
 
-        await disconnectFromTestApp(tester);
+        // logStatus('verify services that are registered to exactly one client');
+        // await _verifyHotReloadAndHotRestart();
+        // await expectLater(
+        //   serviceConnection.serviceManager.callService('fakeMethod'),
+        //   throwsException,
+        // );
+
+        // await disconnectFromTestApp(tester);
       },
       allowedExceptions: [
         AllowedException(
