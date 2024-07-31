@@ -177,11 +177,38 @@ Future<void> Function(WidgetTester) ignoreAllowedExceptions(
   required List<AllowedException> allowedExceptions,
 }) {
   return (WidgetTester tester) async {
+    final nativeFlutterErrorHandler = FlutterError.onError;
+    FlutterError.onError = (FlutterErrorDetails flutterErrorDetails) {
+      print('IN FLUTTER ERROR HANDLER, ${flutterErrorDetails.exception}');
+      final allowed = allowedExceptions.firstWhereOrNull((allowed) =>
+          flutterErrorDetails.exception.toString().contains(allowed.msg));
+
+      if (allowed != null) {
+        logStatus('Ignoring exception due to ${allowed.issue}:');
+        FlutterError.presentError(flutterErrorDetails);
+      } else {
+        nativeFlutterErrorHandler!(flutterErrorDetails);
+      }
+    };
+
     await runZonedGuarded(
       () async {
         await testCallback(tester);
       },
       (e, st) {
+        print('!!!!!!!!!!!!!!');
+        print('!!!!!!!!!!!!!!');
+        print('!!!!!!!!!!!!!!');
+        print('!!!!!!!!!!!!!!');
+        print('!!!!!!!!!!!!!!');
+        print('!!!!!!!!!!!!!!');
+        print('!!!!!!!!!!!!!!');
+        print('!!!!!!!!!!!!!!');
+        print('!!!!!!!!!! GOT AN ERROR: $e');
+        print('!!!!!!!!!!!!!!');
+        print('!!!!!!!!!!!!!!');
+        print('!!!!!!!!!!!!!!');
+        print('!!!!!!!!!!!!!!');
         final allowed = allowedExceptions
             .firstWhereOrNull((allowed) => '$e'.contains(allowed.msg));
         if (allowed == null) {
@@ -191,5 +218,7 @@ Future<void> Function(WidgetTester) ignoreAllowedExceptions(
         }
       },
     );
+
+    FlutterError.onError = nativeFlutterErrorHandler;
   };
 }
