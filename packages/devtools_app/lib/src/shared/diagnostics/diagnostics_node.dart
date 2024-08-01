@@ -544,6 +544,10 @@ class RemoteDiagnosticsNode extends DiagnosticableTree {
     return getBooleanMember('createdByLocalProject', false);
   }
 
+  bool get isImplementationNode {
+    return !isCreatedByLocalProject && description != '[root]';
+  }
+
   /// Whether this node is being displayed as a full tree or a filtered tree.
   bool get isSummaryTree => getBooleanMember('summaryTree', false);
 
@@ -630,7 +634,7 @@ class RemoteDiagnosticsNode extends DiagnosticableTree {
     final hasMoreThanOneChild = node.hasChildren && node.childrenNow.length > 1;
     final hasSiblings = (node.parent?.childrenNow ?? []).length > 1;
     return isRoot ||
-        node.isCreatedByLocalProject ||
+        !node.isImplementationNode ||
         hasMoreThanOneChild ||
         hasSiblings;
   }

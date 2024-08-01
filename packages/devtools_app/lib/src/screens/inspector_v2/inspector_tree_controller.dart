@@ -183,6 +183,9 @@ class InspectorTreeController extends DisposableController
   InspectorTreeNode? get selection => _selection;
   InspectorTreeNode? _selection;
 
+  bool get implementationNodesVisible => _implementationNodesVisible;
+  bool _implementationNodesVisible = true;
+
   late final InspectorTreeConfig config;
 
   /// Refreshes the tree's rows if the return value of the [updateTreeAction]
@@ -192,6 +195,14 @@ class InspectorTreeController extends DisposableController
     if (requiresRefresh) {
       _updateRows();
     }
+  }
+
+  /// Toggle
+  void toggleImplementationNodesVisibility() {
+    final visible = !implementationNodesVisible;
+    _implementationNodesVisible = visible;
+
+    _updateRows(node: _root);
   }
 
   bool setSelectedNode(InspectorTreeNode? node) {
@@ -434,9 +445,15 @@ class InspectorTreeController extends DisposableController
       required int depth,
       required List<int> ticks,
     }) {
-      final currentIdx = rows.length;
+      final includeImpl = implementationNodesVisible;
+
+      final isImplWidgetRow = node.diagnostic?.isImplementationNode ?? false;
+      final shouldSkipImplNode = !includeImpl && isImplWidgetRow;
+
       final isHidden = node.diagnostic?.isHidden ?? false;
-      if (!isHidden || includeHiddenRows) {
+      final shouldSkipHiddenNode = isHidden && !includeHiddenRows;
+      if (!shouldSkipImplNode && !shouldSkipHiddenNode) {
+        final currentIdx = rows.length;
         rows.add(
           InspectorTreeRow(
             node: node,
@@ -1252,14 +1269,21 @@ class _RowPainter extends CustomPainter {
     // 2. is NOT the first node in a hidden group of which the last hidden node
     //    in that group is childless (meaning that last node is at the end of a
     //    branch and therefore has nothing below it).
+    // 3. its first child is an implementation node and implementation nodes
+    // are hidden.
     final expandedWithSingleChild = row.hasSingleChild && node.isExpanded;
-    final subordinates =
-        node.diagnostic?.hideableGroupSubordinates ?? <RemoteDiagnosticsNode>[];
-    final groupIsHidden = node.diagnostic?.groupIsHidden ?? false;
-    final lastHiddenSubordinateHasNoChildren = groupIsHidden &&
-        subordinates.isNotEmpty &&
-        subordinates.last.childrenNow.isEmpty;
-    if (expandedWithSingleChild && !lastHiddenSubordinateHasNoChildren) {
+    final lastSubordinate = _lastSubordinate(node);
+    final lastSubordinateIsHiddenAndHasNoChildren = lastSubordinate != null &&
+        lastSubordinate.groupIsHidden &&
+        lastSubordinate.childrenNow.isEmpty;
+    final children = node.diagnostic?.childrenNow ?? <RemoteDiagnosticsNode>[];
+    final onlyChildIsImplementationNode =
+        children.length == 1 && children.first.isImplementationNode;
+    final implementationNodesAreHidden =
+        !_controller.implementationNodesVisible;
+    if (expandedWithSingleChild &&
+        !lastSubordinateIsHiddenAndHasNoChildren &&
+        !(onlyChildIsImplementationNode && implementationNodesAreHidden)) {
       final distanceFromIconCenterToRowStart =
           inspectorColumnIndent * _iconCenterToRowStartXDistancePercentage;
       final iconCenterX = _controller.getDepthIndent(row.depth) -
@@ -1279,6 +1303,29 @@ class _RowPainter extends CustomPainter {
       );
     }
   }
+
+  // Draw a straight vertical line from current node's icon to the icon below
+  // it if either the current node:
+  // 1. is expanded (meaning its child is visible) and it only has one child
+  //    (because multiple children get indented).
+  // 2. is NOT the first node in a hidden group of which the last hidden node
+  //    in that group is childless (meaning that last node is at the end of a
+  //    branch and therefore has nothing below it).
+  // 3. its first child is an implementation node and implementation nodes
+  // are hidden.
+  bool _shouldDrawVerticalLineToRowBelow(InspectorTreeNode node) {
+    final children = node.diagnostic?.childrenNow ?? <RemoteDiagnosticsNode>[];
+    final hasSingleChild = children.length == 1;
+    final allChildrenAreInvisible = children.every((child) =>
+        child.isImplementationNode && !_controller._implementationNodesVisible);
+
+    return true;
+  }
+
+  RemoteDiagnosticsNode? _lastSubordinate(InspectorTreeNode node) =>
+      (node.diagnostic?.hideableGroupSubordinates ?? <RemoteDiagnosticsNode>[])
+          .lastOrNull;
+
 
   @override
   bool shouldRepaint(CustomPainter oldDelegate) {

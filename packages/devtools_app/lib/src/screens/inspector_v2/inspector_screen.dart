@@ -193,6 +193,8 @@ class InspectorScreenBodyState extends State<InspectorScreenBody>
                 constraints: constraints,
                 onRefreshInspectorPressed: _refreshInspector,
                 onSearchVisibleToggle: _onSearchVisibleToggle,
+                onImplementationNodesVisibilityToggle: _inspectorTreeController
+                    .toggleImplementationNodesVisibility,
                 searchFieldBuilder: () =>
                     StatelessSearchField<InspectorTreeRow>(
                   controller: _inspectorTreeController,
@@ -382,6 +384,7 @@ class InspectorTreeControls extends StatelessWidget {
     required this.isSearchVisible,
     required this.onRefreshInspectorPressed,
     required this.onSearchVisibleToggle,
+    required this.onImplementationNodesVisibilityToggle,
     required this.searchFieldBuilder,
   });
 
@@ -391,6 +394,7 @@ class InspectorTreeControls extends StatelessWidget {
   final BoxConstraints constraints;
   final VoidCallback onRefreshInspectorPressed;
   final VoidCallback onSearchVisibleToggle;
+  final VoidCallback onImplementationNodesVisibilityToggle;
   final Widget Function() searchFieldBuilder;
 
   @override
@@ -422,6 +426,11 @@ class InspectorTreeControls extends StatelessWidget {
                           ? _buildSearchControls()
                           : const Spacer(),
                     ],
+              ToolbarAction(
+                icon: Icons.label_off_outlined,
+                onPressed: onImplementationNodesVisibilityToggle,
+                tooltip: 'Hide implementation widgets',
+              ),
               ToolbarAction(
                 icon: Icons.refresh,
                 onPressed: onRefreshInspectorPressed,

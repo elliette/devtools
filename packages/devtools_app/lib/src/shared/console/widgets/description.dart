@@ -305,7 +305,7 @@ class DiagnosticsNodeDescription extends StatelessWidget {
         textStyle = textStyle.merge(theme.subtleTextStyle);
       }
 
-      if (diagnosticLocal.isCreatedByLocalProject) {
+      if (!diagnosticLocal.isImplementationNode) {
         textStyle = textStyle.merge(DiagnosticsTextStyles.regularBold);
       }
 
@@ -407,14 +407,14 @@ class DiagnosticsNodeDescription extends StatelessWidget {
       // used there.
       if (!emphasizeNodesFromLocalProject &&
           !diagnosticLocal.isSummaryTree &&
-          diagnosticLocal.isCreatedByLocalProject) {
+          !diagnosticLocal.isImplementationNode) {
         textStyle = textStyle.merge(DiagnosticsTextStyles.regularBold);
       }
 
       // Grey out nodes that were not created by the local project to emphasize
       // those that were:
       if (emphasizeNodesFromLocalProject &&
-          !diagnosticLocal.isCreatedByLocalProject) {
+          diagnosticLocal.isImplementationNode) {
         textStyle = textStyle.merge(theme.subtleTextStyle);
       }
 
