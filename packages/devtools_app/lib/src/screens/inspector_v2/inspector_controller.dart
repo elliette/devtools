@@ -606,6 +606,13 @@ class InspectorController extends DisposableController
     }
 
     _selectedNode.value = newSelection;
+    // Call service extension to highlight widget in the app:
+    final node = newSelection?.diagnostic;
+    final api = node?.objectGroupApi as ObjectGroup?;
+    if (node != null && api != null) {
+      unawaited(api.invokeHighlightWidget(node.valueRef));
+    }
+    
 
     lastExpanded = null; // New selected node takes precedence.
     endShowNode();

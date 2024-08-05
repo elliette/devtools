@@ -1168,6 +1168,15 @@ class ObjectGroup extends InspectorObjectGroupBase {
     );
   }
 
+  Future<void> invokeHighlightWidget(
+    InspectorInstanceRef ref,
+  ) async {
+    await invokeServiceMethodDaemonParams(
+      WidgetInspectorServiceExtensions.highlightWidget.name,
+      {'id': ref.id},
+    );
+  }
+
   Future<RemoteDiagnosticsNode?> getLayoutExplorerNode(
     RemoteDiagnosticsNode? node, {
     int subtreeDepth = 1,
