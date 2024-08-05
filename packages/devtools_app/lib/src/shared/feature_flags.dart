@@ -96,7 +96,7 @@ abstract class FeatureFlags {
   /// Flag to enable the new Inspector panel.
   ///
   /// https://github.com/flutter/devtools/issues/7854
-  static bool inspectorV2 = enableExperiments;
+  static bool inspectorV2 = true;
 
   /// Stores a map of all the feature flags for debugging purposes.
   ///
