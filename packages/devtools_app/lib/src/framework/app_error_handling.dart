@@ -33,6 +33,7 @@ void setupErrorHandling(Future Function() appStartCallback) {
         final FlutterExceptionHandler? oldHandler = FlutterError.onError;
 
         FlutterError.onError = (FlutterErrorDetails details) {
+          print('GOT ERROR $details');
           // Flutter Framework errors are caught here.
           reportError(
             details.exception,

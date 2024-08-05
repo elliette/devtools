@@ -5,6 +5,7 @@
 import 'dart:async';
 import 'dart:collection';
 
+import 'package:devtools_app_shared/service.dart';
 import 'package:devtools_app_shared/shared.dart';
 import 'package:devtools_app_shared/ui.dart';
 import 'package:devtools_app_shared/utils.dart';
@@ -132,6 +133,16 @@ class InspectorScreenBodyState extends State<InspectorScreenBody>
     }
 
     _inspectorTreeController.setSearchTarget(searchTarget);
+
+    
+    serviceConnection.serviceManager.service?.onExtensionEventWithHistorySafe
+        .listen((event) {
+      if (event.extensionKind == FlutterEvent.error) {
+        final eventData = event.extensionData?.data;
+        final errorText = eventData?['renderedErrorText'];
+        print(errorText);
+      }
+    });
   }
 
   @override

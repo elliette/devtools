@@ -228,6 +228,7 @@ class LoggingControllerV2 extends DisposableController
     } else if (e.extensionKind == FlutterEvent.error) {
       // TODO(pq): add tests for error extension handling once framework changes
       // are landed.
+      // print('FLUTTER ERROR!!!!!!!!!!!! ${jsonEncode(e.extensionData!.data)}');
       final node = RemoteDiagnosticsNode(
         e.extensionData!.data,
         objectGroup,
