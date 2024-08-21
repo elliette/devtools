@@ -782,6 +782,7 @@ class InspectorController extends DisposableController
     }
 
     if (selection != null) {
+      // This is where we set the selection in Flutter:
       unawaited(selection.setSelectionInspector(true));
     }
   }

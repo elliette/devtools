@@ -1051,6 +1051,7 @@ class ObjectGroup extends InspectorObjectGroupBase {
     if (uiAlreadyUpdated) {
       inspectorService._trackClientSelfTriggeredSelection(selection);
     }
+    // This is where we set the selection in Flutter:
     return useDaemonApi
         ? handleSetSelectionDaemon(
             invokeServiceMethodDaemonInspectorRef(

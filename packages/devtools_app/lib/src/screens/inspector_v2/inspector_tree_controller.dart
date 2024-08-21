@@ -66,7 +66,12 @@ class _InspectorTreeRowState extends State<_InspectorTreeRowWidget>
     with TickerProviderStateMixin, CollapsibleAnimationMixin {
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return MouseRegion(
+      onHover: (_) {
+        final diagnostic = widget.row.node.diagnostic;
+        unawaited(diagnostic?.setSelectionInspector(false));
+      },
+      child: SizedBox(
       height: inspectorRowHeight,
       child: InspectorRowContent(
         row: widget.row,
@@ -78,6 +83,7 @@ class _InspectorTreeRowState extends State<_InspectorTreeRowWidget>
         onToggle: () {
           setExpanded(!isExpanded);
         },
+      ),
       ),
     );
   }
