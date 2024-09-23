@@ -3,12 +3,14 @@
 // found in the LICENSE file.
 
 import 'package:collection/collection.dart' show IterableExtension;
+import 'package:devtools_app/src/shared/routing.dart';
 import 'package:devtools_app_shared/ui.dart';
 import 'package:devtools_app_shared/utils.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
+import '../../initialization.dart';
 import '../screens/performance/performance_utils.dart';
 import 'analytics/constants.dart' as gac;
 import 'common_widgets.dart';
@@ -509,6 +511,41 @@ The $codeType DevTools debugger is in maintenance mode. For the best debugging e
   }
 }
 
+int count = 0;
+
+class SettingRequiresRefreshMessage {
+  const SettingRequiresRefreshMessage(this.screenId);
+
+  final String screenId;
+
+  BannerMessage build(BuildContext context) {
+    final theme = Theme.of(context);
+    final routerDelegate = DevToolsRouterDelegate.of(context);
+
+    return BannerWarning(
+      key: Key('SettingRequiresRefreshMessage - $screenId'),
+      textSpans: [
+        const TextSpan(
+          text:
+              'A setting has changed which requires a refresh to take effect.',
+        ),
+        TextSpan(
+          text: '[Refresh DevTools]',
+          style: theme.linkTextStyle,
+          recognizer: TapGestureRecognizer()
+            ..onTap = () {
+              print('REFRESHING PAGES!!!!');
+              // routerDelegate.refreshPages();
+              // count++;
+              // refreshStreamController.add('refresh-$count');
+            },
+        ),
+      ],
+      screenId: screenId,
+    );
+  }
+}
+
 void maybePushDebugModePerformanceMessage(
   BuildContext context,
   String screenId,
@@ -550,6 +587,16 @@ void pushDebuggerIdeRecommendationMessage(
 ) {
   bannerMessages.addMessage(
     DebuggerIdeRecommendationMessage(screenId).build(context),
+  );
+}
+
+
+void pushSettingRequiresRefreshMessage(
+  BuildContext context,
+  String screenId,
+) {
+  bannerMessages.addMessage(
+    SettingRequiresRefreshMessage(screenId).build(context),
   );
 }
 

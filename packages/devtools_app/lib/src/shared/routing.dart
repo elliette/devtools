@@ -165,6 +165,7 @@ class DevToolsRouterDelegate extends RouterDelegate<DevToolsRouteConfiguration>
   /// or was disabled).
   void refreshPages() {
     notifyListeners();
+    print('called refresh pages...');
   }
 
   /// Navigates to a new page, optionally updating arguments and state.

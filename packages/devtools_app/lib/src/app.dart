@@ -93,6 +93,7 @@ class DevToolsApp extends StatefulWidget {
 /// flutter route parameters.
 class DevToolsAppState extends State<DevToolsApp> with AutoDisposeMixin {
   List<Screen> get _screens {
+    // final screens = defaultScreens(sampleData: widget.originalData);
     if (FeatureFlags.devToolsExtensions) {
       // TODO(https://github.com/flutter/devtools/issues/6273): stop special
       // casing the package:provider extension.
@@ -145,6 +146,7 @@ class DevToolsAppState extends State<DevToolsApp> with AutoDisposeMixin {
 
     void clearRoutesAndSetState() {
       setState(() {
+        print('clear cached routes');
         _clearCachedRoutes();
       });
     }
@@ -158,6 +160,11 @@ class DevToolsAppState extends State<DevToolsApp> with AutoDisposeMixin {
 
     addAutoDisposeListener(
       serviceConnection.serviceManager.isolateManager.mainIsolate,
+      clearRoutesAndSetState,
+    );
+
+    addAutoDisposeListener(
+      preferences.inspector.inspectorV2Enabled,
       clearRoutesAndSetState,
     );
 
@@ -199,6 +206,7 @@ class DevToolsAppState extends State<DevToolsApp> with AutoDisposeMixin {
   ) {
     // `page` will initially be null while the router is set up, then we will
     // be called again with an empty string for the root.
+    print('getting page $page');
     if (FrameworkCore.vmServiceInitializationInProgress || page == null) {
       return const MaterialPage(child: CenteredCircularProgressIndicator());
     }
@@ -267,8 +275,12 @@ class DevToolsAppState extends State<DevToolsApp> with AutoDisposeMixin {
         listenables: [
           preferences.vmDeveloperModeEnabled,
           extensionService.currentExtensions,
+          preferences.inspector.inspectorV2Enabled,
         ],
-        builder: (_, __, child) {
+        builder: (_, values, child) {
+          final inspectorV2Enabled = values[2] as bool;
+          print('inspector V2 enabled? $inspectorV2Enabled');
+
           final screensInScaffold = _visibleScreens()
               .where(
                 (s) => maybeIncludeOnlyEmbeddedScreen(
@@ -316,6 +328,9 @@ class DevToolsAppState extends State<DevToolsApp> with AutoDisposeMixin {
               ),
             );
           } else {
+            for (final screen in screensInScaffold) {
+              print('screen: ${screen.screenId} is v2? ${screen.isV2}');
+            }
             final connectedToFlutterApp = serviceConnection
                     .serviceManager.connectedApp?.isFlutterAppNow ??
                 false;
@@ -362,6 +377,7 @@ class DevToolsAppState extends State<DevToolsApp> with AutoDisposeMixin {
 
   /// The pages that the app exposes.
   Map<String, UrlParametersBuilder> get pages {
+    print('build pages!');
     return _routes ??= {
       homeScreenId: _buildTabbedPage,
       for (final screen in _screens) screen.screenId: _buildTabbedPage,
@@ -404,6 +420,11 @@ class DevToolsAppState extends State<DevToolsApp> with AutoDisposeMixin {
   List<Provider> _providedControllers({bool offline = false}) {
     // We use [widget.originalScreens] here instead of [_screens] because
     // extension screens do not provide a controller through this mechanism.
+    print('called provided controllers...');
+    print(StackTrace.current);
+    for (final screen in widget.originalScreens) {
+      print('original: ${screen.screen.screenId} is v2? ${screen.screen.isV2}');
+    }
     return widget.originalScreens
         .where(
           (s) =>
@@ -416,6 +437,7 @@ class DevToolsAppState extends State<DevToolsApp> with AutoDisposeMixin {
 
   @override
   Widget build(BuildContext context) {
+    print('BUILDING DEVTOOLS!!!!!!!!');
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       themeMode: isDarkThemeEnabled() ? ThemeMode.dark : ThemeMode.light,
@@ -555,6 +577,7 @@ class DevToolsScreen<C extends Object?> {
   bool get providesController => createController != null;
 
   Provider<C> controllerProvider(DevToolsRouterDelegate routerDelegate) {
+    print('controller provider!!!!');
     return Provider<C>(
       create: (_) {
         final controller = createController!(routerDelegate);
@@ -652,12 +675,17 @@ class ScreenUnavailable extends StatelessWidget {
 /// be shown or hidden based on the [Screen.conditionalLibrary] provided.
 List<DevToolsScreen> defaultScreens({
   List<DevToolsJsonFile> sampleData = const [],
+  bool cacheBust = false,
 }) {
+  if (cacheBust) devtoolsScreens = null;
+
+  print('===================');
+  print('devtools screens are $devtoolsScreens');
   return devtoolsScreens ??= <DevToolsScreen>[
     DevToolsScreen<void>(HomeScreen(sampleData: sampleData)),
     // TODO(https://github.com/flutter/devtools/issues/7860): Clean-up after
     // Inspector V2 has been released.
-    FeatureFlags.inspectorV2
+    preferences.inspector.inspectorV2Enabled.value
         ? DevToolsScreen<inspector_v2.InspectorController>(
             inspector_v2.InspectorScreen(),
             createController: (_) => inspector_v2.InspectorController(
@@ -735,3 +763,26 @@ List<DevToolsScreen> defaultScreens({
 
 @visibleForTesting
 List<DevToolsScreen>? devtoolsScreens;
+
+final _inspectorV2Screen = DevToolsScreen<inspector_v2.InspectorController>(
+  inspector_v2.InspectorScreen(),
+  createController: (_) => inspector_v2.InspectorController(
+    inspectorTree: inspector_v2.InspectorTreeController(
+      gaId: InspectorScreenMetrics.summaryTreeGaId,
+    ),
+    treeType: FlutterTreeType.widget,
+  ),
+);
+
+final _legacyInspectorScreen = DevToolsScreen<InspectorController>(
+  InspectorScreen(),
+  createController: (_) => InspectorController(
+    inspectorTree: InspectorTreeController(
+      gaId: InspectorScreenMetrics.summaryTreeGaId,
+    ),
+    detailsTree: InspectorTreeController(
+      gaId: InspectorScreenMetrics.detailsTreeGaId,
+    ),
+    treeType: FlutterTreeType.widget,
+  ),
+);

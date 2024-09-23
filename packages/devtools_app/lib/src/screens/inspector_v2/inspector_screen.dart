@@ -13,6 +13,7 @@ import 'package:vm_service/vm_service.dart' hide Stack;
 
 import '../../shared/analytics/analytics.dart' as ga;
 import '../../shared/analytics/constants.dart' as gac;
+import '../../shared/banner_messages.dart';
 import '../../shared/common_widgets.dart';
 import '../../shared/console/eval/inspector_tree_v2.dart';
 import '../../shared/editable_list.dart';
@@ -29,9 +30,9 @@ import 'inspector_tree_controller.dart';
 import 'widget_details.dart';
 
 class InspectorScreen extends Screen {
-  InspectorScreen() : super.fromMetaData(ScreenMetaData.inspector);
+  InspectorScreen() : super.fromMetaData(ScreenMetaData.inspectorV2);
 
-  static final id = ScreenMetaData.inspector.id;
+  static final id = ScreenMetaData.inspectorV2.id;
 
   // There is not enough room to safely show the console in the embed view of
   // the DevTools and IDEs have their own consoles.
@@ -279,6 +280,16 @@ class FlutterInspectorSettingsDialog extends StatelessWidget {
               description:
                   'Hovering over any widget displays its properties and values.',
               gaItem: gac.inspectorHoverEvalMode,
+            ),
+            CheckboxSetting(
+              notifier: preferences.inspector.inspectorV2Enabled
+                  as ValueNotifier<bool?>,
+              title: 'Enable Inspector V2',
+              description: 'Try out the new Inspector screen.',
+              gaItem: gac.inspectorV2Enabled,
+              onChanged: (_) {
+                pushSettingRequiresRefreshMessage(context, 'inspector');
+              },
             ),
             const SizedBox(height: denseSpacing),
             ...dialogSubHeader(theme, 'Package Directories'),

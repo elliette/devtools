@@ -15,6 +15,7 @@ import '../../service/service_extension_widgets.dart';
 import '../../service/service_extensions.dart' as extensions;
 import '../../shared/analytics/analytics.dart' as ga;
 import '../../shared/analytics/constants.dart' as gac;
+import '../../shared/banner_messages.dart';
 import '../../shared/common_widgets.dart';
 import '../../shared/console/eval/inspector_tree.dart';
 import '../../shared/editable_list.dart';
@@ -356,6 +357,16 @@ class FlutterInspectorSettingsDialog extends StatelessWidget {
               description:
                   'Hovering over any widget displays its properties and values.',
               gaItem: gac.inspectorHoverEvalMode,
+            ),
+            CheckboxSetting(
+              notifier: preferences.inspector.inspectorV2Enabled
+                  as ValueNotifier<bool?>,
+              title: 'Enable Inspector V2',
+              description: 'Try out the new Inspector screen.',
+              gaItem: gac.inspectorV2Enabled,
+              onChanged: (_) {
+                pushSettingRequiresRefreshMessage(context, 'inspector');
+              },
             ),
             const SizedBox(height: denseSpacing),
             const InspectorDefaultDetailsViewOption(),

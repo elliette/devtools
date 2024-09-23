@@ -35,6 +35,15 @@ enum ScreenMetaData {
     requiresDebugBuild: true,
     tutorialVideoTimestamp: '?t=172',
   ),
+  inspectorV2(
+    'inspector',
+    title: 'Flutter Inspector',
+    iconAsset: 'icons/app_bar/inspector.png',
+    requiresFlutter: true,
+    requiresDebugBuild: true,
+    tutorialVideoTimestamp: '?t=172',
+    isV2: true,
+  ),
   performance(
     'performance',
     title: 'Performance',
@@ -124,6 +133,7 @@ enum ScreenMetaData {
     this.requiresDebugBuild = false,
     this.requiresVmDeveloperMode = false,
     this.worksWithOfflineData = false,
+    this.isV2 = false,
     this.requiresLibrary,
     this.tutorialVideoTimestamp,
   }) : assert(
@@ -140,6 +150,7 @@ enum ScreenMetaData {
   final bool requiresFlutter;
   final bool requiresDebugBuild;
   final bool requiresVmDeveloperMode;
+  final bool isV2;
   final bool worksWithOfflineData;
   final String? requiresLibrary;
 
@@ -192,6 +203,7 @@ abstract class Screen {
     this.requiresDebugBuild = false,
     this.requiresVmDeveloperMode = false,
     this.worksWithOfflineData = false,
+    this.isV2 = false,
     this.showFloatingDebuggerControls = true,
   })  : assert(
           title == null || titleGenerator == null,
@@ -211,6 +223,7 @@ abstract class Screen {
     bool requiresDebugBuild = false,
     bool requiresVmDeveloperMode = false,
     bool worksWithOfflineData = false,
+    bool isV2 = false,
     bool Function(FlutterVersion? currentVersion)? shouldShowForFlutterVersion,
     bool showFloatingDebuggerControls = true,
     String? title,
@@ -227,6 +240,7 @@ abstract class Screen {
           requiresDebugBuild: requiresDebugBuild,
           requiresVmDeveloperMode: requiresVmDeveloperMode,
           worksWithOfflineData: worksWithOfflineData,
+          isV2: isV2,
           showFloatingDebuggerControls: showFloatingDebuggerControls,
           title: title,
           titleGenerator: titleGenerator,
@@ -250,6 +264,7 @@ abstract class Screen {
           requiresDebugBuild: metadata.requiresDebugBuild,
           requiresVmDeveloperMode: metadata.requiresVmDeveloperMode,
           worksWithOfflineData: metadata.worksWithOfflineData,
+          isV2: metadata.isV2,
           shouldShowForFlutterVersion: shouldShowForFlutterVersion,
           showFloatingDebuggerControls: showFloatingDebuggerControls,
           title: titleGenerator == null ? metadata.title : null,
@@ -327,6 +342,8 @@ abstract class Screen {
 
   /// Whether this screen works offline and should show in offline mode even if conditions are not met.
   final bool worksWithOfflineData;
+
+  final bool isV2;
 
   /// Whether this screen should display the isolate selector in the status
   /// line.

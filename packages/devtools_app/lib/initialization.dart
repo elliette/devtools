@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'dart:async';
+
 import 'package:devtools_app_shared/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,6 +20,17 @@ import 'src/shared/feature_flags.dart';
 import 'src/shared/globals.dart';
 import 'src/shared/primitives/url_utils.dart';
 import 'src/shared/primitives/utils.dart';
+
+final refreshStreamController = StreamController<String>.broadcast();
+
+/// A global stream of resume events.
+///
+/// The values in the stream are the isolates IDs for the resume event.
+///
+/// IMPORTANT: This should only be listened to during a hot-restart or page
+/// refresh. The debugger ignores any resume events as long as there is a
+/// subscriber to this stream.
+Stream<String> get refreshStream => refreshStreamController.stream;
 
 /// Handles necessary initialization then runs DevTools.
 ///
@@ -51,6 +64,20 @@ void runDevTools({
         ),
       ),
     );
+
+    refreshStream.listen((event) async {
+      print('received event: $event');
+      print('run app again!!');
+      runApp(
+        ProviderScope(
+          observers: const [ErrorLoggerObserver()],
+          child: DevToolsApp(
+            defaultScreens(sampleData: sampleData, cacheBust: true),
+            await analyticsController,
+          ),
+        ),
+      );
+    });
   });
 }
 
