@@ -272,7 +272,6 @@ class LayoutProperties {
           paddingB: parentSize.height - (size.height + parentData.offset.dy),
         );
       case SizeType.widths:
-      default:
         return (
           type: type,
           paddingA: parentData.offset.dx,
