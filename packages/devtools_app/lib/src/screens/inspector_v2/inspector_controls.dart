@@ -12,8 +12,9 @@ import '../../service/service_extensions.dart' as extensions;
 import '../../shared/analytics/constants.dart' as gac;
 import '../../shared/common_widgets.dart';
 import '../../shared/globals.dart';
+import '../inspector_shared/inspector_settings_dialog.dart';
 import 'inspector_controller.dart';
-import 'inspector_screen.dart';
+import 'inspector_screen_body.dart';
 
 /// Control buttons for the inspector panel.
 class InspectorControls extends StatelessWidget {
