@@ -354,6 +354,7 @@ class InspectorController extends DisposableController
 
   @override
   Future<void> onForceRefresh() async {
+    print('inside force refresh...');
     assert(!_disposed);
     if (!visibleToUser || _disposed) {
       return;
@@ -434,6 +435,7 @@ class InspectorController extends DisposableController
         treeType,
         isSummaryTree: hideImplementationWidgets,
       );
+
       if (node == null || group.disposed || _disposed) {
         return;
       }

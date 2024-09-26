@@ -636,6 +636,14 @@ abstract class InspectorObjectGroupBase
       if (json['errorMessage'] != null) {
         throw Exception('$extension -- ${json['errorMessage']}');
       }
+      print('\n\n================');
+      print('RESULT FOR $extension:');
+
+      final result = json['result'];
+      final jsonString = jsonEncode(result);
+      final jsonSizeInBytes = utf8.encode(jsonString).length;
+      print('JSON size: $jsonSizeInBytes bytes');
+
       return json['result'];
     });
   }

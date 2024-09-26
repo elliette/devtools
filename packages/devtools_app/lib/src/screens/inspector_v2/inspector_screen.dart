@@ -227,6 +227,7 @@ class InspectorScreenBodyState extends State<InspectorScreenBody>
   }
 
   void _refreshInspector() {
+    print('refreshing inspector tree...');
     ga.select(gac.inspector, gac.refresh);
     unawaited(
       blockWhileInProgress(() async {
