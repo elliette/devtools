@@ -420,7 +420,7 @@ final class MaterialIconLabel extends StatelessWidget {
           Icon(
             iconData,
             size: defaultIconSize,
-            color: color,
+            color: color,  // :) 
           ),
         // TODO(jacobr): animate showing and hiding the text.
         if (label != null &&
