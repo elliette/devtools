@@ -18,6 +18,7 @@ import 'package:devtools_app_shared/utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:vm_service/vm_service.dart';
+import 'package:widget_inspector_protos/widget_inspector_protos.dart';
 
 import '../console/primitives/simple_items.dart';
 import '../globals.dart';
@@ -644,6 +645,13 @@ abstract class InspectorObjectGroupBase
       final jsonSizeInBytes = utf8.encode(jsonString).length;
       print('JSON size: $jsonSizeInBytes bytes');
 
+      if (extension.contains('Proto')) {
+        print('\n\n\n$result\n\n\n');
+      }
+
+      // print('\n\n\n$result\n\n\n');
+
+      // print('returning $result');
       return json['result'];
     });
   }
@@ -653,6 +661,20 @@ abstract class InspectorObjectGroupBase
   ) async {
     if (disposed) return null;
     return parseDiagnosticsNodeHelper(await json as Map<String, Object?>?);
+  }
+
+  Future<DiagnosticsNodeProto?> parseDiagnosticsNodeProto(
+    Future<Object?> json,
+  ) async {
+    if (disposed) return null;
+    final jsonMap = await json as Map<String, Object?>?;
+    if (jsonMap != null && jsonMap['proto'] != null) {
+      final protoBuffer = jsonMap['proto'] as List<int>?;
+      if (protoBuffer == null) return null;
+      final diagnosticsNodeProto = DiagnosticsNodeProto.fromBuffer(protoBuffer);
+      return diagnosticsNodeProto;
+    }
+    return null;
   }
 
   Future<RemoteDiagnosticsNode?> parseDiagnosticsNodeObservatory(
@@ -968,12 +990,39 @@ class ObjectGroup extends InspectorObjectGroupBase {
     }
   }
 
+  Future<void> getRootProto(
+    FlutterTreeType type, {
+    bool isSummaryTree = false,
+  }) {
+    // There is no excuse to call this method on a disposed group.
+    assert(!disposed);
+    switch (type) {
+      case FlutterTreeType.widget:
+        return getRootWidgetTreeProto(isSummaryTree: isSummaryTree);
+    }
+  }
+
   Future<RemoteDiagnosticsNode?> getRootWidgetTree({
     required bool isSummaryTree,
   }) {
     return parseDiagnosticsNodeDaemon(
       invokeServiceMethodDaemonParams(
         WidgetInspectorServiceExtensions.getRootWidgetTree.name,
+        {
+          'groupName': groupName,
+          'isSummaryTree': '$isSummaryTree',
+          'withPreviews': 'false',
+        },
+      ),
+    );
+  }
+
+  Future<DiagnosticsNodeProto?> getRootWidgetTreeProto({
+    required bool isSummaryTree,
+  }) {
+    return parseDiagnosticsNodeProto(
+      invokeServiceMethodDaemonParams(
+        WidgetInspectorServiceExtensions.getRootWidgetTreeProto.name,
         {
           'groupName': groupName,
           'isSummaryTree': '$isSummaryTree',

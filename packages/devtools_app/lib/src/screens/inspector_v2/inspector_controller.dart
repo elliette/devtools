@@ -435,6 +435,10 @@ class InspectorController extends DisposableController
         treeType,
         isSummaryTree: hideImplementationWidgets,
       );
+      final nodeProto = await group.getRootProto(
+        treeType,
+        isSummaryTree: hideImplementationWidgets,
+      );
 
       if (node == null || group.disposed || _disposed) {
         return;
