@@ -10,6 +10,9 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:typed_data';
+import 'dart:io';
+
 
 import 'package:devtools_app_shared/service.dart';
 import 'package:devtools_app_shared/service_extensions.dart';
@@ -17,11 +20,13 @@ import 'package:devtools_app_shared/ui.dart';
 import 'package:devtools_app_shared/utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
+import 'package:protobuf/protobuf.dart';
 import 'package:vm_service/vm_service.dart';
 import 'package:widget_inspector_protos/widget_inspector_protos.dart';
 
 import '../console/primitives/simple_items.dart';
 import '../globals.dart';
+import '../primitives/utils.dart';
 import '../utils.dart';
 import 'diagnostics_node.dart';
 import 'generic_instance_reference.dart';
@@ -644,14 +649,6 @@ abstract class InspectorObjectGroupBase
       final jsonString = jsonEncode(result);
       final jsonSizeInBytes = utf8.encode(jsonString).length;
       print('JSON size: $jsonSizeInBytes bytes');
-
-      if (extension.contains('Proto')) {
-        print('\n\n\n$result\n\n\n');
-      }
-
-      // print('\n\n\n$result\n\n\n');
-
-      // print('returning $result');
       return json['result'];
     });
   }
@@ -663,16 +660,29 @@ abstract class InspectorObjectGroupBase
     return parseDiagnosticsNodeHelper(await json as Map<String, Object?>?);
   }
 
-  Future<DiagnosticsNodeProto?> parseDiagnosticsNodeProto(
+  Future<RemoteDiagnosticsNode?> parseDiagnosticsNodeProto(
     Future<Object?> json,
   ) async {
     if (disposed) return null;
     final jsonMap = await json as Map<String, Object?>?;
     if (jsonMap != null && jsonMap['proto'] != null) {
-      final protoBuffer = jsonMap['proto'] as List<int>?;
-      if (protoBuffer == null) return null;
-      final diagnosticsNodeProto = DiagnosticsNodeProto.fromBuffer(protoBuffer);
-      return diagnosticsNodeProto;
+      final encodedProto = JsonUtils.getStringMember(jsonMap, 'proto') ?? '';
+      final bytes = base64Decode(encodedProto);
+
+      final bufferReader = CodedBufferReader(
+        bytes,
+        // Note: Inspector tree is highly nested, therefore need a higher
+        // recursion limit than the default.
+        recursionLimit: 10000000,
+      );
+      final diagnosticsNodeProto = DiagnosticsNodeProto()
+        ..mergeFromCodedBufferReader(bufferReader);
+      return RemoteDiagnosticsNode.fromProto(
+        diagnosticsNodeProto,
+        this,
+        false,
+        null,
+      );
     }
     return null;
   }
@@ -990,7 +1000,7 @@ class ObjectGroup extends InspectorObjectGroupBase {
     }
   }
 
-  Future<void> getRootProto(
+  Future<RemoteDiagnosticsNode?> getRootProto(
     FlutterTreeType type, {
     bool isSummaryTree = false,
   }) {
@@ -1017,7 +1027,7 @@ class ObjectGroup extends InspectorObjectGroupBase {
     );
   }
 
-  Future<DiagnosticsNodeProto?> getRootWidgetTreeProto({
+  Future<RemoteDiagnosticsNode?> getRootWidgetTreeProto({
     required bool isSummaryTree,
   }) {
     return parseDiagnosticsNodeProto(

@@ -9,6 +9,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:vm_service/vm_service.dart';
+import 'package:widget_inspector_protos/widget_inspector_protos.dart';
 
 import '../../screens/inspector_v2/inspector_data_models.dart';
 import '../primitives/enum_utils.dart';
@@ -46,7 +47,14 @@ class RemoteDiagnosticsNode extends DiagnosticableTree {
     this.objectGroupApi,
     this.isProperty,
     this.parent,
-  );
+  ) : proto = null;
+
+  RemoteDiagnosticsNode.fromProto(
+    this.proto,
+    this.objectGroupApi,
+    this.isProperty,
+    this.parent,
+  ) : json = <String, Object?>{};
 
   /// Stores the [TextStyle] that was used when building the description.
   ///
@@ -103,6 +111,8 @@ class RemoteDiagnosticsNode extends DiagnosticableTree {
 
   /// JSON describing the diagnostic node.
   final Map<String, Object?> json;
+
+  final DiagnosticsNodeProto? proto;
 
   Future<Map<String, InstanceRef>?>? _valueProperties;
 
@@ -206,13 +216,15 @@ class RemoteDiagnosticsNode extends DiagnosticableTree {
   /// (see [showSeparator]).
   ///
   /// The name should be omitted if the [showName] property is false.
-  String? get name => getStringMember('name');
+  String? get name => proto != null ? proto!.name : getStringMember('name');
 
   /// Whether to show a separator between [name] and description.
   ///
   /// If false, name and description should be shown with no separation.
   /// `:` is typically used as a separator when displaying as text.
-  bool get showSeparator => getBooleanMember('showSeparator', true);
+  bool get showSeparator => proto != null
+      ? proto!.showSeparator
+      : getBooleanMember('showSeparator', true);
 
   /// Returns a description with a short summary of the node itself not
   /// including children or properties.
@@ -220,7 +232,8 @@ class RemoteDiagnosticsNode extends DiagnosticableTree {
   /// `parentConfiguration` specifies how the parent is rendered as text art.
   /// For example, if the parent does not line break between properties, the
   /// description of a property should also be a single line if possible.
-  String? get description => getStringMember('description');
+  String? get description =>
+      proto != null ? proto!.description : getStringMember('description');
 
   /// Priority level of the diagnostic used to control which diagnostics should
   /// be shown and filtered.
@@ -231,26 +244,32 @@ class RemoteDiagnosticsNode extends DiagnosticableTree {
   /// the value returned here but other factors also influence it. For example,
   /// whether an exception is thrown computing a property value
   /// [DiagnosticLevel.error] is returned.
-  DiagnosticLevel get level => getLevelMember('level', DiagnosticLevel.info);
+  DiagnosticLevel get level => proto != null
+      ? getLevelMemberForProto(proto!.level)
+      : getLevelMember('level', DiagnosticLevel.info);
 
   /// Whether the name of the property should be shown when showing the default
   /// view of the tree.
   ///
   /// This could be set to false (hiding the name) if the value's description
   /// will make the name self-evident.
-  bool get showName => getBooleanMember('showName', true);
+  bool get showName =>
+      proto != null ? proto!.showName : getBooleanMember('showName', true);
 
   /// Description to show if the node has no displayed properties or children.
-  String? getEmptyBodyDescription() => getStringMember('emptyBodyDescription');
+  String? getEmptyBodyDescription() => proto != null
+      ? proto!.emptyBodyDescription
+      : getStringMember('emptyBodyDescription');
 
-  late DiagnosticsTreeStyle style =
-      getStyleMember('style', DiagnosticsTreeStyle.sparse);
+  late DiagnosticsTreeStyle style = proto != null
+      ? getStyleMemberForProto(proto!.style)
+      : getStyleMember('style', DiagnosticsTreeStyle.sparse);
 
   /// Dart class defining the diagnostic node.
   /// For example, DiagnosticProperty<Color>, IntProperty, StringProperty, etc.
   /// This should rarely be required except for cases where custom rendering is desired
   /// of a specific Dart diagnostic class.
-  String? get type => getStringMember('type');
+  String? get type => proto != null ? proto!.type : getStringMember('type');
 
   /// Whether the description is enclosed in double quotes.
   ///
@@ -363,7 +382,8 @@ class RemoteDiagnosticsNode extends DiagnosticableTree {
   /// Description if the property [value] is null.
   String? get ifNull => getStringMember('ifNull');
 
-  bool get allowWrap => getBooleanMember('allowWrap', true);
+  bool get allowWrap =>
+      proto != null ? proto!.allowWrap : getBooleanMember('allowWrap', true);
 
   /// Optional tooltip typically describing the property.
   ///
@@ -497,6 +517,13 @@ class RemoteDiagnosticsNode extends DiagnosticableTree {
     return diagnosticLevelUtils.enumEntry(value)!;
   }
 
+  DiagnosticLevel getLevelMemberForProto(
+    DiagnosticsNodeProto_DiagnosticLevel level,
+  ) {
+    final name = level.name;
+    return diagnosticLevelUtils.enumEntry(name)!;
+  }
+
   DiagnosticsTreeStyle getStyleMember(
     String memberName,
     DiagnosticsTreeStyle defaultValue,
@@ -509,6 +536,12 @@ class RemoteDiagnosticsNode extends DiagnosticableTree {
       return defaultValue;
     }
     return treeStyleUtils.enumEntry(value)!;
+  }
+
+  DiagnosticsTreeStyle getStyleMemberForProto(
+    DiagnosticsNodeProto_DiagnosticsTreeStyle style,
+  ) {
+    return treeStyleUtils.enumEntry(style.name)!;
   }
 
   /// Returns a reference to the value the DiagnosticsNode object is describing.
@@ -566,11 +599,14 @@ class RemoteDiagnosticsNode extends DiagnosticableTree {
     // that indicates the node should have no children in the tree while if the
     // 'children' property is not specified it means we do not know whether
     // there is a list of children and need to query the server to find out.
-    final children = json['children'] as List<Object?>?;
+    final children =
+        proto != null ? proto!.children : json['children'] as List<Object?>?;
     if (children != null) {
       return children.isNotEmpty;
     }
-    return getBooleanMember('hasChildren', false);
+    return proto != null
+        ? proto!.hasChildren
+        : getBooleanMember('hasChildren', false);
   }
 
   bool get isCreatedByLocalProject {
@@ -706,6 +742,19 @@ class RemoteDiagnosticsNode extends DiagnosticableTree {
       for (final element in jsonArray!.cast<Map<String, Object?>>()) {
         final child =
             RemoteDiagnosticsNode(element, objectGroupApi, false, parent);
+        child.parent = this;
+        nodes.add(child);
+      }
+      _children = nodes;
+    } else if (proto?.children.isNotEmpty == true) {
+      final nodes = <RemoteDiagnosticsNode>[];
+      for (final element in proto!.children) {
+        final child = RemoteDiagnosticsNode.fromProto(
+          element,
+          objectGroupApi,
+          false,
+          parent,
+        );
         child.parent = this;
         nodes.add(child);
       }
