@@ -1,6 +1,3 @@
 {
-  "dart.showTodos": false,
-  "dart.flutterSdkPath": "~/dev/flutter",
-  "workbench.preferredDarkColorTheme": "Tomorrow Night Blue",
-  "workbench.colorTheme": "Tomorrow Night Blue"
+  "dart.showTodos": false
 }
