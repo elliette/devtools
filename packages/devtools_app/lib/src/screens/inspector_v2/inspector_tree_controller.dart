@@ -490,6 +490,7 @@ class InspectorTreeController extends DisposableController
       final indented = style != DiagnosticsTreeStyle.flat &&
           style != DiagnosticsTreeStyle.error;
 
+      // Bug where all the rows are collapsed:
       if (!node.isExpanded && !includeCollapsedRows) return;
       final children = node.children;
       final parentDepth = depth;

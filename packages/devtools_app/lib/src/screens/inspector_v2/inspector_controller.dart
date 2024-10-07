@@ -455,6 +455,9 @@ class InspectorController extends DisposableController
         node,
         expandChildren: true,
       );
+      // Note: Following is necessary to load anything in inspector tree, though
+      // the tree is malformed:
+      rootNode.isExpanded = true;
       inspectorTree.root = rootNode;
 
       refreshSelection(newSelection);
