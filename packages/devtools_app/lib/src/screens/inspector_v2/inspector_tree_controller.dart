@@ -665,6 +665,7 @@ class InspectorTreeController extends DisposableController
       if (diagnosticsNode.childrenReady || !diagnosticsNode.hasChildren) {
         final styleIsMultiline =
             expandPropertiesByDefault(diagnosticsNode.style);
+        // final styleIsMultiline = true;
         setupChildren(
           diagnosticsNode,
           node,

@@ -29,7 +29,7 @@ class EnumUtils<T extends Enum> {
   final _reverseLookupTable = <T, String>{};
 
   T? enumEntry(String? enumName) =>
-      enumName != null ? _lookupTable[enumName] : null;
+        enumName != null ? _lookupTable[enumName] : null;
 
   String? name(T enumEntry) => _reverseLookupTable[enumEntry];
 }

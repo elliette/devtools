@@ -610,11 +610,15 @@ class RemoteDiagnosticsNode extends DiagnosticableTree {
   }
 
   bool get isCreatedByLocalProject {
-    return getBooleanMember('createdByLocalProject', false);
+    return proto != null
+        ? proto!.createdByLocalProjet
+        : getBooleanMember('createdByLocalProject', false);
   }
 
   /// Whether this node is being displayed as a full tree or a filtered tree.
-  bool get isSummaryTree => getBooleanMember('summaryTree', false);
+  bool get isSummaryTree => proto != null
+      ? proto!.summaryTree
+      : getBooleanMember('summaryTree', false);
 
   /// Whether this node is being displayed as a full tree or a filtered tree.
   bool get isStateful => getBooleanMember('stateful', false);
