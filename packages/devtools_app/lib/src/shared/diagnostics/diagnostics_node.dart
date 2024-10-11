@@ -621,9 +621,11 @@ class RemoteDiagnosticsNode extends DiagnosticableTree {
   }
 
   /// Whether this node is being displayed as a full tree or a filtered tree.
-  bool get isSummaryTree => proto != null
-      ? proto!.summaryTree
-      : getBooleanMember('summaryTree', false);
+  // bool get isSummaryTree => proto != null
+  //     ? proto!.summaryTree
+  //     : getBooleanMember('summaryTree', false);
+
+  bool get isSummaryTree => getBooleanMember('summaryTree', false);
 
   /// Whether this node is being displayed as a full tree or a filtered tree.
   bool get isStateful =>

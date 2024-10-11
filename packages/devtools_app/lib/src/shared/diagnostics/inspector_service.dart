@@ -630,6 +630,8 @@ abstract class InspectorObjectGroupBase
       return Future.value();
     }
 
+    final requestStopWatch = Stopwatch()..start();
+
     return inspectorLibrary.addRequest(this, () async {
       final r =
           await serviceConnection.serviceManager.service!.callServiceExtension(
@@ -642,13 +644,14 @@ abstract class InspectorObjectGroupBase
       if (json['errorMessage'] != null) {
         throw Exception('$extension -- ${json['errorMessage']}');
       }
-      print('\n\n================');
-      print('RESULT FOR $extension:');
+      print(
+          '[$extension] response time: ${requestStopWatch.elapsedMilliseconds} ms');
+      requestStopWatch.stop();
 
       final result = json['result'];
       final jsonString = jsonEncode(result);
-      final jsonSizeInBytes = utf8.encode(jsonString).length;
-      print('JSON size: $jsonSizeInBytes bytes');
+      final jsonSizeInBytes = utf8.encode(jsonString).lengthInBytes;
+      print('[$extension] response size: $jsonSizeInBytes bytes');
       return json['result'];
     });
   }

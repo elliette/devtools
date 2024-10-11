@@ -4,6 +4,8 @@
 
 import 'package:devtools_app_shared/utils.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 import 'initialization.dart';
 import 'src/shared/environment_parameters/environment_parameters_base.dart';
@@ -17,6 +19,12 @@ import 'src/shared/primitives/utils.dart';
 /// should be added to [runDevTools].
 void main() {
   BindingBase.debugZoneErrorsAreFatal = true;
+
+  // debugProfileBuildsEnabled = true;
+  // debugProfileBuildsEnabledUserWidgets = true;
+  // debugProfileLayoutsEnabled = true;
+  // debugProfilePaintsEnabled = true;
+
   externalRunDevTools();
 }
 
