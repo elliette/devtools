@@ -432,11 +432,11 @@ class InspectorController extends DisposableController
     try {
       final group = treeGroups.next;
       // Call old service extension for size comparison:
-      await group.getRoot(
+      final node = await group.getRoot(
         treeType,
         isSummaryTree: hideImplementationWidgets,
       );
-      final node = await group.getRootProto(
+      await group.getRootProto(
         treeType,
         isSummaryTree: hideImplementationWidgets,
       );

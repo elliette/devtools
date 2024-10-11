@@ -874,3 +874,158 @@ class RemoteDiagnosticsNode extends DiagnosticableTree {
     }
   }
 }
+
+
+class DiagnosticsTreeNode extends DiagnosticableTree {
+  DiagnosticsTreeNode(
+    this.proto,
+    this.objectGroupApi,
+    this.parent,
+  );
+
+  List<DiagnosticsTreeNode>? _children;
+
+  /// Stores the [TextStyle] that was used when building the description.
+  ///
+  /// When not set, then the description has not been built yet.
+  /// This style is used when approximating the length of the
+  /// [DiagnosticsNodeDescription], to ensure we are approximating the content
+  /// area using the right style.
+  TextStyle? descriptionTextStyleFromBuild;
+
+  static final iconMaker = CustomIconMaker();
+
+  /// This node's parent (if it's been set).
+  DiagnosticsTreeNode? parent;
+
+  /// Service used to retrieve more detailed information about the value of
+  /// the property and its children and properties.
+  final InspectorObjectGroupApi<RemoteDiagnosticsNode>? objectGroupApi;
+
+  final TreeNodeProto proto;
+
+  ///
+  /// `parentConfiguration` specifies how the parent is rendered as text art.
+  /// For example, if the parent does not line break between properties, the
+  /// description of a property should also be a single line if possible.
+  String? get description => proto.description;
+
+  String? get valueId => proto.valueId;
+
+  /// Returns a reference to the value the DiagnosticsNode object is describing.
+  InspectorInstanceRef get valueRef => InspectorInstanceRef(valueId);
+
+  bool get hasChildren {
+    final children = proto.children;
+    return children.isNotEmpty;
+  }
+
+  bool get isCreatedByLocalProject {
+    return proto.createdByLocalProject;
+  }
+
+  String? get widgetRuntimeType => proto.widgetRuntimeType;
+
+  /// Check whether children are already available.
+  bool get childrenReady {
+    return _children != null;
+  }
+
+  List<DiagnosticsTreeNode> get children {
+    final children = _maybePopulateChildren();
+    return children;
+  }
+
+  DiagnosticsTreeNode? get hideableGroupLeader =>
+      isHideableGroupLeader ? this : _hideableGroupLeader;
+
+  DiagnosticsTreeNode? _hideableGroupLeader;
+
+  set hideableGroupLeader(DiagnosticsTreeNode? newLeader) {
+    _hideableGroupLeader = newLeader;
+  }
+
+  bool get groupIsHidden => inHideableGroup && _groupIsHidden;
+
+  bool _groupIsHidden = true;
+
+  set groupIsHidden(bool newValue) {
+    _groupIsHidden = newValue;
+  }
+
+  bool get isHidden =>
+      inHideableGroup && !isHideableGroupLeader && groupIsHidden;
+
+  bool get inHideableGroup {
+    if (_alwaysVisible(this)) return false;
+    final parentIsHideable = parent != null && !_alwaysVisible(parent!);
+    final firstChildIsHideable =
+        children.isNotEmpty && !_alwaysVisible(children.first);
+
+    // A widget should only be included in a hideable group if either its parent
+    // or first child is hideable (if it's the only hideable widget then it's
+    // not part of a "group").
+    return parentIsHideable || firstChildIsHideable;
+  }
+
+  bool get isHideableGroupLeader {
+    return inHideableGroup && _hideableGroupSubordinates != null;
+  }
+
+  List<DiagnosticsTreeNode>? get hideableGroupSubordinates =>
+      _hideableGroupSubordinates;
+  List<DiagnosticsTreeNode>? _hideableGroupSubordinates;
+
+  void addHideableGroupSubordinate(DiagnosticsTreeNode subordinate) {
+    (_hideableGroupSubordinates ??= <DiagnosticsTreeNode>[]).add(subordinate);
+    subordinate.hideableGroupLeader = this;
+  }
+
+  void toggleHiddenGroup() {
+    // Only the hideable group leader can change the group's hidden state:
+    assert(isHideableGroupLeader);
+
+    final newHiddenValue = !_groupIsHidden;
+    _groupIsHidden = newHiddenValue;
+    if (isHideableGroupLeader) {
+      _hideableGroupSubordinates
+          ?.forEach((node) => node.groupIsHidden = newHiddenValue);
+    }
+  }
+
+  bool _alwaysVisible(DiagnosticsTreeNode node) {
+    final isRoot = node.parent == null;
+    final hasMoreThanOneChild = node.hasChildren && node.children.length > 1;
+    final hasSiblings = (node.parent?.children ?? []).length > 1;
+    return isRoot ||
+        node.isCreatedByLocalProject ||
+        hasMoreThanOneChild ||
+        hasSiblings;
+  }
+
+  List<DiagnosticsTreeNode> _maybePopulateChildren() {
+    if (!hasChildren) return <DiagnosticsTreeNode>[];
+    final childrenLocal = _children;
+    if (childrenLocal != null) return childrenLocal;
+
+    final nodes = <DiagnosticsTreeNode>[];
+    for (final element in proto.children) {
+      final child = DiagnosticsTreeNode(element, objectGroupApi, parent);
+      child.parent = this;
+      nodes.add(child);
+    }
+    _children = nodes;
+    return nodes;
+  }
+
+  Widget? get icon {
+    return iconMaker.fromWidgetName(widgetRuntimeType);
+  }
+
+  Future<void> setSelectionInspector(bool uiAlreadyUpdated) async {
+    final objectGroup = objectGroupApi;
+    if (objectGroup != null && objectGroup.canSetSelectionInspector) {
+      await objectGroup.setSelectionInspector(valueRef, uiAlreadyUpdated);
+    }
+  }
+}

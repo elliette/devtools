@@ -663,7 +663,7 @@ abstract class InspectorObjectGroupBase
     return parseDiagnosticsNodeHelper(await json as Map<String, Object?>?);
   }
 
-  Future<RemoteDiagnosticsNode?> parseDiagnosticsNodeProto(
+  Future<DiagnosticsTreeNode?> parseDiagnosticsNodeProto(
     Future<Object?> json,
   ) async {
     if (disposed) return null;
@@ -678,12 +678,11 @@ abstract class InspectorObjectGroupBase
         // recursion limit than the default.
         recursionLimit: 10000000,
       );
-      final diagnosticsNodeProto = DiagnosticsNodeProto()
+      final diagnosticsNodeProto = TreeNodeProto()
         ..mergeFromCodedBufferReader(bufferReader);
-      return RemoteDiagnosticsNode.fromProto(
+      return DiagnosticsTreeNode(
         diagnosticsNodeProto,
         this,
-        false,
         null,
       );
     }
@@ -1003,7 +1002,7 @@ class ObjectGroup extends InspectorObjectGroupBase {
     }
   }
 
-  Future<RemoteDiagnosticsNode?> getRootProto(
+  Future<DiagnosticsTreeNode?> getRootProto(
     FlutterTreeType type, {
     bool isSummaryTree = false,
   }) {
@@ -1030,7 +1029,7 @@ class ObjectGroup extends InspectorObjectGroupBase {
     );
   }
 
-  Future<RemoteDiagnosticsNode?> getRootWidgetTreeProto({
+  Future<DiagnosticsTreeNode?> getRootWidgetTreeProto({
     required bool isSummaryTree,
   }) {
     return parseDiagnosticsNodeProto(
