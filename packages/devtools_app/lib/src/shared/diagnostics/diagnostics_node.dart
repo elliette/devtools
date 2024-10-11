@@ -544,9 +544,12 @@ class RemoteDiagnosticsNode extends DiagnosticableTree {
     return treeStyleUtils.enumEntry(style.name)!;
   }
 
+  String? get valueId => proto != null
+      ? proto!.valueId
+      : JsonUtils.getStringMember(json, 'valueId');
+
   /// Returns a reference to the value the DiagnosticsNode object is describing.
-  InspectorInstanceRef get valueRef =>
-      InspectorInstanceRef(json['valueId'] as String?);
+  InspectorInstanceRef get valueRef => InspectorInstanceRef(valueId);
 
   bool isEnumProperty() {
     return type?.startsWith('EnumProperty<') ?? false;
@@ -610,9 +613,11 @@ class RemoteDiagnosticsNode extends DiagnosticableTree {
   }
 
   bool get isCreatedByLocalProject {
-    return proto != null
-        ? proto!.createdByLocalProjet
-        : getBooleanMember('createdByLocalProject', false);
+    final protoLocal = proto;
+    if (protoLocal != null) {
+      return protoLocal.createdByLocalProjet;
+    }
+    return getBooleanMember('createdByLocalProject', false);
   }
 
   /// Whether this node is being displayed as a full tree or a filtered tree.
@@ -621,9 +626,12 @@ class RemoteDiagnosticsNode extends DiagnosticableTree {
       : getBooleanMember('summaryTree', false);
 
   /// Whether this node is being displayed as a full tree or a filtered tree.
-  bool get isStateful => getBooleanMember('stateful', false);
+  bool get isStateful =>
+      proto != null ? proto!.stateful : getBooleanMember('stateful', false);
 
-  String? get widgetRuntimeType => getStringMember('widgetRuntimeType');
+  String? get widgetRuntimeType => proto != null
+      ? proto!.widgetRuntimeType
+      : getStringMember('widgetRuntimeType');
 
   /// Check whether children are already available.
   bool get childrenReady {

@@ -433,6 +433,8 @@ class DiagnosticsNodeDescription extends StatelessWidget {
           !diagnosticLocal.isCreatedByLocalProject &&
           diagnosticLocal.description != '[root]') {
         textStyle = textStyle.merge(theme.subtleTextStyle);
+      } else {
+        textStyle = textStyle.merge(theme.regularTextStyle);
       }
 
       var diagnosticDescription = buildDescription(
