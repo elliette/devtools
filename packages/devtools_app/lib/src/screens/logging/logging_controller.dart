@@ -494,6 +494,7 @@ class LoggingController extends DisposableController
     // TODO(jacobr): expose the messageBus for use by vm tests.
     autoDisposeStreamSubscription(
       messageBus.onEvent(type: 'reload.end').listen((BusEvent event) {
+        print('END HOT RELOAD!!!!!');
         log(
           LogData(
             'hot.reload',

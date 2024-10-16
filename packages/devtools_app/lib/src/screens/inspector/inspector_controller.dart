@@ -32,6 +32,7 @@ import '../../shared/globals.dart';
 import '../../shared/primitives/utils.dart';
 import '../../shared/query_parameters.dart';
 import '../inspector_shared/inspector_screen.dart';
+import '../inspector_shared/inspector_screen_controller.dart';
 import 'inspector_tree_controller.dart';
 
 final _log = Logger('inspector_controller');
@@ -126,6 +127,27 @@ class InspectorController extends DisposableController
     }
 
     serviceConnection.consoleService.ensureServiceInitialized();
+
+    final vmService = serviceConnection.serviceManager.service;
+    if (vmService != null) {
+      autoDisposeStreamSubscription(serviceConnection
+          .serviceManager.service!.onIsolateEvent
+          .listen(_handleIsolateEvent));
+    }
+  }
+
+  Future<void> _handleIsolateEvent(Event event) async {
+    print('GOT AN EVENT!');
+    final eventId = event.isolate?.id;
+    final mainIsolate =
+        serviceConnection.serviceManager.isolateManager.mainIsolate.value;
+    if (eventId == null || eventId != mainIsolate?.id) return;
+    switch (event.kind) {
+      case EventKind.kIsolateReload:
+        print('Refresh after hot reload!!!!!');
+        await onForceRefresh();
+        break;
+    }
   }
 
   void _handleConnectionStart() {
@@ -362,6 +384,7 @@ class InspectorController extends DisposableController
 
   @override
   Future<void> onForceRefresh() async {
+    startTreeRefreshTimer();
     assert(!_disposed);
     if (!visibleToUser || _disposed) {
       return;

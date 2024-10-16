@@ -29,6 +29,7 @@ import '../../shared/ui/colors.dart';
 import '../../shared/ui/search.dart';
 import '../../shared/ui/utils.dart';
 import '../../shared/utils.dart';
+import '../inspector_shared/inspector_screen_controller.dart';
 import 'inspector_breadcrumbs.dart';
 import 'inspector_controller.dart';
 
@@ -239,7 +240,16 @@ class InspectorTreeController extends DisposableController
   }
 
   InspectorTreeRow? getCachedRow(int index) {
+    //  print('$index vs $numRows');
     if (index < 0) return null;
+
+    if (index == 0) {
+      startUpdateRowsTimer();
+    }
+
+    if (index == numRows - 1) {
+      stopUpdateRowsTimer(isLegacy: true);
+    }
 
     _maybeClearCache();
     while (cachedRows.length <= index) {
@@ -1014,6 +1024,11 @@ class _InspectorTreeState extends State<InspectorTree>
       }
       controller.firstInspectorTreeLoadCompleted = true;
     }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      stopTreeRefreshTimer(isLegacy: true);
+    });
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final viewportWidth = constraints.maxWidth;

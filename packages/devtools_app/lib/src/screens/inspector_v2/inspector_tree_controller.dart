@@ -30,6 +30,7 @@ import '../../shared/ui/colors.dart';
 import '../../shared/ui/search.dart';
 import '../../shared/ui/utils.dart';
 import '../../shared/utils.dart';
+import '../inspector_shared/inspector_screen_controller.dart';
 import 'inspector_controller.dart';
 
 final _log = Logger('inspector_tree_controller');
@@ -246,8 +247,15 @@ class InspectorTreeController extends DisposableController
     node ??= root;
     if (node == null) return;
 
+    startUpdateRowsTimer();
+
     final rows = _buildRows(node);
     _rowsInTree.value = rows;
+
+    if (rows.length > 1) {
+      stopUpdateRowsTimer(isLegacy: false);
+    }
+
 
     // Build the reverse node-to-index map for faster lookups:
     for (int i = 0; i < _rowsInTree.value.length; i++) {
@@ -487,9 +495,10 @@ class InspectorTreeController extends DisposableController
         );
       }
 
-      final style = node.diagnostic?.style;
-      final indented = style != DiagnosticsTreeStyle.flat &&
-          style != DiagnosticsTreeStyle.error;
+      // final style = node.diagnostic?.style;
+      // final indented = style != DiagnosticsTreeStyle.flat &&
+      //     style != DiagnosticsTreeStyle.error;
+      final indented = true;
 
       // Bug where all the rows are collapsed:
       if (!node.isExpanded && !includeCollapsedRows) return;
@@ -1123,6 +1132,11 @@ class _InspectorTreeState extends State<InspectorTree>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      stopTreeRefreshTimer(isLegacy: false);
+    });
+
     final treeControllerLocal = treeController;
     if (treeControllerLocal == null) {
       // Indicate the tree is loading.

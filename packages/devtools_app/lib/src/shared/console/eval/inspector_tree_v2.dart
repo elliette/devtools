@@ -88,12 +88,16 @@ class InspectorTreeNode {
 
   bool selected = false;
 
+  DiagnosticsTreeNode? _treeDiagnostic;
+
   RemoteDiagnosticsNode? _diagnostic;
   final List<InspectorTreeNode> _children;
 
   Iterable<InspectorTreeNode> get children => _children;
 
   bool get isProperty {
+    final treeDiagnosticLocal = treeDiagnostic;
+    if (treeDiagnosticLocal != null) return false;
     final diagnosticLocal = diagnostic;
     return diagnosticLocal == null || diagnosticLocal.isProperty;
   }
@@ -102,6 +106,15 @@ class InspectorTreeNode {
   bool _isExpanded;
 
   bool get showExpandCollapse {
+    final treeDiagnosticLocal = treeDiagnostic;
+    if (treeDiagnosticLocal != null) {
+      final hasChildren =
+          treeDiagnosticLocal.hasChildren || children.isNotEmpty;
+      final isHideableGroupLeader = treeDiagnosticLocal.isHideableGroupLeader;
+      final isHidden = treeDiagnosticLocal.groupIsHidden;
+      return hasChildren && (!isHideableGroupLeader || !isHidden);
+    } 
+
     final hasChildren = diagnostic?.hasChildren == true || children.isNotEmpty;
     final isHideableGroupLeader = diagnostic?.isHideableGroupLeader ?? false;
     final isHidden = diagnostic?.groupIsHidden ?? false;
@@ -128,6 +141,8 @@ class InspectorTreeNode {
     _parent?.isDirty = true;
   }
 
+  DiagnosticsTreeNode? get treeDiagnostic => _treeDiagnostic;
+
   RemoteDiagnosticsNode? get diagnostic => _diagnostic;
 
   set diagnostic(RemoteDiagnosticsNode? v) {
@@ -136,6 +151,14 @@ class InspectorTreeNode {
     _isExpanded = value.childrenReady;
     isDirty = true;
   }
+
+  set treeDiagnostic(DiagnosticsTreeNode? v) {
+    final value = v!;
+    _treeDiagnostic = value;
+    _isExpanded = value.childrenReady;
+    isDirty = true;
+  }
+
 
   bool get hasPlaceholderChildren {
     return children.length == 1 && children.first.diagnostic == null;

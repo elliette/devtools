@@ -32,6 +32,7 @@ import '../../shared/globals.dart';
 import '../../shared/primitives/utils.dart';
 import '../../shared/query_parameters.dart';
 import '../inspector_shared/inspector_screen.dart';
+import '../inspector_shared/inspector_screen_controller.dart';
 import 'inspector_data_models.dart';
 import 'inspector_tree_controller.dart';
 
@@ -63,6 +64,9 @@ class InspectorController extends DisposableController
   }
 
   Future<void> _init() async {
+    print('init inspector controller:');
+    print(StackTrace.current);
+
     _refreshRateLimiter = RateLimiter(refreshFramesPerSecond, refresh);
 
     inspectorTree.config = InspectorTreeConfig(
@@ -130,7 +134,49 @@ class InspectorController extends DisposableController
     }
 
     serviceConnection.consoleService.ensureServiceInitialized();
+
+    final vmService = serviceConnection.serviceManager.service;
+    if (vmService != null) {
+      print('LISTEN FOR ISOLATE EVENTS');
+      autoDisposeStreamSubscription(serviceConnection
+          .serviceManager.service!.onIsolateEvent
+          .listen(_handleIsolateEvent));
+
+      autoDisposeStreamSubscription(serviceConnection
+          .serviceManager.service!.onVMEvent
+          .listen((Event event) {
+        print('vm event: $event');
+      }));
+
+      autoDisposeStreamSubscription(serviceConnection
+          .serviceManager.service!.onExtensionEvent
+          .listen((Event event) {
+        print('extension: $event / ${event.kind}');
+        print(event.extensionKind);
+      }));
+
+      autoDisposeStreamSubscription(serviceConnection
+          .serviceManager.service!.onLoggingEvent
+          .listen((Event event) {
+        print('logging: $event');
+      }));
+    }
   }
+
+  Future<void> _handleIsolateEvent(Event event) async {
+    print('GOT AN EVENT!: $event');
+    final eventId = event.isolate?.id;
+    final mainIsolate =
+        serviceConnection.serviceManager.isolateManager.mainIsolate.value;
+    if (eventId == null || eventId != mainIsolate?.id) return;
+    switch (event.kind) {
+      case EventKind.kIsolateReload:
+        print('Refresh after hot reload!!!!!');
+        await onForceRefresh();
+        break;
+    }
+  }
+
 
   void _handleConnectionStart() {
     // Clear any existing badge/errors for older errors that were collected.
@@ -354,7 +400,7 @@ class InspectorController extends DisposableController
 
   @override
   Future<void> onForceRefresh() async {
-    print('inside force refresh...');
+    startTreeRefreshTimer();
     assert(!_disposed);
     if (!visibleToUser || _disposed) {
       return;
@@ -432,11 +478,11 @@ class InspectorController extends DisposableController
     try {
       final group = treeGroups.next;
       // Call old service extension for size comparison:
-      final node = await group.getRoot(
-        treeType,
-        isSummaryTree: hideImplementationWidgets,
-      );
-      await group.getRootProto(
+      // await group.getRoot(
+      //   treeType,
+      //   isSummaryTree: hideImplementationWidgets,
+      // );
+      final node = await group.getRootProto(
         treeType,
         isSummaryTree: hideImplementationWidgets,
       );

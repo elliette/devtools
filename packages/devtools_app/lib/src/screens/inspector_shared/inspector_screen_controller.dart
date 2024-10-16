@@ -36,3 +36,53 @@ class InspectorScreenController extends DisposableController {
     treeType: FlutterTreeType.widget,
   );
 }
+
+final _treeRefreshStopwatch = Stopwatch();
+final _updateRowsStopwatch = Stopwatch();
+
+bool? _updateRowsStarted = null;
+bool? _updateRowsEnded = null;
+
+void startTreeRefreshTimer() {
+  _updateRowsStarted = null;
+  _updateRowsEnded = null;
+
+  // print('--- start refresh timer');
+  _treeRefreshStopwatch
+    ..stop()
+    ..reset()
+    ..start();
+}
+
+void startUpdateRowsTimer() {
+  //  print('--- start update rows timer');
+  _updateRowsStopwatch
+    ..stop()
+    ..reset()
+    ..start();
+
+  _updateRowsStarted = true;
+}
+
+void stopTreeRefreshTimer({isLegacy = false}) {
+  // print('Update rows started: ${_updateRowsStarted}');
+//   print('Update rows ended: ${_updateRowsEnded}');
+
+  if (_updateRowsStarted == null) return;
+  if (_updateRowsEnded == null) return;
+
+  print(
+      '[${isLegacy ? 'Legacy' : 'V2'} Inspector] Tree refresh: ${_treeRefreshStopwatch.elapsedMilliseconds} ms');
+  _treeRefreshStopwatch
+    ..stop()
+    ..reset();
+}
+
+void stopUpdateRowsTimer({isLegacy = false}) {
+  _updateRowsEnded = true;
+  print(
+      '[${isLegacy ? 'Legacy' : 'V2'} Inspector] Update rows: ${_updateRowsStopwatch.elapsedMilliseconds} ms');
+  _updateRowsStopwatch
+    ..stop()
+    ..reset();
+}
