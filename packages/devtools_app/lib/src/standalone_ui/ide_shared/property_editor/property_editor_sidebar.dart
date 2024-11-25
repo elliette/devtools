@@ -7,9 +7,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../shared/primitives/utils.dart';
+import 'property_editor_controller.dart';
 
 class PropertyEditorSidebar extends StatelessWidget {
-  const PropertyEditorSidebar({super.key});
+  const PropertyEditorSidebar({
+    required this.controller,
+    super.key,
+});
+
+  final PropertyEditorController controller;
 
   @override
   Widget build(BuildContext context) {

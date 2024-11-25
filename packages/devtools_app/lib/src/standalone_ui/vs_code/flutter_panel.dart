@@ -13,7 +13,7 @@ import '../../service/editor/api_classes.dart';
 import '../../service/editor/editor_client.dart';
 import '../../shared/analytics/analytics.dart' as ga;
 import '../../shared/common_widgets.dart';
-import '../../shared/feature_flags.dart';
+import '../ide_shared/property_editor/property_editor_controller.dart';
 import '../ide_shared/property_editor/property_editor_sidebar.dart';
 import 'debug_sessions.dart';
 import 'devices.dart';
@@ -59,7 +59,7 @@ class _EditorSidebarPanelState extends State<EditorSidebarPanel> {
                   snapshot.data,
                 )) {
                   (ConnectionState.done, final editor?) =>
-                    _EditorConnectedPanel(editor),
+                    _EditorConnectedPanel(editor, widget.dtd),
                   _ => const CenteredCircularProgressIndicator(),
                 },
           ),
@@ -71,9 +71,10 @@ class _EditorSidebarPanelState extends State<EditorSidebarPanel> {
 
 /// The panel shown once we know an editor is available.
 class _EditorConnectedPanel extends StatefulWidget {
-  const _EditorConnectedPanel(this.editor);
+  const _EditorConnectedPanel(this.editor, this.dtd);
 
   final EditorClient editor;
+  final DartToolingDaemon dtd;
 
   @override
   State<_EditorConnectedPanel> createState() => _EditorConnectedPanelState();
@@ -144,6 +145,8 @@ class _EditorConnectedPanelState extends State<_EditorConnectedPanel>
             case ThemeChangedEvent():
             // Do nothing; this is handled in
             // lib/src/framework/theme_manager.dart.
+            case ActiveLocationChangedEvent():
+              widget.editor.activeLocationChangedEvent.value = event as ActiveLocationChangedEvent;
           }
         });
       }),
@@ -197,7 +200,10 @@ class _EditorConnectedPanelState extends State<_EditorConnectedPanel>
                 ),
               // TODO(https://github.com/flutter/devtools/issues/8546) Move
               // Property Editor to its own sidepanel.
-              if (FeatureFlags.propertyEditor) const PropertyEditorSidebar(),
+              // if (FeatureFlags.propertyEditor)
+              PropertyEditorSidebar(
+                controller: PropertyEditorController(widget.editor),
+              ),
             ],
           ),
         ),

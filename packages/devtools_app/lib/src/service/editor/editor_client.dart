@@ -6,9 +6,13 @@ import 'dart:async';
 
 import 'package:devtools_app_shared/utils.dart';
 import 'package:dtd/dtd.dart';
+import 'package:flutter/foundation.dart';
+import 'package:logging/logging.dart';
 
 import '../../shared/analytics/constants.dart';
 import 'api_classes.dart';
+
+final _log = Logger('editor_classes');
 
 /// A client wrapper that connects to an editor over DTD.
 ///
@@ -76,6 +80,8 @@ class EditorClient extends DisposableController
     autoDisposeStreamSubscription(
       _dtd.onEvent(editorStreamName).listen((data) {
         final kind = editorKindMap[data.kind];
+        _log.info('Received following from DTD');
+        _log.info(data.data);
         final event = switch (kind) {
           // Unknown event. Use null here so we get exhaustiveness checking for
           // the rest.
@@ -97,7 +103,14 @@ class EditorClient extends DisposableController
           EditorEventKind.debugSessionStopped =>
             DebugSessionStoppedEvent.fromJson(data.data),
           EditorEventKind.themeChanged => ThemeChangedEvent.fromJson(data.data),
+          EditorEventKind.activeLocationChanged =>
+            ActiveLocationChangedEvent.fromJson(data.data),
         };
+        if (event?.kind == EditorEventKind.activeLocationChanged) {
+          _activeLocationChangedController.add(
+            event as ActiveLocationChangedEvent,
+          );
+        }
         if (event != null) {
           _eventController.add(event);
         }
@@ -139,9 +152,20 @@ class EditorClient extends DisposableController
       _supportsOpenDevToolsForceExternal;
   var _supportsOpenDevToolsForceExternal = false;
 
+  ValueListenable<ActiveLocationChangedEvent?>
+  get activeLocationChangedEventListenable => activeLocationChangedEvent;
+  final activeLocationChangedEvent = ValueNotifier<ActiveLocationChangedEvent?>(
+    null,
+  );
+
   /// A stream of [EditorEvent]s from the editor.
   Stream<EditorEvent> get event => _eventController.stream;
   final _eventController = StreamController<EditorEvent>();
+
+  Stream<ActiveLocationChangedEvent> get activeLocationChangedStream =>
+      _activeLocationChangedController.stream;
+  final _activeLocationChangedController =
+      StreamController<ActiveLocationChangedEvent>();
 
   /// A stream of events of when editor services are registrered or
   /// unregistered.
@@ -212,11 +236,34 @@ class EditorClient extends DisposableController
     );
   }
 
+  /// Gets the editable arguments from the Analysis Server.
+  Future<void> getEditableArguments({
+    required Map<String, String> textDocument,
+    required Map<String, int> position,
+  }) async {
+    final response = await _callLspApi(
+      'experimental/dart/textDocument/editableArguments',
+      params: {
+        'type': 'Object', // not used, but required by DTD?
+        'textDocument': textDocument,
+        'position': position,
+      },
+    );
+    // print(response.result);
+  }
+
   Future<DTDResponse> _call(
     EditorMethod method, {
     Map<String, Object?>? params,
   }) {
     return _dtd.call(editorServiceName, method.name, params: params);
+  }
+
+  Future<DTDResponse> _callLspApi(
+    String lspApi, {
+    Map<String, Object?>? params,
+  }) {
+    return _dtd.call(lspServiceName, lspApi, params: params);
   }
 }
 

@@ -7,6 +7,8 @@ import 'package:devtools_shared/devtools_shared.dart';
 const editorServiceName = 'Editor';
 const editorStreamName = 'Editor';
 
+const lspServiceName = 'Lsp';
+
 enum EditorMethod {
   // Device.
   getDevices,
@@ -53,6 +55,9 @@ enum EditorEventKind {
 
   /// The kind for a [ThemeChangedEvent].
   themeChanged,
+
+  // The kind for an [ActiveLocationChangedEvent] event.
+  activeLocationChanged,
 }
 
 /// Constants for all fields used in JSON maps to avoid literal strings that
@@ -85,8 +90,10 @@ abstract class Field {
   static const projectRootPath = 'projectRootPath';
   static const requiresDebugSession = 'requiresDebugSession';
   static const selectedDeviceId = 'selectedDeviceId';
+  static const selections = 'selections';
   static const supported = 'supported';
   static const supportsForceExternal = 'supportsForceExternal';
+  static const textDocument = 'textDocument';
   static const theme = 'theme';
   static const vmServiceUri = 'vmServiceUri';
 }
@@ -254,6 +261,36 @@ class ThemeChangedEvent extends EditorEvent {
 
   @override
   Map<String, Object?> toJson() => {Field.theme: theme};
+}
+
+typedef CursorPosition = Map<String, int>;
+
+class ActiveLocationChangedEvent extends EditorEvent {
+  ActiveLocationChangedEvent({
+    required this.selections,
+    required this.textDocument,
+  });
+
+  ActiveLocationChangedEvent.fromJson(Map<String, Object?> map)
+    : this(
+        textDocument: map[Field.textDocument] as Map<String, Object?>,
+        selections:
+            (map[Field.selections] as List<Object?>)
+                .cast<Map<String, Object?>>()
+                .toList(),
+      );
+
+  final List<Map<String, Object?>> selections;
+  final Map<String, Object?> textDocument;
+
+  @override
+  EditorEventKind get kind => EditorEventKind.activeLocationChanged;
+
+  @override
+  Map<String, Object?> toJson() => {
+    Field.selections: selections,
+    Field.textDocument: textDocument,
+  };
 }
 
 /// The result of a `GetDevices` request.
