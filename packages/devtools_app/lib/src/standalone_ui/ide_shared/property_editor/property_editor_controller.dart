@@ -2,10 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-
 import 'package:devtools_app_shared/utils.dart';
+import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
 
+import '../../../service/editor/api_classes.dart';
 import '../../../service/editor/editor_client.dart';
 
 final _log = Logger('property_editor_controller');
@@ -19,13 +20,33 @@ class PropertyEditorController extends DisposableController
 
   final EditorClient editorClient;
 
+  TextDocument? _currentDocument;
+  CursorPosition? _currentCursorPosition;
+
+  ValueListenable<List<EditableArgument>> get editableArgs => _editableArgs;
+  final _editableArgs = ListValueNotifier<EditableArgument>([]);
+
   void _init() {
     editorClient.activeLocationChangedEventListenable.addListener(() async {
       final event = editorClient.activeLocationChangedEvent.value;
       if (event != null) {
-        _log.info('got an active location changed event!');
-        _log.info(event.selections);
-        _log.info(event.textDocument);
+        final textDocument = event.textDocument;
+        final cursorPosition = event.selections.first.active;
+        if (textDocument == _currentDocument &&
+            cursorPosition == _currentCursorPosition) {
+          return;
+        }
+        _currentDocument = textDocument;
+        _currentCursorPosition = cursorPosition;
+        final result = await editorClient.getEditableArguments(
+          textDocument: textDocument,
+          position: cursorPosition,
+        );
+
+        final args = result?.args ?? <EditableArgument>[];
+        if (args.isNotEmpty) {
+          _editableArgs.replaceAll(args);
+        }
       }
     });
   }

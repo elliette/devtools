@@ -237,19 +237,25 @@ class EditorClient extends DisposableController
   }
 
   /// Gets the editable arguments from the Analysis Server.
-  Future<void> getEditableArguments({
-    required Map<String, String> textDocument,
-    required Map<String, int> position,
+  Future<EditableArgumentsResult?> getEditableArguments({
+    required TextDocument textDocument,
+    required CursorPosition position,
   }) async {
     final response = await _callLspApi(
       'experimental/dart/textDocument/editableArguments',
       params: {
         'type': 'Object', // not used, but required by DTD?
-        'textDocument': textDocument,
-        'position': position,
+        'textDocument': textDocument.toJson(),
+        'position': position.toJson(),
       },
     );
-    // print(response.result);
+    final result = response.result;
+    if (result['result'] != null) {
+      return EditableArgumentsResult.fromJson(
+        result['result'] as Map<String, Object?>,
+      );
+    }
+    return null;
   }
 
   Future<DTDResponse> _call(

@@ -6,6 +6,7 @@ import 'package:devtools_app_shared/ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../service/editor/api_classes.dart';
 import '../../../shared/primitives/utils.dart';
 import 'property_editor_controller.dart';
 
@@ -24,14 +25,16 @@ class PropertyEditorSidebar extends StatelessWidget {
       children: [
         Text('Property Editor', style: Theme.of(context).textTheme.titleMedium),
         const PaddedDivider.noPadding(),
-        const _PropertiesList(),
+        _PropertiesList(controller: controller),
       ],
     );
   }
 }
 
 class _PropertiesList extends StatelessWidget {
-  const _PropertiesList();
+  const _PropertiesList({required this.controller});
+
+  final PropertyEditorController controller;
 
   static const itemPadding = densePadding;
 
@@ -39,21 +42,28 @@ class _PropertiesList extends StatelessWidget {
   Widget build(BuildContext context) {
     // TODO(https://github.com/flutter/devtools/issues/8546) Switch to scrollable
     // ListView when this has been moved into its own panel.
-    return Column(
-      children: [
-        for (final property in _properties)
-          ...<Widget>[
-            _EditablePropertyItem(property: property),
-          ].joinWith(const PaddedDivider.noPadding()),
-      ],
+    return ValueListenableBuilder<List<EditableArgument>>(
+      valueListenable: controller.editableArgs,
+      builder: (context, args, _) {
+        return Column(
+          children: [
+            for (final property in args)
+              ...<Widget>[
+                _EditablePropertyItem(property: property),
+              ].joinWith(const PaddedDivider.noPadding()),
+          ],
+        );
+
+      },
     );
+
   }
 }
 
 class _EditablePropertyItem extends StatelessWidget {
   const _EditablePropertyItem({required this.property});
 
-  final _WidgetProperty property;
+  final EditableArgument property;
 
   @override
   Widget build(BuildContext context) {
@@ -79,7 +89,7 @@ class _EditablePropertyItem extends StatelessWidget {
 class _PropertyLabels extends StatelessWidget {
   const _PropertyLabels({required this.property});
 
-  final _WidgetProperty property;
+  final EditableArgument property;
 
   @override
   Widget build(BuildContext context) {
@@ -112,7 +122,7 @@ class _PropertyLabels extends StatelessWidget {
 class _PropertyInput extends StatelessWidget {
   const _PropertyInput({required this.property});
 
-  final _WidgetProperty property;
+  final EditableArgument property;
 
   @override
   Widget build(BuildContext context) {
@@ -129,11 +139,16 @@ class _PropertyInput extends StatelessWidget {
       case 'bool':
         final options =
             property.type == 'bool' ? ['true', 'false'] : property.options;
+        options.add(property.valueDisplay);
+        if (property.isNullable) {
+          options.add('null');
+        }
+      
         return DropdownButtonFormField(
           value: property.valueDisplay,
           decoration: decoration,
           items:
-              (options ?? []).map((option) {
+              options.toSet().toList().map((option) {
                 return DropdownMenuItem(
                   value: option,
                   // TODO(https://github.com/flutter/devtools/issues/8531) Handle onTap.

@@ -36,6 +36,7 @@ class _EditorSidebarPanelState extends State<EditorSidebarPanel> {
   _EditorSidebarPanelState();
 
   Future<EditorClient>? _editor;
+  PropertyEditorController? _propertyEditorController;
 
   @override
   void initState() {
@@ -43,7 +44,12 @@ class _EditorSidebarPanelState extends State<EditorSidebarPanel> {
 
     final editor = EditorClient(widget.dtd);
     ga.screen(editor.gaId);
-    unawaited(_editor = editor.initialized.then((_) => editor));
+    unawaited(
+      _editor = editor.initialized.then((_) {
+        _propertyEditorController = PropertyEditorController(editor);
+        return editor;
+      }),
+    );
   }
 
   @override
@@ -59,7 +65,11 @@ class _EditorSidebarPanelState extends State<EditorSidebarPanel> {
                   snapshot.data,
                 )) {
                   (ConnectionState.done, final editor?) =>
-                    _EditorConnectedPanel(editor, widget.dtd),
+                    _EditorConnectedPanel(
+                      editor,
+                      widget.dtd,
+                      _propertyEditorController!,
+                    ),
                   _ => const CenteredCircularProgressIndicator(),
                 },
           ),
@@ -71,10 +81,15 @@ class _EditorSidebarPanelState extends State<EditorSidebarPanel> {
 
 /// The panel shown once we know an editor is available.
 class _EditorConnectedPanel extends StatefulWidget {
-  const _EditorConnectedPanel(this.editor, this.dtd);
+  const _EditorConnectedPanel(
+    this.editor,
+    this.dtd,
+    this.propertyEditorController,
+  );
 
   final EditorClient editor;
   final DartToolingDaemon dtd;
+  final PropertyEditorController propertyEditorController;
 
   @override
   State<_EditorConnectedPanel> createState() => _EditorConnectedPanelState();
@@ -146,7 +161,8 @@ class _EditorConnectedPanelState extends State<_EditorConnectedPanel>
             // Do nothing; this is handled in
             // lib/src/framework/theme_manager.dart.
             case ActiveLocationChangedEvent():
-              widget.editor.activeLocationChangedEvent.value = event as ActiveLocationChangedEvent;
+              widget.editor.activeLocationChangedEvent.value =
+                  event as ActiveLocationChangedEvent;
           }
         });
       }),
@@ -202,7 +218,7 @@ class _EditorConnectedPanelState extends State<_EditorConnectedPanel>
               // Property Editor to its own sidepanel.
               // if (FeatureFlags.propertyEditor)
               PropertyEditorSidebar(
-                controller: PropertyEditorController(widget.editor),
+                controller: widget.propertyEditorController,
               ),
             ],
           ),

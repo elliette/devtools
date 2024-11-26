@@ -78,7 +78,9 @@ class EditorSidebarScene extends Scene {
     // launches this as part of the standalone_ui/editor_sidebar config.
     // TODO(dantup): Add a way for the mock editor to set workspace roots so
     //  the extensions parts can work in the sidebar.
-    final dtdUri = Uri.parse('ws://127.0.0.1:8500/');
+    final customUri = 'ws://127.0.0.1:59853/6SAHxafIfxE=';
+    final defaultUri = 'ws://127.0.0.1:8500/';
+    final dtdUri = Uri.parse(customUri);
     final connection = await createLoggedWebSocketChannel(dtdUri);
     clientLog = connection.log;
     clientDtd = DartToolingDaemon.fromStreamChannel(connection.channel);
