@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'dart:io';
+
 import 'package:collection/collection.dart';
 import 'package:devtools_app/devtools_app.dart'
     hide InspectorScreenBodyState, InspectorScreenBody;
@@ -265,6 +267,54 @@ void main() {
     expect(find.richTextContaining('more widgets...'), findsNothing);
   });
 
+  testWidgetsWithWindowSize('Tree updates on edit', windowSize, (
+    WidgetTester tester,
+  ) async {
+    await _loadInspectorUI(tester);
+
+    // Give time for the initial animation to complete.
+    await tester.pumpAndSettle(inspectorChangeSettleTime);
+
+    // Confirm the hidden widgets are visible behind affordances like "X more
+    // widgets".
+    expect(find.richTextContaining('more widgets...'), findsWidgets);
+
+    // Select the Text widget (row index #17)
+    await tester.tap(find.richText('Text: "Hello, World!"'));
+    await tester.pumpAndSettle(inspectorChangeSettleTime);
+
+    final areInOrder = treeRowsAreInOrder(
+      treeRowDescriptions: ['Center', 'Text: "Hello, World!"'],
+      startingAtIndex: 16,
+    );
+
+    expect(areInOrder, isTrue);
+
+    //   expect(find.richText('Center'), findsOneWidget);
+
+    //   // Verify the properties are displayed:
+    //   verifyPropertyIsVisible(
+    //     name: 'data',
+    //     value: '"Hello, World!"',
+    //     tester: tester,
+    //   );
+
+    //   _makeEditToFlutterMain(toReplace: 'Center', replaceWith: 'Align');
+
+    //   await env.flutter!.hotReload();
+    //   // Give time for the initial animation to complete.
+    //   await tester.pumpAndSettle(inspectorChangeSettleTime);
+
+    //   // Verify the properties are displayed:
+    //   verifyPropertyIsVisible(
+    //     name: 'data',
+    //     value: '"Hello, World!"',
+    //     tester: tester,
+    //   );
+
+    //   expect(find.richText('Center'), findsNothing);
+  });
+
   testWidgetsWithWindowSize('can revert to legacy inspector', windowSize, (
     WidgetTester tester,
   ) async {
@@ -514,6 +564,57 @@ void verifyPropertyIsVisible({
   expect(propertyNameCenter.dy, equals(propertyValueCenter.dy));
 }
 
+List<T> getWidgetsFromFinder<T>(Finder finder) {
+  var i = 0;
+  final widgets = <T>[];
+  var shouldIncrement = true;
+  while (shouldIncrement) {
+    try {
+      final widget = finder.at(i).evaluate().first.widget as T;
+      widgets.add(widget);
+      i++;
+    } catch (_) {
+      shouldIncrement = false;
+    }
+  }
+  return widgets;
+}
+
+bool treeRowsAreInOrder({
+  required List<String> treeRowDescriptions,
+  required int startingAtIndex,
+}) {
+  final treeRowIndices = <List<int?>>[];
+
+  for (final description in treeRowDescriptions) {
+    final treeRowsFinder = find.ancestor(
+      of: find.richText(description),
+      matching: find.byType(DiagnosticsNodeDescription),
+    );
+    print('tree row finders: $treeRowsFinder');
+    final treeRows = getWidgetsFromFinder<DiagnosticsNodeDescription>(
+      treeRowsFinder,
+    );
+    final asIndices = treeRows.map((row) => row.index).toList();
+    treeRowIndices.add(treeRows.map((row) => row.index).toList());
+  }
+
+  print('TREE ROWS INDICES:');
+  for (final indices in treeRowIndices) {
+    print(indices.join(','));
+  }
+
+  int indexToCheck = startingAtIndex;
+  for (final indices in treeRowIndices) {
+    if (indices.contains(indexToCheck)) {
+      indexToCheck++;
+    } else {
+      return false;
+    }
+  }
+  return true;
+}
+
 bool areHorizontallyAligned(
   Finder widgetAFinder,
   Finder widgetBFinder, {
@@ -523,4 +624,13 @@ bool areHorizontallyAligned(
   final widgetBCenter = tester.getCenter(widgetBFinder);
 
   return widgetACenter.dy == widgetBCenter.dy;
+}
+
+void _makeEditToFlutterMain({
+  required String toReplace,
+  required String replaceWith,
+}) {
+  final file = File('test/test_infra/fixtures/flutter_app/lib/main.dart');
+  final fileContents = file.readAsStringSync();
+  file.writeAsStringSync(fileContents.replaceAll(toReplace, replaceWith));
 }

@@ -35,24 +35,26 @@ import 'inspector_controller.dart';
 final _log = Logger('inspector_tree_controller');
 
 /// Presents a [TreeNode].
-class _InspectorTreeRowWidget extends StatefulWidget {
-  /// Constructs a [_InspectorTreeRowWidget] that presents a line in the
+class InspectorTreeRowWidget extends StatefulWidget {
+  /// Constructs a [InspectorTreeRowWidget] that presents a line in the
   /// Inspector tree.
-  const _InspectorTreeRowWidget({
+  const InspectorTreeRowWidget({
     required super.key,
     required this.row,
     required this.inspectorTreeState,
     this.error,
     required this.scrollControllerX,
     required this.viewportWidth,
+    required this.index,
   });
 
-  final _InspectorTreeState inspectorTreeState;
+  final InspectorTreeState inspectorTreeState;
 
   InspectorTreeNode get node => row.node;
   final InspectorTreeRow row;
   final ScrollController scrollControllerX;
   final double viewportWidth;
+  final int index;
 
   /// A [DevToolsError] that applies to the widget in this row.
   ///
@@ -60,10 +62,10 @@ class _InspectorTreeRowWidget extends StatefulWidget {
   final DevToolsError? error;
 
   @override
-  _InspectorTreeRowState createState() => _InspectorTreeRowState();
+  InspectorTreeRowState createState() => InspectorTreeRowState();
 }
 
-class _InspectorTreeRowState extends State<_InspectorTreeRowWidget>
+class InspectorTreeRowState extends State<InspectorTreeRowWidget>
     with TickerProviderStateMixin, CollapsibleAnimationMixin {
   @override
   Widget build(BuildContext context) {
@@ -758,11 +760,11 @@ class InspectorTree extends StatefulWidget {
   final String? screenId;
 
   @override
-  State<InspectorTree> createState() => _InspectorTreeState();
+  State<InspectorTree> createState() => InspectorTreeState();
 }
 
 // AutomaticKeepAlive is necessary so that the tree does not get recreated when we switch tabs.
-class _InspectorTreeState extends State<InspectorTree>
+class InspectorTreeState extends State<InspectorTree>
     with
         SingleTickerProviderStateMixin,
         AutomaticKeepAliveClientMixin<InspectorTree>,
@@ -1054,7 +1056,7 @@ class _InspectorTreeState extends State<InspectorTree>
                         }
                         final row = treeControllerLocal.getCachedRow(index)!;
                         final inspectorRef = row.node.diagnostic?.valueRef.id;
-                        return _InspectorTreeRowWidget(
+                        return InspectorTreeRowWidget(
                           key: PageStorageKey(row.node),
                           inspectorTreeState: this,
                           row: row,
@@ -1065,6 +1067,7 @@ class _InspectorTreeState extends State<InspectorTree>
                                       inspectorRef != null
                                   ? widget.widgetErrors![inspectorRef]
                                   : null,
+                          index: index,
                         );
                       }, childCount: treeControllerLocal.numRows + 1),
                       controller: _scrollControllerY,
@@ -1264,6 +1267,7 @@ class InspectorRowContent extends StatelessWidget {
                         child: DiagnosticsNodeDescription(
                           node.diagnostic,
                           isSelected: row.isSelected,
+                          index: row.index,
                           searchValue: searchValue,
                           errorText: error?.errorMessage,
                           nodeDescriptionHighlightStyle:

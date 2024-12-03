@@ -45,6 +45,7 @@ class DiagnosticsNodeDescription extends StatelessWidget {
     this.customIconName,
     this.includeName = true,
     this.overflow,
+    this.index,
   });
 
   final RemoteDiagnosticsNode? diagnostic;
@@ -64,6 +65,7 @@ class DiagnosticsNodeDescription extends StatelessWidget {
   final String? customIconName;
   final bool includeName;
   final TextOverflow? overflow;
+  final int? index;
 
   static Widget _paddedIcon(Widget icon) {
     return Padding(
