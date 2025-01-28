@@ -427,7 +427,7 @@ class CursorPosition with Serializable {
 class EditableArgumentsResult with Serializable {
   EditableArgumentsResult({required this.args});
 
-  EditableArgumentsResult.fromJson(Map<String, Object?> map)
+  EditableArgumentsResult.fromJson(Map<String, Object?> map) 
     : this(
         args:
             (map[Field.arguments] as List<Object?>? ?? <Object?>[])
