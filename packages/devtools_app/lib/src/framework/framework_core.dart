@@ -32,6 +32,7 @@ import '../shared/managers/survey.dart';
 import '../shared/offline/offline_data.dart';
 import '../shared/preferences/preferences.dart';
 import '../shared/primitives/message_bus.dart';
+import '../shared/primitives/query_parameters.dart';
 import '../shared/server/server.dart' as server;
 import '../shared/utils/utils.dart';
 import 'theme_manager.dart';
@@ -171,8 +172,8 @@ abstract class FrameworkCore {
 
 Future<void> _initDTDConnection() async {
   try {
-    // Get the dtdUri from the devtools server
-    final dtdUri = await server.getDtdUri();
+    final dtdUriString = DevToolsQueryParams.load().dtdUri;
+    final dtdUri = dtdUriString != null ? Uri.parse(dtdUriString) : null;
 
     if (dtdUri != null) {
       await dtdManager.connect(
