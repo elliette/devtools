@@ -66,7 +66,11 @@ extension type DevToolsQueryParams(Map<String, String?> params) {
   /// dart2js + canvaskit.
   bool get useWasm => params[wasmKey] == 'true';
 
+  /// The DTD URI that DevTools is connected to.
+  String? get dtdUri => params[dtdUriKey];
+
   static const vmServiceUriKey = 'uri';
+  static const dtdUriKey = 'dtd';
   static const hideScreensKey = 'hide';
   static const hideExtensionsValue = 'extensions';
   static const hideAllExceptExtensionsValue = 'all-except-extensions';
