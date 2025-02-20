@@ -3,6 +3,7 @@
 // found in the LICENSE file or at https://developers.google.com/open-source/licenses/bsd.
 
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:devtools_app_shared/utils.dart';
 import 'package:dtd/dtd.dart';
@@ -29,6 +30,8 @@ class EditorClient extends DisposableController
   late final initialized = _initialize();
 
   String get gaId => EditorSidebar.id;
+
+  final _encoder = const JsonEncoder.withIndent('  ');
 
   Future<void> _initialize() async {
     autoDisposeStreamSubscription(
@@ -91,6 +94,14 @@ class EditorClient extends DisposableController
     autoDisposeStreamSubscription(
       _dtd.onEvent(editorStreamName).listen((data) {
         final kind = editorKindMap[data.kind];
+        try {
+          _log.info('RAW DTD EVENT:');
+          _log.info(data.toString());
+          _log.info('EVENT DATA:');
+          _log.info(_encoder.convert(data.data));
+        } catch (_) {
+          _log.info('Error displaying event of $kind');
+        }
         final event = switch (kind) {
           // Unknown event. Use null here so we get exhaustiveness checking for
           // the rest.
