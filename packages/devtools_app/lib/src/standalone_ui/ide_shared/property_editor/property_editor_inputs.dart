@@ -256,8 +256,10 @@ class _TextInputState<T> extends State<_TextInput<T>>
 
   Future<void> _editProperty() async {
     final property = widget.property;
-    if (property.isExpressionOrNamedConst &&
-        _currentValue == property.displayValue) {
+    if ((property.isExpressionOrNamedConst ||
+            property.isDefault ||
+            !property.hasArgument) &&
+        _currentValue == property.valueDisplay) {
       return;
     }
 
