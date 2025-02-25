@@ -214,6 +214,7 @@ class _TextInputState<T> extends State<_TextInput<T>>
   @override
   void initState() {
     super.initState();
+    _currentValue = widget.property.valueDisplay;
     _focusNode = FocusNode(debugLabel: 'text-input-${widget.property.name}');
 
     addAutoDisposeListener(_focusNode, () async {
@@ -254,8 +255,14 @@ class _TextInputState<T> extends State<_TextInput<T>>
   }
 
   Future<void> _editProperty() async {
+    final property = widget.property;
+    if (property.isExpressionOrNamedConst &&
+        _currentValue == property.displayValue) {
+      return;
+    }
+
     await editProperty(
-      widget.property,
+      property,
       valueAsString: _currentValue,
       editPropertyCallback: widget.editProperty,
     );
