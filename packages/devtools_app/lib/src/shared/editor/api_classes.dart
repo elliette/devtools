@@ -603,6 +603,8 @@ class EditableArgument with Serializable {
 
   Object? get currentValue => hasArgument ? value : defaultValue;
 
+  bool get isExpressionOrNamedConst => displayValue != null;
+
   @override
   Map<String, Object?> toJson() => {
     Field.name: name,
