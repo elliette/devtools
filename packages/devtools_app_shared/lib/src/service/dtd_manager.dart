@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file or at https://developers.google.com/open-source/licenses/bsd.
 
+import 'dart:async';
+
 import 'package:dtd/dtd.dart';
 import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
@@ -22,6 +24,11 @@ class DTDManager {
   Uri? get uri => _uri;
   Uri? _uri;
 
+  // Subscripton that listens for the [done] event.
+  StreamSubscription<void>? _connectionClosedSubscription;
+
+  bool _shouldAttemptReconnection = true;
+
   /// Sets the Dart Tooling Daemon connection to point to [uri].
   ///
   /// Before connecting to [uri], if a current connection exists, then
@@ -31,18 +38,58 @@ class DTDManager {
     void Function(Object, StackTrace?)? onError,
   }) async {
     await disconnect();
-
     try {
-      _connection.value = await DartToolingDaemon.connect(uri);
+      final dtdConnection = await DartToolingDaemon.connect(uri);
+      _connection.value = dtdConnection;
+      _shouldAttemptReconnection = true;
+      _subscribeToConnectionClosed(dtdConnection);
+
       _uri = uri;
-      _log.info('Successfully connected to DTD at: $uri');
+      _log.info(
+          '[${DateTime.now().toIso8601String()}]  Successfully connected to DTD at: $uri');
     } catch (e, st) {
       onError?.call(e, st);
     }
   }
 
+  void _subscribeToConnectionClosed(DartToolingDaemon dtdConnection) {
+    _log.info('[${DateTime.now().toIso8601String()}] Subscribe to connection closed, should attempt reconnection? $_shouldAttemptReconnection');
+    if (_shouldAttemptReconnection) {
+      _connectionClosedSubscription = Stream.fromFuture(dtdConnection.done)
+          .listen(_attemptDtdReconnection,
+              onError: (error) {
+                _log.info('Error from DTD closed subscription: $error');
+              },
+              onDone: () => _subscribeToConnectionClosed(dtdConnection));
+    }
+  }
+
+  Future<void> _attemptDtdReconnection(void _) async {
+    _log.info(
+        '[${DateTime.now().toIso8601String()}] ATTEMPTING RECONNECTION TO THE DART TOOLING DAEMON...');
+    if (uri != null) {
+      await connect(
+        uri!,
+        onError: (e, st) {
+          _log.info(
+              '[${DateTime.now().toIso8601String()}] FAILED TO RECONNECT TO THE DART TOOLING DAEMON');
+        },
+      );
+    } else {
+      await _cancelConnectionClosedSubscription();
+    }
+  }
+
+  Future<void> _cancelConnectionClosedSubscription() async {
+    await _connectionClosedSubscription?.cancel();
+    _connectionClosedSubscription = null;
+  }
+
   /// Closes and unsets the Dart Tooling Daemon connection, if one is set.
   Future<void> disconnect() async {
+    _shouldAttemptReconnection = false;
+    await _cancelConnectionClosedSubscription();
+
     if (_connection.value != null) {
       await _connection.value!.close();
     }
