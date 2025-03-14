@@ -80,6 +80,9 @@ dev_dependencies:
 dependency_overrides:
   dtd:
     path: /Users/elliottbrooks/dev/dart-sdk/sdk/pkg/dtd
+  json_rpc_2:
+    path: /Users/elliottbrooks/dev/tools/pkgs/json_rpc_2
+
 
 flutter:
   uses-material-design: true
