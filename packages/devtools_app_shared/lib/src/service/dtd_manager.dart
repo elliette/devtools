@@ -42,9 +42,8 @@ class DTDManager {
     try {
       _connection.value = await DartToolingDaemon.connect(uri);
       _uri = uri;
-      _log.info('Successfully connected to DTD at: $uri');
-      _connectionCount++;
-      _shouldKeepAlive = true;
+      _log.info(
+          'Successfully connected to DTD at: $uri (count: ${_connectionCount++})');
       _keepAlive(uri);
     } catch (e, st) {
       onError?.call(e, st);
@@ -130,21 +129,18 @@ class DTDManager {
   UriList? _projectRoots;
 
   void _keepAlive(Uri uri) {
-    // _dtd.done.whenComplete(_maybeReconnect);
+    _shouldKeepAlive = true;
     Timer.periodic(const Duration(seconds: 5), (timer) {
-      _log.info('[${DateTime.now().toIso8601String()}] Health check!');
+      _log.info('[${DateTime.now().toIso8601String()}] Pinging DTD.');
       if (_dtd.isClosed) {
         timer.cancel();
-        _maybeReconnect(uri);
-      } else {
-        _log.info(' -- still alive!');
+        _reconnect(uri);
       }
     });
   }
 
-  Future<void> _maybeReconnect(Uri uri) async {
-      _log.info('[${DateTime.now().toIso8601String()}] Reconnecting to $uri...');
-      _shouldKeepAlive = false;
-      await connect(uri);
+  Future<void> _reconnect(Uri uri) async {
+    _shouldKeepAlive = false;
+    await connect(uri);
   }
 }
