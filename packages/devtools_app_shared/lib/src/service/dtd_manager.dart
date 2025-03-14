@@ -27,6 +27,7 @@ class DTDManager {
   // Subscripton that listens for the [done] event.
   StreamSubscription<void>? _connectionClosedSubscription;
 
+
   bool _shouldAttemptReconnection = true;
 
   /// Sets the Dart Tooling Daemon connection to point to [uri].
@@ -44,6 +45,8 @@ class DTDManager {
       _shouldAttemptReconnection = true;
       _subscribeToConnectionClosed(dtdConnection);
 
+      dtdConnection.clientDone.whenComplete(() => _log.info('!!!!!!!!!!!!! DTD CLIENT CLOSED!!!!!!!!'));
+      dtdConnection.serverDone.whenComplete(() => _log.info('!!!!!!!!!!!!!! DTD SERVER CLOSED!!!!!!!!'));
       _uri = uri;
       _log.info(
           '[${DateTime.now().toIso8601String()}]  Successfully connected to DTD at: $uri');
