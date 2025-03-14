@@ -4,6 +4,7 @@
 
 import 'package:devtools_shared/devtools_shared.dart';
 
+const serviceStreamName = 'Service';
 const editorServiceName = 'Editor';
 const editorStreamName = 'Editor';
 const lspServiceName = 'Lsp';
