@@ -39,6 +39,7 @@ enum StandaloneScreenType {
         //  useful message.
         valueListenable: dtdManager.connection,
         builder: (context, data, _) {
+          print('REBUILD EDITOR SIDEBAR, DATA: $data');
           return _DtdConnectedScreen(
             dtd: data,
             screenProvider: (dtd) => EditorSidebarPanel(dtd),
@@ -48,6 +49,7 @@ enum StandaloneScreenType {
       StandaloneScreenType.propertyEditor => ValueListenableBuilder(
         valueListenable: dtdManager.connection,
         builder: (context, data, _) {
+          print('REBUILD PROPERTY EDITOR SIDEBAR, DATA: $data');
           return _DtdConnectedScreen(
             dtd: data,
             screenProvider: (dtd) => PropertyEditorPanel(dtd),

@@ -47,31 +47,41 @@ class PropertyEditorController extends DisposableController
     _editableArgsDebouncer = Debouncer(duration: _editableArgsDebounceDuration);
 
     autoDisposeStreamSubscription(
-      editorClient.activeLocationChangedStream.listen((event) async {
-        final textDocument = event.textDocument;
-        final cursorPosition = event.selections.first.active;
-        // Don't do anything if the text document is null.
-        if (textDocument == null) {
-          return;
-        }
-        // Don't do anything if the event corresponds to the current position
-        // and document version.
-        //
-        // Note: This is only checked if the document version is not null. For
-        // IntelliJ, the document verison is always null, so identical events
-        // indicating a valid change are possible.
-        if (textDocument.version != null &&
-            textDocument == _currentDocument &&
-            cursorPosition == _currentCursorPosition) {
-          return;
-        }
-        _editableArgsDebouncer.run(
-          () => _updateWithEditableArgs(
-            textDocument: textDocument,
-            cursorPosition: cursorPosition,
-          ),
-        );
-      }),
+      editorClient.activeLocationChangedStream.listen(
+        (event) async {
+          print(
+            '${DateTime.now().toIso8601String()} PE received ActiveLocationChagned event',
+          );
+          final textDocument = event.textDocument;
+          final cursorPosition = event.selections.first.active;
+          // Don't do anything if the text document is null.
+          if (textDocument == null) {
+            return;
+          }
+          // Don't do anything if the event corresponds to the current position
+          // and document version.
+          //
+          // Note: This is only checked if the document version is not null. For
+          // IntelliJ, the document verison is always null, so identical events
+          // indicating a valid change are possible.
+          if (textDocument.version != null &&
+              textDocument == _currentDocument &&
+              cursorPosition == _currentCursorPosition) {
+            return;
+          }
+          _editableArgsDebouncer.run(
+            () => _updateWithEditableArgs(
+              textDocument: textDocument,
+              cursorPosition: cursorPosition,
+            ),
+          );
+        },
+        onDone: () {
+          print(
+            '${DateTime.now().toIso8601String()} Active location stream closed!!!',
+          );
+        },
+      ),
     );
   }
 

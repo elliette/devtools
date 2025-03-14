@@ -77,6 +77,10 @@ dev_dependencies:
   web_benchmarks: ^4.0.0
   webkit_inspection_protocol: ">=0.5.0 <2.0.0"
 
+dependency_overrides:
+  dtd:
+    path: /Users/elliottbrooks/dev/dart-sdk/sdk/pkg/dtd
+
 flutter:
   uses-material-design: true
   assets:

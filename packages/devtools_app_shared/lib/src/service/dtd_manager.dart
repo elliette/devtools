@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file or at https://developers.google.com/open-source/licenses/bsd.
 
+import 'dart:async';
+
 import 'package:dtd/dtd.dart';
 import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
@@ -22,6 +24,11 @@ class DTDManager {
   Uri? get uri => _uri;
   Uri? _uri;
 
+  bool _shouldKeepAlive = false;
+
+  int _connectionCount = 0;
+  int get connectionCount => _connectionCount;
+
   /// Sets the Dart Tooling Daemon connection to point to [uri].
   ///
   /// Before connecting to [uri], if a current connection exists, then
@@ -36,6 +43,9 @@ class DTDManager {
       _connection.value = await DartToolingDaemon.connect(uri);
       _uri = uri;
       _log.info('Successfully connected to DTD at: $uri');
+      _connectionCount++;
+      _shouldKeepAlive = true;
+      _keepAlive(uri);
     } catch (e, st) {
       onError?.call(e, st);
     }
@@ -47,6 +57,7 @@ class DTDManager {
       await _connection.value!.close();
     }
 
+    _log.info('Disconnected from DTD.');
     _connection.value = null;
     _uri = null;
     _workspaceRoots = null;
@@ -117,4 +128,23 @@ class DTDManager {
   }
 
   UriList? _projectRoots;
+
+  void _keepAlive(Uri uri) {
+    // _dtd.done.whenComplete(_maybeReconnect);
+    Timer.periodic(const Duration(seconds: 5), (timer) {
+      _log.info('[${DateTime.now().toIso8601String()}] Health check!');
+      if (_dtd.isClosed) {
+        timer.cancel();
+        _maybeReconnect(uri);
+      } else {
+        _log.info(' -- still alive!');
+      }
+    });
+  }
+
+  Future<void> _maybeReconnect(Uri uri) async {
+      _log.info('[${DateTime.now().toIso8601String()}] Reconnecting to $uri...');
+      _shouldKeepAlive = false;
+      await connect(uri);
+  }
 }
