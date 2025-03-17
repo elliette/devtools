@@ -15,6 +15,7 @@ import '../../../shared/editor/editor_client.dart';
 import '../../../shared/ui/common_widgets.dart';
 import 'property_editor_controller.dart';
 import 'property_editor_view.dart';
+import 'utils/utils.dart';
 
 /// The side panel for the Property Editor.
 class PropertyEditorPanel extends StatefulWidget {
@@ -106,24 +107,98 @@ class _PropertyEditorConnectedPanelState
 
   @override
   Widget build(BuildContext context) {
-    return Scrollbar(
-      controller: scrollController,
-      thumbVisibility: true,
-      child: SingleChildScrollView(
-        controller: scrollController,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            denseSpacing,
-            defaultSpacing,
-            defaultSpacing, // Additional right padding for scroll bar.
-            defaultSpacing,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [PropertyEditorView(controller: widget.controller)],
-          ),
+    return ValueListenableBuilder<bool>(
+      valueListenable: widget.controller.shouldReconnect,
+      builder: (context, shouldReconnect, _) {
+        return Stack(
+          children: [
+            Scrollbar(
+              controller: scrollController,
+              thumbVisibility: true,
+              child: SingleChildScrollView(
+                controller: scrollController,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    denseSpacing,
+                    defaultSpacing,
+                    defaultSpacing, // Additional right padding for scroll bar.
+                    defaultSpacing,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      PropertyEditorView(controller: widget.controller),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            if (shouldReconnect)
+              const _ReconnectingOverlay(),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _ReconnectingOverlay extends StatefulWidget {
+  const _ReconnectingOverlay();
+
+  @override
+  State<_ReconnectingOverlay> createState() => _ReconnectingOverlayState();
+}
+
+class _ReconnectingOverlayState extends State<_ReconnectingOverlay> {
+  int _countdown = 3;
+  late Timer _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() {
+        _countdown--;
+        if (_countdown == 0) {
+          _timer.cancel();
+          _reconnect();
+        }
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.black.withOpacity(0.5), // Semi-transparent background
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const CircularProgressIndicator(),
+            const SizedBox(height: defaultSpacing),
+            Text(
+              _countdown > 0
+                  ? 'Reconnecting in $_countdown'
+                  : 'Reconnecting...',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
+                fontSize: 16,
+              ),
+            ),
+          ],
         ),
       ),
     );
+  }
+
+  void _reconnect() {
+    forceReload();
   }
 }

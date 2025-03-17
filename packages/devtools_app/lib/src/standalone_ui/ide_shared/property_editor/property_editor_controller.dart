@@ -41,6 +41,10 @@ class PropertyEditorController extends DisposableController
       _editableWidgetData;
   final _editableWidgetData = ValueNotifier<EditableWidgetData?>(null);
 
+    ValueListenable<bool> get shouldReconnect =>
+      _shouldReconnect;
+  final _shouldReconnect = ValueNotifier<bool>(false);
+
   late final Debouncer _editableArgsDebouncer;
 
   late final Timer _checkConnectionTimer;
@@ -137,10 +141,11 @@ class PropertyEditorController extends DisposableController
     return Timer.periodic(interval, (timer) async {
       final isClosed = await editorClient.lspClientClosed();
       print('PING! Connection closed? $isClosed');
-      // if (isClosed) {
-        _showDisconnectedWarning();
+      if (isClosed) {
+      _shouldReconnect.value = true;
+        // _showDisconnectedWarning();
         timer.cancel();
-      // }
+      }
     });
   }
 
