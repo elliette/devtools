@@ -24,6 +24,7 @@ enum StandaloneScreenType {
   vsCodeFlutterPanel; // Legacy postMessage version, shows an upgrade message.
 
   Widget get screen {
+    print('GETTING SCREEN FOR $this');
     return switch (this) {
       StandaloneScreenType.vsCodeFlutterPanel => const Padding(
         padding: EdgeInsets.all(8.0),
