@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file or at https://developers.google.com/open-source/licenses/bsd.
 
+import 'dart:async';
+
 import 'package:devtools_app_shared/utils.dart';
 import 'package:flutter/foundation.dart';
 
@@ -9,7 +11,9 @@ import '../../../shared/analytics/analytics.dart' as ga;
 import '../../../shared/analytics/constants.dart' as gac;
 import '../../../shared/editor/api_classes.dart';
 import '../../../shared/editor/editor_client.dart';
+import '../../../shared/globals.dart';
 import '../../../shared/utils/utils.dart';
+import 'disconnected_banner.dart';
 
 typedef EditableWidgetData =
     ({List<EditableArgument> args, String? name, String? documentation});
@@ -39,12 +43,19 @@ class PropertyEditorController extends DisposableController
 
   late final Debouncer _editableArgsDebouncer;
 
+  late final Timer _checkConnectionTimer;
+
   static const _editableArgsDebounceDuration = Duration(milliseconds: 600);
+
+  static const _checkConnectionInterval = Duration(seconds: 5);
 
   @override
   void init() {
     super.init();
     _editableArgsDebouncer = Debouncer(duration: _editableArgsDebounceDuration);
+    _checkConnectionTimer = _periodicallyCheckConnection(
+      _checkConnectionInterval,
+    );
 
     autoDisposeStreamSubscription(
       editorClient.activeLocationChangedStream.listen((event) async {
@@ -78,6 +89,7 @@ class PropertyEditorController extends DisposableController
   @override
   void dispose() {
     _editableArgsDebouncer.dispose();
+    _checkConnectionTimer.cancel();
     super.dispose();
   }
 
@@ -118,6 +130,25 @@ class PropertyEditorController extends DisposableController
     ga.impression(
       gaId,
       gac.PropertyEditorSidebar.widgetPropertiesUpdate(name: name),
+    );
+  }
+
+  Timer _periodicallyCheckConnection(Duration interval) {
+    return Timer.periodic(interval, (timer) async {
+      final isClosed = await editorClient.lspClientClosed();
+      print('PING! Connection closed? $isClosed');
+      // if (isClosed) {
+        _showDisconnectedWarning();
+        timer.cancel();
+      // }
+    });
+  }
+
+  void _showDisconnectedWarning() {
+    print('Showing disconnected warning.');
+    bannerMessages.addMessage(
+      DisconnectedStateBannerMessage(),
+      callInPostFrameCallback: false,
     );
   }
 

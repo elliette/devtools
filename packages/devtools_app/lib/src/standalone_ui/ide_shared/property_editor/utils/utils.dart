@@ -91,3 +91,10 @@ void setUpTextFieldFocusFixHandler() {
 void removeTextFieldFocusFixHandler() {
   removeBlurListener();
 }
+
+/// Workaround to allow users to reload the Property Editor when it disconnects.
+///
+/// See https://github.com/flutter/devtools/issues/TODO for details.
+void forceReload() {
+  reloadIframe();
+}

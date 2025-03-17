@@ -9,6 +9,7 @@ import 'package:dtd/dtd.dart';
 import 'package:flutter/foundation.dart';
 import 'package:json_rpc_2/json_rpc_2.dart';
 import 'package:logging/logging.dart';
+import 'package:vm_service/vm_service.dart' hide Field;
 
 import '../analytics/constants.dart';
 import 'api_classes.dart';
@@ -329,6 +330,23 @@ class EditorClient extends DisposableController
     Map<String, Object?>? params,
   }) {
     return _dtd.call(lspServiceName, methodName, params: params);
+  }
+
+  Future<bool> lspClientClosed() async {
+    try {
+      await _dtd.call(lspServiceName, '');
+    } on StateError catch (e) {
+      // This is only a temporary fix. If the error in package:json_rpc_2 is
+      // changed, this will no longer catch it. See:
+      // https://github.com/dart-lang/tools/blob/b55643dadafd3ac6b2bd20823802f75929ebf98e/pkgs/json_rpc_2/lib/src/client.dart#L151
+      if (e.message.contains('The client is closed.')) {
+        return true;
+      }
+    } catch (e) {
+      // Ignore other exceptions. If the client is open, we expect this to fail
+      // with the error: 'Unknown method "Lsp."'.
+    }
+    return false;
   }
 }
 

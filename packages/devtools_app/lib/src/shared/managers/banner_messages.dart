@@ -53,9 +53,12 @@ class BannerMessagesController {
     void add() {
       if ((ignoreIfAlreadyDismissed && isMessageDismissed(message)) ||
           isMessageVisible(message)) {
+            print('ignoring: 1');
         return;
       }
       final messages = _messagesForScreen(message.screenId);
+      print('getting messages for ${message.screenId}');
+      print('messags are $messages');
       messages.add(message);
     }
 
@@ -67,6 +70,7 @@ class BannerMessagesController {
         add();
       });
     } else {
+      print('adding message!');
       add();
     }
   }
@@ -130,6 +134,7 @@ class BannerMessages extends StatelessWidget {
       universalScreenId,
     );
     final messagesForScreen = bannerMessages.messagesForScreen(screen.screenId);
+    print('MESSAGES FOR SCREEN (${screen.screenId})  ARE $messagesForScreen');
     return Column(
       children: [
         MultiValueListenableBuilder(
