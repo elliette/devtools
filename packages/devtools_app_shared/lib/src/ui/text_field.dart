@@ -54,6 +54,10 @@ final class DevToolsClearableTextField extends StatelessWidget {
         onSubmitted: onSubmitted,
         style: theme.regularTextStyle,
         decoration: InputDecoration(
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: denseSpacing,
+            vertical: densePadding,
+          ),
           isDense: true,
           constraints: BoxConstraints(
             minHeight: defaultTextFieldHeight,
@@ -69,19 +73,22 @@ final class DevToolsClearableTextField extends StatelessWidget {
           hintText: hintText,
           hintStyle: theme.subtleTextStyle,
           prefixIcon: prefixIcon,
-          suffix: SizedBox(
-            height: inputDecorationElementHeight,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ...additionalSuffixActions,
-                InputDecorationSuffixButton.clear(
-                  onPressed: () {
-                    controller.clear();
-                    onChanged?.call('');
-                  },
-                ),
-              ],
+          suffixIcon: Padding(
+            padding: const EdgeInsets.only(right: densePadding),
+            child: SizedBox(
+              height: inputDecorationElementHeight,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ...additionalSuffixActions,
+                  InputDecorationSuffixButton.clear(
+                    onPressed: () {
+                      controller.clear();
+                      onChanged?.call('');
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         ),
