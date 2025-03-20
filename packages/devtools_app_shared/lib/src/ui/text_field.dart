@@ -34,8 +34,6 @@ final class DevToolsClearableTextField extends StatelessWidget {
   final bool? enabled;
   final bool roundedBorder;
 
-  static const _contentVerticalPadding = 6.0;
-
   /// This is the default border radius used by the [OutlineInputBorder]
   /// constructor.
   static const _defaultInputBorderRadius =
@@ -45,8 +43,10 @@ final class DevToolsClearableTextField extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return SizedBox(
-      height: defaultTextFieldHeight,
+      height: defaultTextFieldHeight + densePadding,
       child: TextField(
+        textAlignVertical: TextAlignVertical.center,
+        cursorHeight: defaultTextFieldHeight / 2,
         autofocus: autofocus,
         controller: controller,
         enabled: enabled,
@@ -55,12 +55,6 @@ final class DevToolsClearableTextField extends StatelessWidget {
         style: theme.regularTextStyle,
         decoration: InputDecoration(
           isDense: true,
-          contentPadding: const EdgeInsets.only(
-            top: _contentVerticalPadding,
-            bottom: _contentVerticalPadding,
-            left: denseSpacing,
-            right: densePadding,
-          ),
           constraints: BoxConstraints(
             minHeight: defaultTextFieldHeight,
             maxHeight: defaultTextFieldHeight,
