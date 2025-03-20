@@ -54,9 +54,11 @@ final class DevToolsClearableTextField extends StatelessWidget {
         onSubmitted: onSubmitted,
         style: theme.regularTextStyle,
         decoration: InputDecoration(
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: denseSpacing,
-            vertical: densePadding,
+          contentPadding: const EdgeInsets.only(
+            top: densePadding,
+            bottom: densePadding,
+            left: denseSpacing,
+            right: densePadding,
           ),
           isDense: true,
           constraints: BoxConstraints(
