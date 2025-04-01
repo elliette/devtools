@@ -361,8 +361,9 @@ class _PropertyInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print('KEY FOR ${property.name} IS ${property.keyHash}}');
     final argType = property.type;
-    final propertyKey = Key(property.hashCode.toString());
+    final propertyKey = Key(property.keyHash.toString());
     switch (argType) {
       case boolType:
         return BooleanInput(

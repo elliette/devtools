@@ -25,6 +25,9 @@ class EditableString extends EditableProperty {
   bool isNully(String? inputValue) {
     return inputValue == null || inputValue == 'null';
   }
+
+  @override
+  int get keyHash => hashWithoutValue;
 }
 
 class EditableBool extends EditableProperty with FiniteValuesProperty {
@@ -61,6 +64,9 @@ class EditableDouble extends EditableProperty with NumericProperty {
   @override
   double? convertFromInputString(String? valueAsString) =>
       toNumber(valueAsString) as double?;
+
+  @override
+  int get keyHash => hashWithoutValue;
 }
 
 class EditableInt extends EditableProperty with NumericProperty {
@@ -69,6 +75,9 @@ class EditableInt extends EditableProperty with NumericProperty {
   @override
   int? convertFromInputString(String? valueAsString) =>
       toNumber(valueAsString) as int?;
+
+  @override
+  int get keyHash => hashWithoutValue;
 }
 
 class EditableEnum extends EditableProperty with FiniteValuesProperty {
@@ -165,6 +174,41 @@ class EditableProperty extends EditableArgument {
     final isEmpty = inputValue == '';
     return isNull || isEmpty;
   }
+
+  int get keyHash => hashWithValue;
+
+  int get hashWithValue => Object.hash(
+    name,
+    type,
+    value,
+    hasDefault,
+    hasArgument,
+    defaultValue,
+    isNullable,
+    isRequired,
+    isEditable,
+    isDeprecated,
+    options,
+    displayValue,
+    documentation,
+    errorText,
+  );
+
+  int get hashWithoutValue => Object.hash(
+    name,
+    type,
+    hasDefault,
+    hasArgument,
+    defaultValue,
+    isNullable,
+    isRequired,
+    isEditable,
+    isDeprecated,
+    options,
+    displayValue,
+    documentation,
+    errorText,
+  );
 
   @mustBeOverridden
   Object? convertFromInputString(String? _) {
