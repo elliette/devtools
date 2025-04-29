@@ -12,8 +12,8 @@ version: 2.46.0-dev.0
 repository: https://github.com/flutter/devtools/tree/master/packages/devtools_app
 
 environment:
-  sdk: ">=3.8.0-265.0.dev <4.0.0"
-  flutter: ">=3.32.0-1.0.pre.73"
+  sdk: ">=3.8.0-261.0.dev <4.0.0"
+  flutter: ">=3.30.0-1.0.pre.73"
 
 resolution: workspace
 
@@ -21,6 +21,7 @@ dependencies:
   async: ^2.0.0
   collection: ^1.15.0
   dap: ^1.1.0
+  cupertino_icons: ^1.0.0 
   dds_service_extensions: ^2.0.0
   devtools_app_shared:
   devtools_extensions:
