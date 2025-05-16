@@ -307,7 +307,7 @@ mixin _PropertyInputMixin<T extends StatefulWidget, U> on State<T> {
 
     clearServerError();
     final argName = property.name;
-    ga.select(
+    ga.impression(
       gac.PropertyEditorSidebar.id,
       gac.PropertyEditorSidebar.applyEditRequest(
         argName: property.name,
@@ -391,7 +391,7 @@ mixin _PropertyInputMixin<T extends StatefulWidget, U> on State<T> {
       });
       ga.reportError('property-editor $_serverError');
     }
-    ga.select(
+    ga.impression(
       gac.PropertyEditorSidebar.id,
       gac.PropertyEditorSidebar.applyEditComplete(
         argName: property.name,
