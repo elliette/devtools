@@ -166,7 +166,10 @@ void main() {
         expect(hideableNodeFinder, findsNothing);
 
         // Expand the hidden group that contains the HeroControllerScope:
-        final moreWidgetsRow = findInspectorRow(matching: 'more widgets...', childOf: 'MaterialApp');
+        final moreWidgetsRow = findInspectorRow(
+          matching: _findTreeRowContaining('more widgets...'),
+          parent: _findTreeRowContaining('MaterialApp'),
+        );
         final expandButton = findExpandCollapseButtonForRow(
           inspectorRowFinder: moreWidgetsRow,
           isExpand: true,
@@ -192,7 +195,10 @@ void main() {
         );
 
         // Collapse the hidden group that contains the HeroControllerScope:
-        final scrollConfigurationRow = findInspectorRow(matching: 'ScrollConfiguration', childOf: 'MaterialApp');
+        final scrollConfigurationRow = findInspectorRow(
+          matching: _findTreeRowMatching('ScrollConfiguration'),
+          parent: _findTreeRowMatching('MaterialApp'),
+        );
         final collapseButton = findExpandCollapseButtonForRow(
           inspectorRowFinder: scrollConfigurationRow,
           isExpand: false,
@@ -642,11 +648,14 @@ Future<void> _waitForFlutterFrame(
   }
 }
 
-Finder findInspectorRow({required String matching, required String childOf}) {
-  final possibleParentRowsFinder = _findTreeRowMatching(childOf);
+/// Finds an [InspectorRowContent] who is the child of [parent].
+///
+/// Both [matching] and [parent] should be [InspectorRowContent] finders.
+Finder findInspectorRow({required Finder matching, required Finder parent}) {
+  final possibleParentRowsFinder = parent;
   final possibleParentRows = possibleParentRowsFinder.evaluate().toList();
-  
-  final possibleChildRowsFinder = _findTreeRowMatching(matching);
+
+  final possibleChildRowsFinder = matching;
   final possibleChildRows = possibleChildRowsFinder.evaluate().toList();
 
   for (final parentRow in possibleParentRows) {
@@ -776,8 +785,13 @@ bool _treeRowsAreInOrder({
   return true;
 }
 
-Finder _findTreeRowMatching(String description) => find.ancestor(
+Finder _findTreeRowContaining(String description) => find.ancestor(
   of: find.richTextContaining(description),
+  matching: find.byType(InspectorRowContent),
+);
+
+Finder _findTreeRowMatching(String description) => find.ancestor(
+  of: find.richText(description),
   matching: find.byType(InspectorRowContent),
 );
 
