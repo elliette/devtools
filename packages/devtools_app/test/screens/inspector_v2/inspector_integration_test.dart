@@ -166,8 +166,9 @@ void main() {
         expect(hideableNodeFinder, findsNothing);
 
         // Expand the hidden group that contains the HeroControllerScope:
-        final expandButton = findExpandCollapseButtonForNode(
-          nodeDescription: '71 more widgets...',
+        final moreWidgetsRow = findInspectorRow(matching: 'more widgets...', childOf: 'MaterialApp');
+        final expandButton = findExpandCollapseButtonForRow(
+          inspectorRowFinder: moreWidgetsRow,
           isExpand: true,
         );
         await tester.tap(expandButton);
@@ -191,8 +192,9 @@ void main() {
         );
 
         // Collapse the hidden group that contains the HeroControllerScope:
-        final collapseButton = findExpandCollapseButtonForNode(
-          nodeDescription: 'ScrollConfiguration',
+        final scrollConfigurationRow = findInspectorRow(matching: 'ScrollConfiguration', childOf: 'MaterialApp');
+        final collapseButton = findExpandCollapseButtonForRow(
+          inspectorRowFinder: scrollConfigurationRow,
           isExpand: false,
         );
         await tester.tap(collapseButton);
@@ -640,20 +642,40 @@ Future<void> _waitForFlutterFrame(
   }
 }
 
+Finder findInspectorRow({required String matching, required String childOf}) {
+  final possibleParentRowsFinder = _findTreeRowMatching(childOf);
+  final possibleParentRows = possibleParentRowsFinder.evaluate().toList();
+  
+  final possibleChildRowsFinder = _findTreeRowMatching(matching);
+  final possibleChildRows = possibleChildRowsFinder.evaluate().toList();
+
+  for (final parentRow in possibleParentRows) {
+    final parentWidget = parentRow.widget as InspectorRowContent;
+    for (final childRow in possibleChildRows) {
+      final childWidget = childRow.widget as InspectorRowContent;
+      if (childWidget.row.index == parentWidget.row.index + 1) {
+        return find.byWidgetPredicate((widget) => widget == childWidget);
+      }
+    }
+  }
+
+  fail(
+    'Could not find child row with description "$matching" for parent '
+    'row with description "$childOf".',
+  );
+}
+
 Finder findNodeMatching(String text) => find.ancestor(
   of: find.richTextContaining(text),
   matching: find.byType(DescriptionDisplay),
 );
 
-Finder findExpandCollapseButtonForNode({
-  required String nodeDescription,
+Finder findExpandCollapseButtonForRow({
+  required Finder inspectorRowFinder,
   required bool isExpand,
 }) {
-  final hiddenNodeFinder = findNodeMatching(nodeDescription);
-  expect(hiddenNodeFinder, findsOneWidget);
-
   final expandCollapseButtonFinder = find.descendant(
-    of: hiddenNodeFinder,
+    of: inspectorRowFinder,
     matching: find.byType(TextButton),
   );
   expect(expandCollapseButtonFinder, findsOneWidget);
@@ -755,7 +777,7 @@ bool _treeRowsAreInOrder({
 }
 
 Finder _findTreeRowMatching(String description) => find.ancestor(
-  of: find.richText(description),
+  of: find.richTextContaining(description),
   matching: find.byType(InspectorRowContent),
 );
 
