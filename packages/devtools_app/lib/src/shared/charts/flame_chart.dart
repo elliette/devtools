@@ -1114,8 +1114,8 @@ class FlameChartNode<T extends FlameChartDataMixin<T>> {
     // TODO(kenz): revisit this style when we perform a V2 style upgrade on the
     // more complex data structures in DevTools.
     if (selected) return darkColorScheme.primary;
-    if (activeSearchMatch) return activeSearchMatchColor;
-    if (searchMatch) return searchMatchColor;
+    if (activeSearchMatch) return colorScheme.activeSearchMatchColor;
+    if (searchMatch) return colorScheme.searchMatchColor;
     return colorPair.background.colorFor(colorScheme);
   }
 
