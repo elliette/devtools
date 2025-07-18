@@ -96,22 +96,25 @@ class _AnalyticsPromptState extends State<AnalyticsPrompt> {
     // When failing to parse the consent message, fallback to displaying the
     // consent message in its regular form.
     if (consentMessageRegExpResults == null) {
-      return SelectableText.rich(
-        TextSpan(
-          children: [
-            TextSpan(
-              text: adjustLineBreaks(controller.consentMessage),
-              style: theme.regularTextStyle,
-            ),
-          ],
+      return SelectionArea(
+        child: Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(
+                text: adjustLineBreaks(controller.consentMessage),
+                style: theme.regularTextStyle,
+              ),
+            ],
+          ),
         ),
       );
     }
 
-    return SelectableText.rich(
-      TextSpan(
-        children: [
-          TextSpan(
+    return SelectionArea(
+      child: Text.rich(
+        TextSpan(
+          children: [
+            TextSpan(
             text: consentMessageRegExpResults[0],
             style: theme.regularTextStyle,
           ),
@@ -129,7 +132,7 @@ class _AnalyticsPromptState extends State<AnalyticsPrompt> {
           ),
         ],
       ),
-    );
+    ),);
   }
 
   Widget _actionButtons() {

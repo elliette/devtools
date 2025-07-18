@@ -139,14 +139,16 @@ class MicrotaskStackTraceView extends StatelessWidget {
         Row(
           children: [
             Expanded(
+            child: SelectionArea(
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                   vertical: denseRowSpacing,
                   horizontal: defaultSpacing,
                 ),
-                child: SelectableText(
+                child: Text(
                   style: theme.fixedFontStyle,
                   _selectedMicrotask!.stackTrace.toString(),
+                ),
                 ),
               ),
             ),

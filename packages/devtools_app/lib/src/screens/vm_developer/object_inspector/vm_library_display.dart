@@ -67,15 +67,16 @@ class LibraryDependencies extends StatelessWidget {
 
   final List<LibraryDependency> dependencies;
 
-  List<Row> dependencyRows(BuildContext context) {
+  List<Widget> dependencyRows(BuildContext context) {
     final textStyle = Theme.of(context).fixedFontStyle;
-
-    return <Row>[
+    return <Widget>[
       for (final dep in dependencies)
-        Row(
-          children: [
-            Flexible(child: SelectableText(dep.description, style: textStyle)),
-          ],
+        SelectionArea(
+          child: Row(
+            children: [
+              Flexible(child: Text(dep.description, style: textStyle)),
+            ],
+          ),
         ),
     ];
   }

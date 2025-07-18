@@ -383,7 +383,7 @@ class AddressColumn extends ColumnData<NetworkRequest>
   }) {
     final value = getDisplayValue(data);
 
-    return SelectableText(
+    return Text(
       value,
       maxLines: 1,
       style: const TextStyle(overflow: TextOverflow.ellipsis),

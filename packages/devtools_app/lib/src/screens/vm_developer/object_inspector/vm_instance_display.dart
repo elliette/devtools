@@ -163,24 +163,27 @@ class DisplayProvider extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     if (variable.text != null) {
-      return SelectableText.rich(
-        TextSpan(
-          children: textSpansFromAnsi(
-            variable.text ?? '',
-            theme.subtleFixedFontStyle,
+      return SelectionArea(
+        child: Text.rich(
+          TextSpan(
+            children: textSpansFromAnsi(
+              variable.text ?? '',
+              theme.subtleFixedFontStyle,
+            ),
           ),
+          onTap: onTap,
         ),
-        onTap: onTap,
       );
     }
 
     final hasName = variable.name?.isNotEmpty ?? false;
     return Row(
       children: [
-        SelectableText.rich(
-          TextSpan(
-            text: hasName ? variable.name : null,
-            style: variable.artificialName
+        SelectionArea(
+          child: Text.rich(
+            TextSpan(
+              text: hasName ? variable.name : null,
+              style: variable.artificialName
                 ? theme.subtleFixedFontStyle
                 : theme.fixedFontStyle.apply(
                     color: theme.colorScheme.controlFlowSyntaxColor,
@@ -195,7 +198,7 @@ class DisplayProvider extends StatelessWidget {
             ],
           ),
           onTap: onTap,
-        ),
+        ),),
         if (variable.ref!.value is! Sentinel && variable.ref!.value is ObjRef?)
           VmServiceObjectLink(
             object: variable.ref!.value as ObjRef?,
