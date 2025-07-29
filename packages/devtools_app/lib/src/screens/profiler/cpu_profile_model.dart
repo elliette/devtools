@@ -561,50 +561,187 @@ class CpuProfileData with Serializable {
     // final output from this method.
     const kRootId = 0;
 
-    // Generate the stack frames first as it builds and tracks
-    // the timeline tree for each sample.
-    final stackFrames = cpuSamples.generateStackFramesJson(
-      isolateId: isolateId,
-      // We want to ensure that if [kRootId] ever changes, this change is
-      // propagated to [cpuSamples.generateStackFramesJson].
-      // ignore: avoid_redundant_argument_values
-      kRootId: kRootId,
-      buildCodeTree: buildCodeTree,
+    // 1. Build the timeline tree from the samples. This populates an Expando
+    // that maps a sample to its leaf in the tree, which we'll need later.
+    final timelineTreeRoot = _CpuProfileTimelineTree.fromCpuSamples(
+      cpuSamples,
+      asCodeProfileTimelineTree: buildCodeTree,
     );
 
-    // Build the trace events.
-    final traceEvents = <Map<String, Object?>>[];
-    for (final sample in cpuSamples.samples ?? <vm_service.CpuSample>[]) {
-      final tree = _CpuProfileTimelineTree.getTreeFromSample(sample)!;
-      // Skip the root.
-      if (tree.frameId == kRootId) {
-        continue;
+    // 2. Pre-fetch all package URIs for the URLs present in the profile.
+    final urlsToResolve = <String>{};
+    void collectUrls(_CpuProfileTimelineTree node) {
+      if (node.resolvedUrl != null) {
+        urlsToResolve.add(node.resolvedUrl!);
       }
-      traceEvents.add({
-        'ph': 'P', // kind = sample event
-        'name': '', // Blank to keep about:tracing happy
-        'pid': cpuSamples.pid,
-        'tid': sample.tid,
-        'ts': sample.timestamp,
-        'cat': 'Dart',
-        CpuProfileData.stackFrameIdKey: '$isolateId-${tree.frameId}',
-        'args': {userTagKey: ?sample.userTag, vmTagKey: ?sample.vmTag},
-      });
+      for (final child in node.children) {
+        collectUrls(child);
+      }
     }
 
-    final traceObject = <String, Object?>{
-      CpuProfileData._sampleCountKey: cpuSamples.sampleCount,
-      CpuProfileData._samplePeriodKey: cpuSamples.samplePeriod,
-      CpuProfileData._stackDepthKey: cpuSamples.maxStackDepth,
-      CpuProfileData._timeOriginKey: cpuSamples.timeOriginMicros,
-      CpuProfileData._timeExtentKey: cpuSamples.timeExtentMicros,
-      CpuProfileData._stackFramesKey: stackFrames,
-      CpuProfileData._traceEventsKey: traceEvents,
-    };
+    collectUrls(timelineTreeRoot);
+    if (urlsToResolve.isNotEmpty) {
+      await serviceConnection.serviceManager.resolvedUriManager
+          .fetchPackageUris(isolateId, urlsToResolve.toList());
+    }
 
-    await _addPackageUrisToTraceObject(isolateId, traceObject);
+    // 3. Create a temporary metadata object. The sample period will be updated
+    // after we create and sort the sample events.
+    final tempProfileMetaData = CpuProfileMetaData(
+      sampleCount: cpuSamples.sampleCount!,
+      samplePeriod: cpuSamples.samplePeriod!,
+      stackDepth: cpuSamples.maxStackDepth!,
+      time: TimeRange.ofDuration(
+        cpuSamples.timeExtentMicros!,
+        start: cpuSamples.timeOriginMicros!,
+      ),
+    );
 
-    return CpuProfileData.fromJson(traceObject);
+    // 4. Traverse the timeline tree to create CpuStackFrame objects for each
+    // unique stack frame in the profile.
+    final stackFrames = <String, CpuStackFrame>{};
+    int nextFrameId = kRootId;
+
+    void processNode({
+      required _CpuProfileTimelineTree currentNode,
+      required _CpuProfileTimelineTree? parentNode,
+    }) {
+      final frameId = nextFrameId++;
+      currentNode.frameId = frameId;
+
+      // Skip the root, which is a synthetic node.
+      if (frameId != kRootId) {
+        final key = '$isolateId-$frameId';
+        final parentFrameId = parentNode?.frameId;
+        final parentKey = (parentFrameId != null && parentFrameId != kRootId)
+            ? '$isolateId-$parentFrameId'
+            : rootId;
+
+        final rawUrl = currentNode.resolvedUrl ?? '';
+        final packageUri =
+            serviceConnection.serviceManager.resolvedUriManager
+                .lookupPackageUri(isolateId, rawUrl) ??
+            rawUrl;
+        final verboseName = _nameForStackFrame(currentNode, buildCodeTree);
+
+        final stackFrame = CpuStackFrame(
+          id: key,
+          name: getSimpleStackFrameName(verboseName),
+          verboseName: verboseName,
+          category: 'Dart',
+          rawUrl: rawUrl,
+          packageUri: packageUri,
+          sourceLine: currentNode.sourceLine,
+          parentId: parentKey,
+          profileMetaData: tempProfileMetaData,
+          isTag: false,
+        );
+        stackFrames[key] = stackFrame;
+      }
+
+      for (final child in currentNode.children) {
+        processNode(currentNode: child, parentNode: currentNode);
+      }
+    }
+
+    processNode(currentNode: timelineTreeRoot, parentNode: null);
+
+    // 5. Build the list of CpuSampleEvents from the raw samples.
+    final samples = <CpuSampleEvent>[];
+    for (final sample in cpuSamples.samples ?? <vm_service.CpuSample>[]) {
+      final tree = _CpuProfileTimelineTree.getTreeFromSample(sample);
+      if (tree == null || tree.frameId == kRootId) continue;
+
+      final leafId = '$isolateId-${tree.frameId}';
+      samples.add(
+        CpuSampleEvent(
+          leafId: leafId,
+          userTag: sample.userTag,
+          vmTag: sample.vmTag,
+          traceJson: {
+            'ph': 'P', // kind = sample event
+            'name': '', // Blank to keep about:tracing happy
+            'pid': cpuSamples.pid,
+            'tid': sample.tid,
+            'ts': sample.timestamp,
+            'cat': 'Dart',
+            stackFrameIdKey: leafId,
+            'args': {userTagKey: sample.userTag, vmTagKey: sample.vmTag},
+          },
+        ),
+      );
+    }
+
+    // 6. Sort samples to calculate the observed sample period.
+    // samples.sort((a, b) => a.timestampMicros!.compareTo(b.timestampMicros!));
+
+    final samplePeriod =
+        observedSamplePeriod(samples) ?? cpuSamples.samplePeriod;
+    final profileMetaData = tempProfileMetaData.copyWith(
+      samplePeriod: samplePeriod,
+    );
+
+    // 7. Update all stack frames with the final metadata object if it changed.
+    if (profileMetaData.samplePeriod != tempProfileMetaData.samplePeriod) {
+      final finalStackFrames = <String, CpuStackFrame>{};
+      for (final entry in stackFrames.entries) {
+        finalStackFrames[entry.key] = entry.value.shallowCopy(
+          profileMetaData: profileMetaData,
+        );
+      }
+      // Replace the old map with the one containing updated frames.
+      stackFrames
+        ..clear()
+        ..addAll(finalStackFrames);
+    }
+
+    // 8. Construct the final CpuProfileData object.
+    return CpuProfileData._(
+      stackFrames: stackFrames,
+      cpuSamples: samples,
+      profileMetaData: profileMetaData,
+      rootedAtTags: false,
+    );
+  }
+
+  static String? _nameForStackFrame(
+    _CpuProfileTimelineTree current,
+    bool buildCodeTree,
+  ) {
+    // The `buildCodeTree` parameter is kept for consistency with the original
+    // logic, though it is not used in this implementation as `current.className`
+    // already handles the distinction.
+    final className = current.className;
+    if (className != null) {
+      return '$className.${current.name}';
+    }
+    if (current.name == anonymousClosureName &&
+        current._function is vm_service.FuncRef) {
+      final nameParts = <String?>[current.name];
+
+      final function = current._function as vm_service.FuncRef;
+      var owner = function.owner;
+      switch (owner.runtimeType) {
+        case const (vm_service.FuncRef):
+          owner = owner as vm_service.FuncRef;
+          final functionName = owner.name;
+
+          String? className;
+          if (owner.owner is vm_service.ClassRef) {
+            className = (owner.owner as vm_service.ClassRef).name;
+          }
+
+          nameParts.insertAll(0, [className, functionName]);
+          break;
+        case const (vm_service.ClassRef):
+          final className = (owner as vm_service.ClassRef).name;
+          nameParts.insert(0, className);
+      }
+
+      nameParts.removeWhere((element) => element == null);
+      return nameParts.join('.');
+    }
+    return current.name;
   }
 
   /// Helper function for determining and updating the
@@ -1197,6 +1334,9 @@ class _CpuProfileTimelineTree {
   int frameId = kNoFrameId;
 
   Object? get _function {
+    // Return null for the root node to prevent RangeErrors.
+    if (index == kRootIndex) return null;
+
     if (isCodeTree) {
       return _code.function!;
     }
@@ -1233,13 +1373,18 @@ class _CpuProfileTimelineTree {
     return null;
   }
 
-  String? get resolvedUrl => isCodeTree && _function is vm_service.FuncRef?
-      ?
-        // TODO(bkonyi): not sure if this is a resolved URL or not, but it's not
-        // critical since this is only displayed when advanced developer mode is
-        // enabled.
-        (_function as vm_service.FuncRef?)?.location?.script?.uri
-      : samples.functions?[index].resolvedUrl;
+  String? get resolvedUrl {
+    // Return null for the root node to prevent RangeErrors.
+    if (index == kRootIndex) return null;
+
+    return isCodeTree && _function is vm_service.FuncRef?
+        ?
+          // TODO(bkonyi): not sure if this is a resolved URL or not, but it's not
+          // critical since this is only displayed when advanced developer mode is
+          // enabled.
+          (_function as vm_service.FuncRef?)?.location?.script?.uri
+        : samples.functions?[index].resolvedUrl;
+  }
 
   int? get sourceLine {
     final function = _function;
@@ -1284,82 +1429,6 @@ class _CpuProfileTimelineTree {
       children.add(child);
     }
     return child;
-  }
-}
-
-extension on vm_service.CpuSamples {
-  Map<String, Object?> generateStackFramesJson({
-    required String isolateId,
-    int kRootId = 0,
-    bool buildCodeTree = false,
-  }) {
-    final traceObject = <String, Object?>{};
-    int nextId = kRootId;
-
-    String? nameForStackFrame(_CpuProfileTimelineTree current) {
-      final className = current.className;
-      if (className != null) {
-        return '$className.${current.name}';
-      }
-      if (current.name == anonymousClosureName &&
-          current._function is vm_service.FuncRef) {
-        final nameParts = <String?>[current.name];
-
-        final function = current._function as vm_service.FuncRef;
-        var owner = function.owner;
-        switch (owner.runtimeType) {
-          case const (vm_service.FuncRef):
-            owner = owner as vm_service.FuncRef;
-            final functionName = owner.name;
-
-            String? className;
-            if (owner.owner is vm_service.ClassRef) {
-              className = (owner.owner as vm_service.ClassRef).name;
-            }
-
-            nameParts.insertAll(0, [className, functionName]);
-            break;
-          case const (vm_service.ClassRef):
-            final className = (owner as vm_service.ClassRef).name;
-            nameParts.insert(0, className);
-        }
-
-        nameParts.removeWhere((element) => element == null);
-        return nameParts.join('.');
-      }
-      return current.name;
-    }
-
-    void processStackFrame({
-      required _CpuProfileTimelineTree current,
-      required _CpuProfileTimelineTree? parent,
-    }) {
-      final id = nextId++;
-      current.frameId = id;
-
-      // Skip the root.
-      if (id != kRootId) {
-        final key = '$isolateId-$id';
-        traceObject[key] = {
-          CpuProfileData.categoryKey: 'Dart',
-          CpuProfileData.nameKey: nameForStackFrame(current),
-          CpuProfileData.resolvedUrlKey: current.resolvedUrl,
-          CpuProfileData.sourceLineKey: current.sourceLine,
-          if (parent != null && parent.frameId != 0)
-            CpuProfileData.parentIdKey: '$isolateId-${parent.frameId}',
-        };
-      }
-      for (final child in current.children) {
-        processStackFrame(current: child, parent: current);
-      }
-    }
-
-    final root = _CpuProfileTimelineTree.fromCpuSamples(
-      this,
-      asCodeProfileTimelineTree: buildCodeTree,
-    );
-    processStackFrame(current: root, parent: null);
-    return traceObject;
   }
 }
 
