@@ -2,49 +2,47 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file or at https://developers.google.com/open-source/licenses/bsd.
 
-@Timeout(Duration(minutes: 2))
+@Timeout(Duration(minutes: 4))
 library;
 
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:devtools_shared/devtools_test_utils.dart';
-import 'package:path/path.dart' as path;
+import 'package:devtools_test/helpers.dart';
 import 'package:test/test.dart';
 import 'package:webdriver/async_io.dart';
 
 import '../integration_test/test_infra/run/run_test.dart';
 
-// Note: Copy the server logic from
-// devtools_app/integration_test/test_infra/run/run_test.dart instead
 void main() {
   late Process devtoolsProcess;
   late WebDriver driver;
+  late String devToolsServerAddress;
+
+  const serverStartupTimeout = Duration(minutes: 3);
 
   setUp(() async {
-    final chromedriver = ChromeDriver();
-    await chromedriver.start(debugLogging: true);
+    // Start ChromeDriver.
+    await ChromeDriver().start(debugLogging: true);
 
-    print('START DEVTOOLS PROCESS');
-    devtoolsProcess = await _startLocalDevToolsServer();
-    final devToolsServerAddress = await listenForDevToolsAddress(
+    // Start the DevTools server.
+    devtoolsProcess = await startDevToolsServer(useLocalServer: true);
+    devToolsServerAddress = await listenForDevToolsAddress(
       devtoolsProcess,
-      timeout: const Duration(minutes: 3),
+      timeout: serverStartupTimeout,
     );
-    print('====== DEVTOOLS SERVER ADDRESS IS ==== $devToolsServerAddress');
 
     // Create a WebDriver instance.
-    // This requires a running chromedriver instance.
-    // You can start one with `chromedriver --port=4444`.
     driver = await createDriver(
-      uri: Uri.parse('http://localhost:4444'),
-      desired: Capabilities.chrome,
+      uri: Uri.parse('http://127.0.0.1:${ChromeDriver.port}'),
+      desired: {
+        ...Capabilities.chrome,
+        Capabilities.chromeOptions: {
+          'args': ['--headless'],
+        },
+      },
     );
-
-    // Navigate to the DevTools URL.
-    await driver.get(devToolsServerAddress);
-    print('DONE NAVIGATING');
   });
 
   tearDown(() async {
@@ -52,29 +50,37 @@ void main() {
     devtoolsProcess.kill();
   });
 
+  Future<String?> getRendererAttribute() => retryUntilNotNull(() async {
+    final body = await driver.findElement(const By.tagName('body'));
+    return body.attributes['flt-renderer'];
+  });
+
   group('compilation', () {
-    test('loads the app and has the correct title', () async {
-      // Verify that the app has loaded by checking the title.
-      final title = await driver.title;
-      // print('======= TITLE IS $title');
-      // expect(title, contains('DevTools'));
-    });
+    test('compiler query param determines skwasm/canvaskit renderer', () async {
+      // Open the DevTools URL with ?compiler=wasm.
+      await driver.get(
+        _addQueryParam(devToolsServerAddress, param: 'compiler', value: 'wasm'),
+      );
+      // Verify we are using the skwasm renderer.
+      expect(await getRendererAttribute(), equals('skwasm'));
+
+      // Open the DevTools URL with ?compiler=js.
+      await driver.get(
+        _addQueryParam(devToolsServerAddress, param: 'compiler', value: 'js'),
+      );
+      // Verify we are using the canvaskit renderer.
+      expect(await getRendererAttribute(), equals('canvaskit'));
+    }, retry: 1);
   });
 }
 
-Future<Process> _startLocalDevToolsServer() async {
-  final devtoolsToolPath = path.join(
-    Directory.current.path,
-    '..',
-    '..',
-    'tool',
-  );
-
-  final devtoolsProcess = await Process.start('dart', [
-    'run',
-    'bin/dt.dart',
-    'serve',
-    '--no-launch-browser',
-  ], workingDirectory: devtoolsToolPath);
-  return devtoolsProcess;
+String _addQueryParam(
+  String url, {
+  required String param,
+  required String value,
+}) {
+  final uri = Uri.parse(url);
+  final newQueryParameters = Map<String, dynamic>.from(uri.queryParameters);
+  newQueryParameters[param] = value;
+  return uri.replace(queryParameters: newQueryParameters).toString();
 }
