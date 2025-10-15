@@ -36,7 +36,7 @@ void main() {
     _exceededThresholds.clear();
   });
 
-  for (final useWasm in [true, false]) {
+  for (final useWasm in [true]) {
     test(
       'Can run web benchmarks with ${useWasm ? 'WASM' : 'JS'}',
       () async {

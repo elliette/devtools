@@ -12,6 +12,8 @@ import 'package:io/io.dart';
 import '../utils.dart';
 import 'shared.dart';
 
+const _commitFlag = 'commit';
+
 final _flutterPreReleaseTagRegExp = RegExp(r'[0-9]+.[0-9]+.0-[0-9]+.0.pre');
 
 /// This command updates the the Flutter SDK contained in the 'tool/' directory
@@ -26,6 +28,11 @@ final _flutterPreReleaseTagRegExp = RegExp(r'[0-9]+.[0-9]+.0-[0-9]+.0.pre');
 class UpdateFlutterSdkCommand extends Command {
   UpdateFlutterSdkCommand() {
     argParser.addUpdateOnPathFlag();
+    argParser.addOption(
+      _commitFlag,
+      help: 'A specific Flutter commit to checkout.',
+      valueHelp: 'abc1234',
+    );
   }
 
   @override
@@ -41,18 +48,23 @@ class UpdateFlutterSdkCommand extends Command {
   Future run() async {
     final updateOnPath =
         argResults![SharedCommandArgs.updateOnPath.flagName] as bool;
+    final commit = argResults![_commitFlag] as String?;
     final log = Logger.standard();
     final repo = DevToolsRepo.getInstance();
     final processManager = ProcessManager();
 
-    final String? flutterVersion;
-    final versionStr = repo.readFile(Uri.parse('flutter-candidate.txt')).trim();
-    // If the version string doesn't match the expected pattern for a
-    // pre-release tag, then assume it's a commit hash:
-    flutterVersion =
-        _flutterPreReleaseTagRegExp.hasMatch(versionStr)
-            ? 'tags/$versionStr'
-            : versionStr;
+    late final String flutterVersion;
+    if (commit != null) {
+      flutterVersion = commit;
+    } else {
+      final versionStr =
+          repo.readFile(Uri.parse('flutter-candidate.txt')).trim();
+      // If the version string doesn't match the expected pattern for a
+      // pre-release tag, then assume it's a commit hash:
+      flutterVersion = _flutterPreReleaseTagRegExp.hasMatch(versionStr)
+          ? 'tags/$versionStr'
+          : versionStr;
+    }
 
     log.stdout('Updating to Flutter version from cache: $flutterVersion');
 

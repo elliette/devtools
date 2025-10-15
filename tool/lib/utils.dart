@@ -81,8 +81,15 @@ class CliCommand {
     return CliCommand('git', args, throwOnException: throwOnException);
   }
 
-  factory CliCommand.tool(List<String> args, {bool throwOnException = true}) {
-    var toolPath = Platform.script.toFilePath();
+  factory CliCommand.tool(
+    List<String> args, {
+    bool throwOnException = true,
+    String? toolScript,
+  }) {
+    // When `toolScript` is not passed, we must resolve the path from
+    // `Platform.script`. This may not be safe if the current working directory
+    // has been changed.
+    var toolPath = toolScript ?? Platform.script.toFilePath();
     if (!File(toolPath).existsSync()) {
       // Handling https://github.com/dart-lang/sdk/issues/54493
       // Platform.script.toFilePath() duplicates next to current directory, when run recursively from itself.

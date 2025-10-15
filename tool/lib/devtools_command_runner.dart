@@ -24,6 +24,7 @@ import 'commands/repo_check.dart';
 import 'commands/rollback.dart';
 import 'commands/update_dart_sdk_deps.dart';
 import 'commands/update_version.dart';
+import 'commands/flutter_binary_search.dart';
 
 const _flutterFromPathFlag = 'flutter-from-path';
 
@@ -50,6 +51,7 @@ class DevToolsCommandRunner extends CommandRunner {
     addCommand(UpdateDevToolsVersionCommand());
     addCommand(UpdateFlutterSdkCommand());
     addCommand(UpdatePerfettoCommand());
+    addCommand(FlutterBisectCommand());
 
     argParser
       ..addFlag(
