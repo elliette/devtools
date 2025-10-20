@@ -257,11 +257,20 @@ class PreferencesController extends DisposableController
       return;
     }
 
+    print('enabled from storage: $enabledFromStorage');
+    print('enabled from query params: $enabledFromQueryParams');
+    print('kIsWeb: $kIsWeb');
+    print('usingDebugDevToolsServer: $usingDebugDevToolsServer');
     final shouldEnableWasm =
         (enabledFromStorage || enabledFromQueryParams) &&
         kIsWeb &&
         // Wasm cannot be enabled if DevTools was built using `flutter run`.
-        !usingDebugDevToolsServer;
+        !usingDebugDevToolsServer && 
+        // Wasm cannot be enabled if DevTools was compiled with DDC.
+        !kDebugMode;
+    print('------------------');
+    print('shouldEnableWasm: $shouldEnableWasm');
+    print('kIsWasm: $kIsWasm');
     assert(kIsWasm == shouldEnableWasm);
     // This should be a no-op if the flutter_bootstrap.js logic set the
     // renderer properly, but we call this to be safe in case something went

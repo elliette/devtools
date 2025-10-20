@@ -126,7 +126,7 @@ class DevToolsTableState<T> extends State<DevToolsTable<T>>
   /// This must be calculated where we have access to the Flutter view
   /// constraints (e.g. the [LayoutBuilder] below).
   @visibleForTesting
-  late List<double> adjustedColumnWidths;
+  late List<double> _columnWidths;
 
   @override
   void initState() {
@@ -150,7 +150,7 @@ class DevToolsTableState<T> extends State<DevToolsTable<T>>
 
     pinnedScrollController = ScrollController();
 
-    adjustedColumnWidths = List.of(widget.columnWidths);
+    _columnWidths = List.of(widget.columnWidths);
   }
 
   @override
@@ -168,7 +168,9 @@ class DevToolsTableState<T> extends State<DevToolsTable<T>>
       _initDataAndAddListeners();
     }
 
-    adjustedColumnWidths = List.of(widget.columnWidths);
+    if (widget.columnWidths != oldWidget.columnWidths) {
+      _columnWidths = List.of(widget.columnWidths);
+    }
   }
 
   void _initDataAndAddListeners() {
@@ -254,8 +256,26 @@ class DevToolsTableState<T> extends State<DevToolsTable<T>>
     super.dispose();
   }
 
+  void _handleColumnResize(int index, double delta) {
+    setState(() {
+      const minColumnWidth = 20.0; // Prevent columns from disappearing
+
+      final newWidth = (_columnWidths[index] + delta).clamp(
+        minColumnWidth,
+        double.infinity, // Or some reasonable max width
+      );
+
+      _columnWidths[index] = newWidth;
+
+      // Note: The LayoutBuilder will automatically run again after setState,
+      // calling _adjustColumnWidthsForViewSize, which will now correctly
+      // re-distribute any new extra space (or do nothing)
+      // based on our new _columnWidths.
+    });
+  }
+
   /// The width of all columns in the table with additional padding.
-  double get _tableWidthForOriginalColumns {
+  double get _currentTableWidth {
     var tableWidth = 2 * defaultSpacing;
     final numColumnGroupSpacers =
         widget.tableController.columnGroups?.numSpacers ?? 0;
@@ -263,7 +283,8 @@ class DevToolsTableState<T> extends State<DevToolsTable<T>>
         widget.tableController.columns.numSpacers - numColumnGroupSpacers;
     tableWidth += numColumnSpacers * columnSpacing;
     tableWidth += numColumnGroupSpacers * columnGroupSpacingWithPadding;
-    for (final columnWidth in widget.columnWidths) {
+
+    for (final columnWidth in _columnWidths) {
       tableWidth += columnWidth;
     }
     return tableWidth;
@@ -273,73 +294,30 @@ class DevToolsTableState<T> extends State<DevToolsTable<T>>
   /// than [_tableWidthForOriginalColumns] is distributed evenly across variable
   /// width columns.
   void _adjustColumnWidthsForViewSize(double viewWidth) {
-    final extraSpace = viewWidth - _tableWidthForOriginalColumns;
+    final extraSpace = viewWidth - _currentTableWidth;
     if (extraSpace <= 0) {
-      adjustedColumnWidths = List.of(widget.columnWidths);
+      // No extra space, or we are overflowing. The widths are as they are.
       return;
     }
 
-    final adjustedColumnWidthsByIndex = <int, double>{};
-
-    /// Helper method to evenly distribute [space] among the columns at
-    /// [columnIndices].
-    ///
-    /// This method stores the adjusted width values in
-    /// [adjustedColumnWidthsByIndex].
-    void evenlyDistributeColumnSizes(List<int> columnIndices, double space) {
-      final targetSize = space / columnIndices.length;
-
-      var largestColumnIndex = -1;
-      var largestColumnWidth = 0.0;
-      for (final index in columnIndices) {
-        final columnWidth = widget.columnWidths[index];
-        if (columnWidth >= largestColumnWidth) {
-          largestColumnIndex = index;
-          largestColumnWidth = columnWidth;
-        }
-      }
-      if (targetSize < largestColumnWidth) {
-        // We do not have enough extra space to evenly distribute to all
-        // columns. Remove the largest column and recurse.
-        adjustedColumnWidthsByIndex[largestColumnIndex] = largestColumnWidth;
-        final newColumnIndices = List.of(columnIndices)
-          ..remove(largestColumnIndex);
-        return evenlyDistributeColumnSizes(
-          newColumnIndices,
-          space - largestColumnWidth,
-        );
-      }
-
-      for (int i = 0; i < columnIndices.length; i++) {
-        final columnIndex = columnIndices[i];
-        adjustedColumnWidthsByIndex[columnIndex] = targetSize;
-      }
-    }
-
+    // Find variable-width columns
     final variableWidthColumnIndices = <int>[];
-    var sumVariableWidthColumnSizes = 0.0;
     for (int i = 0; i < widget.tableController.columns.length; i++) {
       final column = widget.tableController.columns[i];
       if (column.fixedWidthPx == null) {
         variableWidthColumnIndices.add(i);
-        sumVariableWidthColumnSizes += widget.columnWidths[i];
       }
     }
-    final totalVariableWidthColumnSpace =
-        sumVariableWidthColumnSizes + extraSpace;
 
-    evenlyDistributeColumnSizes(
-      variableWidthColumnIndices,
-      totalVariableWidthColumnSpace,
-    );
+    if (variableWidthColumnIndices.isEmpty) {
+      return; // No variable columns to distribute space to
+    }
 
-    adjustedColumnWidths.clear();
-    for (int i = 0; i < widget.columnWidths.length; i++) {
-      final originalWidth = widget.columnWidths[i];
-      final isVariableWidthColumn = variableWidthColumnIndices.contains(i);
-      adjustedColumnWidths.add(
-        isVariableWidthColumn ? adjustedColumnWidthsByIndex[i]! : originalWidth,
-      );
+    // Distribute the extra space evenly to the variable columns.
+    // This logic modifies the state list IN-PLACE.
+    final spacePerColumn = extraSpace / variableWidthColumnIndices.length;
+    for (final index in variableWidthColumnIndices) {
+      _columnWidths[index] += spacePerColumn;
     }
   }
 
@@ -410,20 +388,23 @@ class DevToolsTableState<T> extends State<DevToolsTable<T>>
     return LayoutBuilder(
       builder: (context, constraints) {
         final viewWidth = constraints.maxWidth;
-        _adjustColumnWidthsForViewSize(viewWidth);
+        _adjustColumnWidthsForViewSize(
+          viewWidth,
+        ); // This now modifies _columnWidths
         return SelectionArea(
           child: SizedBox(
-            width: max(viewWidth, _tableWidthForOriginalColumns),
+            width: max(viewWidth, _currentTableWidth), // MODIFIED
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 if (showColumnGroupHeader)
                   TableRow<T>.tableColumnGroupHeader(
-                    linkedScrollControllerGroup:
+                                        linkedScrollControllerGroup:
                         _linkedHorizontalScrollControllerGroup,
                     columnGroups: columnGroups,
-                    columnWidths: adjustedColumnWidths,
-                    sortColumn: sortColumn,
+                    columnWidths: _columnWidths, // MODIFIED
+                    onColumnResize: _handleColumnResize,
+                           sortColumn: sortColumn,
                     sortDirection: tableUiState.sortDirection,
                     secondarySortColumn:
                         widget.tableController.secondarySortColumn,
@@ -431,15 +412,15 @@ class DevToolsTableState<T> extends State<DevToolsTable<T>>
                     tall: widget.tallHeaders,
                     backgroundColor: widget.headerColor,
                   ),
-                // TODO(kenz): add support for excluding column headers.
                 TableRow<T>.tableColumnHeader(
                   key: const Key('Table header'),
-                  linkedScrollControllerGroup:
+                                    linkedScrollControllerGroup:
                       _linkedHorizontalScrollControllerGroup,
                   columns: widget.tableController.columns,
                   columnGroups: columnGroups,
-                  columnWidths: adjustedColumnWidths,
-                  sortColumn: sortColumn,
+                  columnWidths: _columnWidths, // MODIFIED
+                  onColumnResize: _handleColumnResize, // NEW
+                           sortColumn: sortColumn,
                   sortDirection: tableUiState.sortDirection,
                   secondarySortColumn:
                       widget.tableController.secondarySortColumn,

@@ -78,6 +78,7 @@ class TableRow<T> extends StatefulWidget {
     required this.sortColumn,
     required this.sortDirection,
     required this.onSortChanged,
+    this.onColumnResize,
     this.secondarySortColumn,
     this.onPressed,
     this.tall = false,
@@ -108,6 +109,7 @@ class TableRow<T> extends StatefulWidget {
     this.onPressed,
     this.tall = false,
     this.backgroundColor,
+    this.onColumnResize,
   }) : node = null,
        isExpanded = false,
        isExpandable = false,
@@ -132,6 +134,8 @@ class TableRow<T> extends StatefulWidget {
   final ItemSelectedCallback<T>? onPressed;
 
   final List<double> columnWidths;
+
+final void Function(int, double)? onColumnResize;
 
   final bool isSelected;
 
@@ -402,7 +406,7 @@ class _TableRowState<T> extends State<TableRow<T>>
 
   /// Presents the content of this row.
   Widget tableRowFor(BuildContext context) {
-    Widget columnFor(ColumnData<T> column, double columnWidth) {
+    Widget columnFor(ColumnData<T> column, double columnWidth, int columnIndex) {
       Widget? content;
       final theme = Theme.of(context);
       final node = widget.node;
@@ -509,10 +513,27 @@ class _TableRowState<T> extends State<TableRow<T>>
         );
       }
 
-      content = SizedBox(
+Widget cell = SizedBox(
         width: columnWidth,
         child: Align(alignment: _alignmentFor(column), child: content),
       );
+
+      // And if it's a header, add the resize handle
+      if (widget._rowType == _TableRowType.columnHeader &&
+          widget.onColumnResize != null) {
+        cell = Stack(
+          clipBehavior: Clip.none, // Allow handle to overlap
+          children: [
+            cell, // The original header content
+            _ColumnResizeHandle(
+              onResize: (delta) {
+                widget.onColumnResize!(columnIndex, delta);
+              },
+            ),
+          ],
+        );
+      }
+      content = cell;
       if (widget.displayTreeGuidelines &&
           node != null &&
           node is TreeNode &&
@@ -531,6 +552,7 @@ class _TableRowState<T> extends State<TableRow<T>>
         groups: groups,
         columnWidths: widget.columnWidths,
         scrollController: scrollController,
+        onColumnResize: widget.onColumnResize,
       );
     }
 
@@ -550,6 +572,7 @@ class _TableRowState<T> extends State<TableRow<T>>
               return columnFor(
                 widget.columns[index],
                 widget.columnWidths[index],
+                index,
               );
             case _TableRowPartDisplayType.columnSpacer:
               return const SizedBox(
@@ -585,4 +608,42 @@ class _TableRowState<T> extends State<TableRow<T>>
 
   @override
   bool shouldShow() => widget.isShown;
+}
+
+/// A draggable vertical line used to resize a table column.
+class _ColumnResizeHandle extends StatelessWidget {
+  const _ColumnResizeHandle({
+    required this.onResize,
+  });
+
+  final void Function(double) onResize;
+
+  static const _handleWidth = 16.0;
+  static const _clickTargetWidth = _handleWidth;
+  static const _lineWidth = 1.0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      right: -_clickTargetWidth / 2,
+      top: 0,
+      bottom: 0,
+      width: _clickTargetWidth,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.resizeLeftRight,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onHorizontalDragUpdate: (details) {
+            onResize(details.delta.dx);
+          },
+          child: Center(
+            child: Container(
+              width: _lineWidth,
+              color: Theme.of(context).focusColor,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
