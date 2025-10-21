@@ -542,12 +542,8 @@ class _TableRowState<T> extends State<TableRow<T>>
 
     Widget rowContent = Padding(
       padding: const EdgeInsets.symmetric(horizontal: defaultSpacing),
-      child: ExtentDelegateListView(
-        scrollDirection: Axis.horizontal,
-        physics: const ClampingScrollPhysics(),
-        controller: scrollController,
-        extentDelegate: rowExtentDelegate,
-        childrenDelegate: SliverChildBuilderDelegate((context, int i) {
+      child: Row(
+        children: List.generate(_rowDisplayParts.length, (int i) {
           final columnIndexMap = _columnIndexMapHelper(_rowDisplayParts);
           final displayTypeForIndex = _rowDisplayParts[i];
           switch (displayTypeForIndex) {
@@ -588,7 +584,7 @@ class _TableRowState<T> extends State<TableRow<T>>
             case _TableRowPartDisplayType.columnGroupSpacer:
               return const _ColumnGroupSpacer();
           }
-        }, childCount: _rowDisplayParts.length),
+        }),
       ),
     );
 

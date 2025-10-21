@@ -120,6 +120,7 @@ class DevToolsTableState<T> extends State<DevToolsTable<T>>
   late LinkedScrollControllerGroup _linkedHorizontalScrollControllerGroup;
   late ScrollController scrollController;
   late ScrollController pinnedScrollController;
+  late ScrollController _horizontalScrollbarController;
 
   late List<T> _data;
 
@@ -139,8 +140,9 @@ class DevToolsTableState<T> extends State<DevToolsTable<T>>
     _initDataAndAddListeners();
 
     _resizingDebouncer = Debouncer(duration: _resizingDebounceDuration);
-
     _linkedHorizontalScrollControllerGroup = LinkedScrollControllerGroup();
+    _horizontalScrollbarController = _linkedHorizontalScrollControllerGroup
+        .addAndGet();
 
     final initialScrollOffset = widget.preserveVerticalScrollPosition
         ? widget.tableController.tableUiState.scrollOffset
@@ -255,6 +257,7 @@ class DevToolsTableState<T> extends State<DevToolsTable<T>>
   @override
   void dispose() {
     pinnedScrollController.dispose();
+    _horizontalScrollbarController.dispose();
     super.dispose();
   }
 
@@ -375,7 +378,6 @@ class DevToolsTableState<T> extends State<DevToolsTable<T>>
       scrollController.jumpTo(tableUiState.scrollOffset);
     }
 
-    // TODO(kenz): add horizontal scrollbar.
     return LayoutBuilder(
       builder: (context, constraints) {
         final viewWidth = constraints.maxWidth;
@@ -385,16 +387,37 @@ class DevToolsTableState<T> extends State<DevToolsTable<T>>
           );
         }
         _previousViewWidth = viewWidth;
-        return SelectionArea(
-          child: SizedBox(
-            width: max(viewWidth, _currentTableWidth),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (showColumnGroupHeader)
-                  TableRow<T>.tableColumnGroupHeader(
+        return Scrollbar(
+          controller: _horizontalScrollbarController,
+          thumbVisibility: true,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            controller: _horizontalScrollbarController,
+            child: SizedBox(
+              width: max(viewWidth, _currentTableWidth),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (showColumnGroupHeader)
+                    TableRow<T>.tableColumnGroupHeader(
+                      linkedScrollControllerGroup:
+                          _linkedHorizontalScrollControllerGroup,
+                      columnGroups: columnGroups,
+                      columnWidths: _columnWidths,
+                      onColumnResize: _handleColumnResize,
+                      sortColumn: sortColumn,
+                      sortDirection: tableUiState.sortDirection,
+                      secondarySortColumn:
+                          widget.tableController.secondarySortColumn,
+                      onSortChanged: widget.tableController.sortDataAndNotify,
+                      tall: widget.tallHeaders,
+                      backgroundColor: widget.headerColor,
+                    ),
+                  TableRow<T>.tableColumnHeader(
+                    key: const Key('Table header'),
                     linkedScrollControllerGroup:
                         _linkedHorizontalScrollControllerGroup,
+                    columns: widget.tableController.columns,
                     columnGroups: columnGroups,
                     columnWidths: _columnWidths,
                     onColumnResize: _handleColumnResize,
@@ -406,70 +429,56 @@ class DevToolsTableState<T> extends State<DevToolsTable<T>>
                     tall: widget.tallHeaders,
                     backgroundColor: widget.headerColor,
                   ),
-                TableRow<T>.tableColumnHeader(
-                  key: const Key('Table header'),
-                  linkedScrollControllerGroup:
-                      _linkedHorizontalScrollControllerGroup,
-                  columns: widget.tableController.columns,
-                  columnGroups: columnGroups,
-                  columnWidths: _columnWidths,
-                  onColumnResize: _handleColumnResize,
-                  sortColumn: sortColumn,
-                  sortDirection: tableUiState.sortDirection,
-                  secondarySortColumn:
-                      widget.tableController.secondarySortColumn,
-                  onSortChanged: widget.tableController.sortDataAndNotify,
-                  tall: widget.tallHeaders,
-                  backgroundColor: widget.headerColor,
-                ),
-                if (pinnedData.isNotEmpty) ...[
-                  SizedBox(
-                    height: _pinnedDataHeight(constraints),
-                    child: Scrollbar(
-                      thumbVisibility: true,
-                      controller: pinnedScrollController,
-                      child: ListView.builder(
+                  if (pinnedData.isNotEmpty) ...[
+                    SizedBox(
+                      height: _pinnedDataHeight(constraints),
+                      child: Scrollbar(
+                        thumbVisibility: true,
                         controller: pinnedScrollController,
-                        itemCount: pinnedData.length,
-                        itemExtent: widget.rowItemExtent,
-                        itemBuilder: (context, index) =>
-                            _buildItem(context, index, isPinned: true),
+                        child: ListView.builder(
+                          controller: pinnedScrollController,
+                          itemCount: pinnedData.length,
+                          itemExtent: widget.rowItemExtent,
+                          itemBuilder: (context, index) =>
+                              _buildItem(context, index, isPinned: true),
+                        ),
                       ),
                     ),
-                  ),
-                  const ThickDivider(),
-                ],
-                Expanded(
-                  child: Scrollbar(
-                    thumbVisibility: true,
-                    controller: scrollController,
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.translucent,
-                      onTapDown: (a) => widget.focusNode?.requestFocus(),
-                      child: Focus(
-                        autofocus: true,
-                        onKeyEvent: (_, event) => widget.handleKeyEvent != null
-                            ? widget.handleKeyEvent!(
-                                event,
-                                scrollController,
-                                constraints,
-                              )
-                            : KeyEventResult.ignored,
-                        focusNode: widget.focusNode,
-                        child: ListView.builder(
-                          controller: scrollController,
-                          itemCount: _dataRowCount(
-                            constraints,
-                            showColumnGroupHeader,
+                    const ThickDivider(),
+                  ],
+                  Expanded(
+                    child: Scrollbar(
+                      thumbVisibility: true,
+                      controller: scrollController,
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.translucent,
+                        onTapDown: (a) => widget.focusNode?.requestFocus(),
+                        child: Focus(
+                          autofocus: true,
+                          onKeyEvent: (_, event) =>
+                              widget.handleKeyEvent != null
+                              ? widget.handleKeyEvent!(
+                                  event,
+                                  scrollController,
+                                  constraints,
+                                )
+                              : KeyEventResult.ignored,
+                          focusNode: widget.focusNode,
+                          child: ListView.builder(
+                            controller: scrollController,
+                            itemCount: _dataRowCount(
+                              constraints,
+                              showColumnGroupHeader,
+                            ),
+                            itemExtent: widget.rowItemExtent,
+                            itemBuilder: _buildItem,
                           ),
-                          itemExtent: widget.rowItemExtent,
-                          itemBuilder: _buildItem,
                         ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         );
