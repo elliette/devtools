@@ -404,6 +404,8 @@ class _GCStatsTable extends StatelessWidget {
             columns: _columns,
             defaultSortColumn: _columns.first,
             defaultSortDirection: SortDirection.ascending,
+            sizeColumnsToFit: false,
+            // includeColumnGroupHeaders: false,
           ),
         );
       },
@@ -459,7 +461,7 @@ class AllocationProfileTableViewState
                   // and columns) and one data row. We add a slight padding to
                   // ensure the underlying scrollable area has enough space to not
                   // display a scroll bar.
-                  height: defaultRowHeight + defaultHeaderHeight * 2 + 1,
+                  height: defaultRowHeight + defaultHeaderHeight * 2 + 1 + intermediateSpacing,
                   child: _GCStatsTable(controller: widget.controller),
                 ),
                 const ThickDivider(),

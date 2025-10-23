@@ -37,7 +37,7 @@ class TableRow<T> extends StatefulWidget {
        sortDirection = null,
        secondarySortColumn = null,
        onSortChanged = null,
-       horizontalScrollController = null,
+       // horizontalScrollController = null,
        _rowType = _TableRowType.data,
        tall = false;
 
@@ -53,7 +53,7 @@ class TableRow<T> extends StatefulWidget {
        isExpandable = false,
        isSelected = false,
        onPressed = null,
-       horizontalScrollController = null,
+       // horizontalScrollController = null,
        expandableColumn = null,
        isShown = true,
        sortColumn = null,
@@ -85,7 +85,7 @@ class TableRow<T> extends StatefulWidget {
        isExpanded = false,
        isExpandable = false,
        isSelected = false,
-       horizontalScrollController = null,
+      //  horizontalScrollController = null,
        expandableColumn = null,
        isShown = true,
        searchMatchesNotifier = null,
@@ -103,12 +103,13 @@ class TableRow<T> extends StatefulWidget {
     required this.sortColumn,
     required this.sortDirection,
     required this.onSortChanged,
-    required this.horizontalScrollController,
+   //  required this.horizontalScrollController,
     this.secondarySortColumn,
     this.onPressed,
     this.tall = false,
     this.backgroundColor,
-  }) : assert(horizontalScrollController != null),
+  }) :
+  // assert(horizontalScrollController != null),
        node = null,
        isExpanded = false,
        isExpandable = false,
@@ -145,7 +146,7 @@ class TableRow<T> extends StatefulWidget {
   /// This is necessary for the column group headers, which are rendered in a
   /// [ListView] and need to be scrolled in coordination with the rest of the
   /// table.
-  final ScrollController? horizontalScrollController;
+ //  final ScrollController? horizontalScrollController;
 
   /// Which column, if any, should show expansion affordances
   /// and nested rows.
@@ -522,7 +523,7 @@ class _TableRowState<T> extends State<TableRow<T>>
       return _ColumnGroupHeaderRow(
         groups: groups,
         columnWidths: widget.columnWidths,
-        scrollController: widget.horizontalScrollController!,
+        // scrollController: widget.horizontalScrollController!,
       );
     }
 
