@@ -10,6 +10,7 @@ import 'package:flutter/widgets.dart';
 import '../extensions/extension_service.dart';
 import '../screens/debugger/breakpoint_manager.dart';
 import '../service/service_manager.dart';
+import 'ai_assists/ai_controller.dart';
 import 'console/eval/eval_service.dart';
 import 'environment_parameters/environment_parameters_base.dart';
 import 'framework/framework_controller.dart';
@@ -46,6 +47,8 @@ Storage get storage => globals[Storage] as Storage;
 SurveyService get surveyService => globals[SurveyService] as SurveyService;
 
 DTDManager get dtdManager => globals[DTDManager] as DTDManager;
+
+AiController get aiController => globals[AiController] as AiController;
 
 PreferencesController get preferences =>
     globals[PreferencesController] as PreferencesController;

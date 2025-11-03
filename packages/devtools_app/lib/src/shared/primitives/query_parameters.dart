@@ -73,7 +73,11 @@ extension type DevToolsQueryParams(Map<String, String?> params) {
   /// load using wasm.
   bool get useJs => params[compilerKey] == 'js';
 
+  /// The DTD URI that DevTools is connected to.
+  String? get dtdUri => params[dtdUriKey];
+
   static const vmServiceUriKey = 'uri';
+  static const dtdUriKey = 'dtd';
   static const hideScreensKey = 'hide';
   static const hideExtensionsValue = 'extensions';
   static const hideAllExceptExtensionsValue = 'all-except-extensions';

@@ -19,6 +19,7 @@ import '../../shared/feature_flags.dart';
 import '../../shared/framework/framework_controller.dart';
 import '../../shared/framework/routing.dart';
 import '../../shared/framework/screen.dart';
+import '../../shared/ai_assists/ai_controller.dart';
 import '../../shared/globals.dart';
 import '../../shared/managers/banner_messages.dart';
 import '../../shared/primitives/query_parameters.dart';
@@ -114,6 +115,8 @@ class DevToolsScaffoldState extends State<DevToolsScaffold>
   late Screen _currentScreen;
 
   late ImportController _importController;
+
+  late final AiController _aiController;
 
   @override
   void initState() {
@@ -376,10 +379,42 @@ class DevToolsScaffoldState extends State<DevToolsScaffold>
                         .connected &&
                     serviceConnection.serviceManager.connectedAppInitialized,
               ),
+              floatingActionButton: ValueListenableBuilder<bool>(
+                valueListenable: aiController.canSendSamplingRequests,
+                builder: (context, canSend, _) {
+                  if (!canSend) return const SizedBox.shrink();
+
+                  return FloatingActionButton(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => const AiChatDialog(),
+                      );
+                    },
+                    child: const Icon(Icons.assistant),
+                  );
+                },
+              ),
             ),
           ),
         );
       },
+    );
+  }
+}
+
+class AiChatDialog extends StatelessWidget {
+  const AiChatDialog({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const AlertDialog(
+      title: Text('DevTools AI Assistant'),
+      content: SizedBox(
+        width: 600,
+        height: 800,
+        child: Center(child: Text('Chatbot widget will be here.')),
+      ),
     );
   }
 }
