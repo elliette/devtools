@@ -6,11 +6,14 @@ import 'package:devtools_app_shared/shared.dart';
 import 'package:devtools_app_shared/ui.dart';
 import 'package:devtools_app_shared/utils.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:provider/provider.dart';
 
 import '../../app.dart';
 import '../../extensions/extension_settings.dart';
 import '../../screens/debugger/debugger_screen.dart';
+import '../../shared/ai_assists/ai_chat_dialog.dart';
+import '../../shared/ai_assists/ai_controller.dart';
 import '../../shared/analytics/prompt.dart';
 import '../../shared/config_specific/drag_and_drop/drag_and_drop.dart';
 import '../../shared/config_specific/import_export/import_export.dart';
@@ -19,7 +22,6 @@ import '../../shared/feature_flags.dart';
 import '../../shared/framework/framework_controller.dart';
 import '../../shared/framework/routing.dart';
 import '../../shared/framework/screen.dart';
-import '../../shared/ai_assists/ai_controller.dart';
 import '../../shared/globals.dart';
 import '../../shared/managers/banner_messages.dart';
 import '../../shared/primitives/query_parameters.dart';
@@ -385,10 +387,11 @@ class DevToolsScaffoldState extends State<DevToolsScaffold>
                   if (!canSend) return const SizedBox.shrink();
 
                   return FloatingActionButton(
-                    onPressed: () {
-                      showDialog(
+                    onPressed: () async {
+                      await showDialog(
                         context: context,
-                        builder: (context) => const AiChatDialog(),
+                        builder: (context) =>
+                            AiChatDialog(currentScreen: _currentScreen),
                       );
                     },
                     child: const Icon(Icons.assistant),
@@ -399,22 +402,6 @@ class DevToolsScaffoldState extends State<DevToolsScaffold>
           ),
         );
       },
-    );
-  }
-}
-
-class AiChatDialog extends StatelessWidget {
-  const AiChatDialog({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const AlertDialog(
-      title: Text('DevTools AI Assistant'),
-      content: SizedBox(
-        width: 600,
-        height: 800,
-        child: Center(child: Text('Chatbot widget will be here.')),
-      ),
     );
   }
 }

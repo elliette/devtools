@@ -194,8 +194,6 @@ extension FrameworkCore on Never {
 
 Future<void> _initDTDConnection() async {
   try {
-    print('INIT DTD CONNECTION');
-
     final dtdUriString = DevToolsQueryParams.load().dtdUri;
     final dtdUri = dtdUriString != null ? Uri.parse(dtdUriString) : null;
 
@@ -206,8 +204,6 @@ Future<void> _initDTDConnection() async {
       await dtdManager.connect(
         dtdUri,
         onError: (e, st) {
-          print('ERROR HERE $e');
-          print(st);
           notificationService.pushError(
             'Failed to connect to the Dart Tooling Daemon',
             isReportable: false,
@@ -225,35 +221,13 @@ Future<void> _initDTDConnection() async {
         FrameworkCore._themeManager = EditorThemeManager(dtd)
           ..listenForThemeChanges();
 
-        await aiController.listenForSamplingSupport(dtd);
-
-        //   print('Listening to $dartMcpServerStreamName...');
-        //   await dtdManager.connection.value!.streamListen(dartMcpServerStreamName).catchError((e) {
-        //     print('[ERROR] $dartMcpServerStreamName: $e');
-        //   });
-        //           await dtdManager.connection.value!.streamListen(CoreDtdServiceConstants.servicesStreamId).catchError((e) {
-        //     print('[ERROR] $dartMcpServerStreamName: $e');
-        //   });
-
-        //   dtdManager.connection.value!.onEvent(CoreDtdServiceConstants.servicesStreamId).listen((data) {
-        //   final kind = data.kind;
-        //   print('KIND: $kind');
-        //   print('DATA: $data');
-        // });
-
-        //   dtdManager.connection.value!.onEvent('dart-mcp-server').listen((data) {
-        //     final kind = data.kind;
-        //     print('Received event of $kind');
-        //   });
+        aiController.dtd = dtd;
+        await aiController.listenForSamplingSupport();
       }
     } else {
-      print('IN THIS CASE!');
       _log.info('No DTD uri provided from the server during initialization.');
     }
   } catch (e, st) {
-    print('FAILED TO START DTD CONNECTION');
-    print(e);
-    print(st);
     // Dtd failing to connect does not interfere with devtools starting up so
     // catch any errors and report them.
     error_handling.reportError(
