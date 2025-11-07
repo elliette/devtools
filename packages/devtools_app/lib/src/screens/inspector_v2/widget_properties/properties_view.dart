@@ -11,11 +11,13 @@ import '../../../shared/analytics/constants.dart' as gac;
 import '../../../shared/console/widgets/description.dart';
 import '../../../shared/diagnostics/diagnostics_node.dart';
 import '../../../shared/primitives/utils.dart';
+import '../../../shared/ui/common_widgets.dart';
 import '../../../shared/ui/tab.dart';
 import '../inspector_controller.dart';
 import '../inspector_data_models.dart';
 import '../layout_explorer/box/box.dart';
 import '../layout_explorer/flex/flex.dart';
+import 'layout_agent.dart';
 
 /// Table for the widget's properties, along with its render object and a
 /// flex layout explorer if the widget is part of a flex layout.
@@ -59,6 +61,11 @@ class _DetailsTableState extends State<DetailsTable> {
 
   final _flexExplorerTab = DevToolsTab.create(
     tabName: 'Flex explorer',
+    gaPrefix: DetailsTable.gaPrefix,
+  );
+
+  final _geminiTab = DevToolsTab.create(
+    tabName: 'AI Assistant',
     gaPrefix: DetailsTable.gaPrefix,
   );
 
@@ -127,6 +134,15 @@ class _DetailsTableState extends State<DetailsTable> {
                 tab: _flexExplorerTab,
                 tabView: FlexLayoutExplorerWidget(widget.controller),
               ),
+            (
+              tab: _geminiTab,
+              tabView: KeepAliveWrapper(
+                child: FlutterLayoutAgent(
+                  inspectorController: widget.controller,
+                  widgetProperties: widgetProperties,
+                ),
+              ),
+            ),
           ],
         );
       },

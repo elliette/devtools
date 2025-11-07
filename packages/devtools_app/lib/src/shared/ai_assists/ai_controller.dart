@@ -7,6 +7,10 @@ import 'package:dtd/dtd.dart';
 import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
 
+import '../../screens/inspector_shared/inspector_screen.dart';
+import '../editor/api_classes.dart';
+import '../editor/editor_client.dart';
+
 final _log = Logger('ai_controller');
 
 const _dartMCPStreamName = 'dart-mcp-server';
@@ -18,9 +22,11 @@ class AiController extends DisposableController
 
   set dtd(DartToolingDaemon dtd) {
     _dtd = dtd;
+    _editor = EditorClient(dtd);
   }
 
   DartToolingDaemon? _dtd;
+  EditorClient? _editor;
 
   ValueListenable<bool> get canSendSamplingRequests => _canSendSamplingRequests;
   final _canSendSamplingRequests = ValueNotifier<bool>(false);
@@ -44,6 +50,20 @@ class AiController extends DisposableController
         _canSendSamplingRequests.value = true;
       }
     });
+  }
+
+  Future<EditableArgumentsResult?> sendEditableArgsRequest({
+    required TextDocument textDocument,
+    required CursorPosition position,
+  }) async {
+    final editor = _editor;
+    if (editor == null) return null;
+
+    return editor.getEditableArguments(
+      textDocument: textDocument,
+      position: position,
+      screenId: InspectorScreen.id,
+    );
   }
 
   Future<String?> sendSamplingRequest({

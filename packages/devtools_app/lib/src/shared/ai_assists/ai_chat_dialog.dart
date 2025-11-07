@@ -40,7 +40,12 @@ class _AiChatDialogState extends State<AiChatDialog> {
         '''The following message is a question from a user about Flutter
         DevTools. The user is currently on the ${widget.currentScreen.screenId}
         panel in Flutter DevTools and most likely has questions about that panel.
-         Please tailor your answer to the Flutter DevTools context''';
+         Please tailor your answer to the Flutter DevTools context.''';
+
+    // Add tooling call.
+    // preamble += '''Additionally, please call get_selected_widget to get
+    // information about the currently selected widget (including the name) and 
+    // specify that in your response.''';
 
     final response = await aiController.sendSamplingRequest(
       messages: [preamble, text],
