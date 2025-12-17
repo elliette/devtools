@@ -42,7 +42,7 @@ void main() {
     setGlobal(ScriptManager, scriptManager);
     setGlobal(NotificationService, NotificationService());
     setGlobal(BreakpointManager, BreakpointManager());
-    setGlobal(EvalService, MockEvalService());
+    setGlobal(EvalService, MockEvalService()); // hi
     setGlobal(
       DevToolsEnvironmentParameters,
       ExternalDevToolsEnvironmentParameters(),
