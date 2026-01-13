@@ -66,7 +66,9 @@ Future<void> initializeDevTools({
 
   // Before switching to URL path strategy, check if this URL is in the legacy
   // fragment format and redirect if necessary.
+  print('CHECKING LEGACY URL');
   if (_handleLegacyUrl()) return;
+  print('NOT LEGACY URL...');
 
   usePathUrlStrategy();
 

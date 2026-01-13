@@ -58,6 +58,7 @@ void setupErrorHandling(Future Function() appStartCallback) {
         return appStartCallback();
       },
       (Object error, StackTrace stack) {
+        // This is maybe a problem.
         // TODO(https://github.com/flutter/devtools/issues/7856): can we detect
         // severe errors here that are related to dart2wasm? Otherwise we may
         // crash DevTools for the user without any way for them to force reload

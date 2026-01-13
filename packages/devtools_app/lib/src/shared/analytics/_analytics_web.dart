@@ -126,6 +126,7 @@ extension type GtagEventDevTools._(JSObject _) implements GtagEvent {
     int value = 0,
     ScreenAnalyticsMetrics? screenMetrics,
   }) {
+    print('CREATING EVENT, DEVTOOLS PLATFORM IS $devtoolsPlatformType');
     return GtagEventDevTools(
       screen: screen,
       event_category: event_category,
@@ -837,11 +838,13 @@ Future<void> computeFlutterClientId() async {
 }
 
 Future<void> setupDimensions() async {
+  print('SET UP DIMENSIONS, COMPUTING? $_computingDimensions');
   if (!_analyticsComputed && !_computingDimensions) {
     _computingDimensions = true;
     computeDevToolsCustomGTagsData();
     computeDevToolsQueryParams();
     await computeFlutterClientId();
+    print('DONE SETTING UP ANALTYICS DIMENSIONS');
     _analyticsComputed = true;
   }
 }
