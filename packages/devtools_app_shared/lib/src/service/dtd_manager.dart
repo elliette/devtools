@@ -10,11 +10,20 @@ import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
 
 import 'dtd_manager_connection_state.dart';
+import 'dtd_service_extension_manager.dart';
 
 final _log = Logger('dtd_manager');
 
 /// Manages a connection to the Dart Tooling Daemon.
 class DTDManager {
+  DTDManager() {
+    _serviceExtensionManager = DTDServiceExtensionManager(_connection);
+  }
+
+  DTDServiceExtensionManager get serviceExtensionManager =>
+      _serviceExtensionManager;
+  late final DTDServiceExtensionManager _serviceExtensionManager;
+
   ValueListenable<DartToolingDaemon?> get connection => _connection;
   final _connection = ValueNotifier<DartToolingDaemon?>(null);
 
@@ -56,6 +65,10 @@ class DTDManager {
     _periodicConnectionCheck?.cancel();
 
     final dtd = await DartToolingDaemon.connect(uri);
+
+    // _serviceExtensionManager.serviceRegistrationStream.listen((DTDEvent event) {
+    //   print('in dtd manager, event is ${event.data['service']}');
+    // });
 
     // Set up a periodic connection check to detect if the connection has
     // dropped even if `done` doesn't fire.

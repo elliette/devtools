@@ -16,3 +16,4 @@ export 'src/service/service_extension_manager.dart'
     hide TestServiceExtensionManager;
 export 'src/service/service_manager.dart';
 export 'src/service/service_utils.dart';
+export 'src/service/dtd_service_extension_manager.dart';
