@@ -7,3 +7,11 @@ class ChatMessage {
   final String text;
   final bool isUser;
 }
+
+class ConnectedClient {
+  const ConnectedClient({required this.name, required this.number});
+  final String name;
+  final int number;
+
+  String get displayName => '$name${number > 1 ? ' (#$number)' : ''}';
+}

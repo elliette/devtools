@@ -22,7 +22,12 @@ class DTDToolsController extends DevToolsScreenController
   /// This instance of [DTDManager] is intentionally separate from the global
   /// [DTDManager] so that we can connect and disconnect from DTD instances
   /// to inspect them without affecting other screens.
-  final localDtdManager = DTDManager();
+  final _localDtdManager = DTDManager();
+
+  bool _useGlobalDtd = false;
+
+  DTDManager get localDtdManager =>
+      _useGlobalDtd ? dtdManager : _localDtdManager;
 
   @override
   Future<void> init() async {
@@ -34,6 +39,10 @@ class DTDToolsController extends DevToolsScreenController
         await localDtdManager.connect(dtdManager.uri!);
       }
     });
+  }
+
+  void toggleUseGlobalDtd(bool value) {
+    _useGlobalDtd = value;
   }
 
   @override

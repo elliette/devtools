@@ -37,11 +37,11 @@ enum StandaloneScreenType {
       ),
       StandaloneScreenType.editorSidebar => _DtdConnectedScreen(
         dtdManager: dtdManager,
-        builder: (dtd) => EditorSidebarPanel(dtd),
+        builder: (dtd) => EditorSidebarPanel(dtdManager),
       ),
       StandaloneScreenType.propertyEditor => _DtdConnectedScreen(
         dtdManager: dtdManager,
-        builder: (dtd) => PropertyEditorPanel(dtd),
+        builder: (dtd) => PropertyEditorPanel(dtdManager),
       ),
     };
   }

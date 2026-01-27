@@ -4,6 +4,7 @@
 
 import 'dart:async';
 
+import 'package:devtools_app_shared/service.dart';
 import 'package:devtools_app_shared/utils.dart';
 import 'package:devtools_shared/devtools_shared.dart';
 import 'package:dtd/dtd.dart';
@@ -20,23 +21,27 @@ import 'api_classes.dart';
 /// ensure they are not breaking changes to already-shipped editors.
 class EditorClient extends DisposableController
     with AutoDisposeControllerMixin {
-  EditorClient(this._dtd) {
+  EditorClient(this._dtdManager) : _dtd = _dtdManager.connection.value! {
     unawaited(initialized); // Trigger async initialization.
   }
 
+  final DTDManager _dtdManager;
   final DartToolingDaemon _dtd;
   late final initialized = _initialize();
 
   String get gaId => EditorSidebar.id;
 
+  DTDServiceExtensionManager get serviceExtensionManager =>
+      _dtdManager.serviceExtensionManager;
+
   Future<void> _initialize() async {
     autoDisposeStreamSubscription(
-      _dtd.onEvent(CoreDtdServiceConstants.servicesStreamId).listen((data) {
+      serviceExtensionManager.serviceRegistrationStream.listen((data) {
         final kind = data.kind;
-        if (kind != CoreDtdServiceConstants.serviceRegisteredKind &&
-            kind != CoreDtdServiceConstants.serviceUnregisteredKind) {
-          return;
-        }
+        // if (kind != CoreDtdServiceConstants.serviceRegisteredKind &&
+        //     kind != CoreDtdServiceConstants.serviceUnregisteredKind) {
+        //   return;
+        // }
 
         final service = data.data[DtdParameters.service] as String?;
         if (service == null ||

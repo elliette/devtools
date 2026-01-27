@@ -317,10 +317,12 @@ class DevToolsScaffoldState extends State<DevToolsScaffold>
             !offlineDataController.showingOfflineData.value;
         final showConsole =
             isConnectedAppView && _currentScreen.showConsole(widget.embedMode);
+        // final showAiAssistant =
+        //     FeatureFlags.aiAssistant.isEnabled &&
+        //     isConnectedAppView &&
+        //     _currentScreen.showAiAssistant();
         final showAiAssistant =
-            FeatureFlags.aiAssistant.isEnabled &&
-            isConnectedAppView &&
-            _currentScreen.showAiAssistant();
+            isConnectedAppView && _currentScreen.showAiAssistant();
         final showBottomPane = showConsole || showAiAssistant;
         final containsSingleSimpleScreen =
             widget.screens.length == 1 && widget.screens.first is SimpleScreen;
