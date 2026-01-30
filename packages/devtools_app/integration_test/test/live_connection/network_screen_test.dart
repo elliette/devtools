@@ -102,7 +102,7 @@ final class _NetworkScreenHelper {
   Future<void> clear() async {
     // Press the 'Clear' button between tests.
     await _tester.tap(find.text('Clear'));
-    await _tester.pump(safePumpDuration);
+    await _tester.pumpAndSettle(safePumpDuration);
     expect(
       screenControllers.lookup<NetworkController>().requests.value,
       isEmpty,
@@ -114,8 +114,7 @@ final class _NetworkScreenHelper {
         .callServiceExtensionOnMainIsolate('ext.networking_app.exit');
     logStatus(response.toString());
 
-    await Future.delayed(const Duration(milliseconds: 200));
-    await _tester.pump(safePumpDuration);
+    await Future.delayed(const Duration(milliseconds: 500));
   }
 
   Future<void> triggerRequest(
@@ -131,7 +130,7 @@ final class _NetworkScreenHelper {
       'Sent a $requestType request, received response: ${response.json}',
     );
 
-    await _tester.pump(safePumpDuration);
+    await _tester.pumpAndSettle(safePumpDuration);
   }
 }
 
