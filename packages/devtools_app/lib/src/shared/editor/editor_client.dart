@@ -33,55 +33,82 @@ class EditorClient extends DisposableController
   String get gaId => EditorSidebar.id;
 
   Future<void> _initialize() async {
+    void handleServiceChange(
+      String service,
+      String method,
+      Map<String, Object?>? capabilities,
+      bool isRegistered,
+    ) {
+      if (service != editorServiceName && service != lspServiceName) {
+        return;
+      }
+
+      final lspMethod = LspMethod.fromMethodName(method);
+      if (lspMethod != null) {
+        lspMethod.isRegistered = isRegistered;
+        if (lspMethod == LspMethod.editableArguments) {
+          // Update the notifier so that the Property Editor is aware that the
+          // editableArguments API is registered.
+          _editableArgumentsApiIsRegistered.value = isRegistered;
+        }
+      } else if (method == EditorMethod.getDevices.name) {
+        _supportsGetDevices = isRegistered;
+      } else if (method == EditorMethod.getDebugSessions.name) {
+        _supportsGetDebugSessions = isRegistered;
+      } else if (method == EditorMethod.selectDevice.name) {
+        _supportsSelectDevice = isRegistered;
+      } else if (method == EditorMethod.hotReload.name) {
+        _supportsHotReload = isRegistered;
+      } else if (method == EditorMethod.hotRestart.name) {
+        _supportsHotRestart = isRegistered;
+      } else if (method == EditorMethod.openDevToolsPage.name) {
+        _supportsOpenDevToolsPage = isRegistered;
+        _supportsOpenDevToolsForceExternal =
+            capabilities?[Field.supportsForceExternal] == true;
+      } else {
+        return;
+      }
+
+      final info = isRegistered
+          ? ServiceRegistered(
+              service: service,
+              method: method,
+              capabilities: capabilities,
+            )
+          : ServiceUnregistered(service: service, method: method);
+      _editorServiceChangedController.add(info);
+    }
+
     autoDisposeStreamSubscription(
       _dtdManager.serviceRegistrationBroadcastStream.listen((data) {
         final service = data.data[DtdParameters.service] as String?;
-        if (service == null ||
-            (service != editorServiceName && service != lspServiceName)) {
-          return;
-        }
+        if (service == null) return;
 
         final isRegistered =
             data.kind == CoreDtdServiceConstants.serviceRegisteredKind;
         final method = data.data[DtdParameters.method] as String;
         final capabilities =
             data.data[DtdParameters.capabilities] as Map<String, Object?>?;
-        final lspMethod = LspMethod.fromMethodName(method);
-        if (lspMethod != null) {
-          lspMethod.isRegistered = isRegistered;
-          if (lspMethod == LspMethod.editableArguments) {
-            // Update the notifier so that the Property Editor is aware that the
-            // editableArguments API is registered.
-            _editableArgumentsApiIsRegistered.value = isRegistered;
-          }
-        } else if (method == EditorMethod.getDevices.name) {
-          _supportsGetDevices = isRegistered;
-        } else if (method == EditorMethod.getDebugSessions.name) {
-          _supportsGetDebugSessions = isRegistered;
-        } else if (method == EditorMethod.selectDevice.name) {
-          _supportsSelectDevice = isRegistered;
-        } else if (method == EditorMethod.hotReload.name) {
-          _supportsHotReload = isRegistered;
-        } else if (method == EditorMethod.hotRestart.name) {
-          _supportsHotRestart = isRegistered;
-        } else if (method == EditorMethod.openDevToolsPage.name) {
-          _supportsOpenDevToolsPage = isRegistered;
-          _supportsOpenDevToolsForceExternal =
-              capabilities?[Field.supportsForceExternal] == true;
-        } else {
-          return;
-        }
 
-        final info = isRegistered
-            ? ServiceRegistered(
-                service: service,
-                method: method,
-                capabilities: capabilities,
-              )
-            : ServiceUnregistered(service: service, method: method);
-        _editorServiceChangedController.add(info);
+        handleServiceChange(service, method, capabilities, isRegistered);
       }),
     );
+
+    try {
+      final response = await _dtd.getRegisteredServices();
+      for (final service in response.clientServices) {
+        for (final method in service.methods.values) {
+          handleServiceChange(
+            service.name,
+            method.name,
+            method.capabilities,
+            true,
+          );
+        }
+      }
+    } catch (e) {
+      // Ignore errors if DTD is not available or the call fails.
+    }
 
     final editorKindMap = EditorEventKind.values.asNameMap();
     autoDisposeStreamSubscription(
