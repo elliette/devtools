@@ -136,9 +136,10 @@ class DevToolsScaffoldState extends State<DevToolsScaffold>
         );
         if (newIndex != -1) {
           final screen = widget.screens[newIndex];
-          final screenKeys = screen.keys;
-          automationManager.visibleKeys = screenKeys;
-          _switchToScreen(widget.screens[newIndex]);
+          // final screenKeys = screen.keys;
+          // print('screenKeys: $screenKeys');
+          // automationManager.visibleKeys = screenKeys;
+          _switchToScreen(screen);
         }
       }),
     );
@@ -207,6 +208,7 @@ class DevToolsScaffoldState extends State<DevToolsScaffold>
     }
 
     _currentScreen = widget.screens[_tabController!.index];
+    _updateVisibleKeys(_currentScreen);
     _tabController!.addListener(() {
       final screen = widget.screens[_tabController!.index];
 
@@ -242,6 +244,8 @@ class DevToolsScaffoldState extends State<DevToolsScaffold>
       setState(() {
         _currentScreen = screen;
       });
+
+      _updateVisibleKeys(screen);
 
       // Send the page change info to the framework controller (it can then
       // send it on to the devtools server, if one is connected).
@@ -292,6 +296,12 @@ class DevToolsScaffoldState extends State<DevToolsScaffold>
         () => routerDelegate.navigate(snapshotScreenId, params),
       );
     }
+  }
+
+  void _updateVisibleKeys(Screen screen) {
+    final screenKeys = screen.keys;
+    automationManager.clearVisibleKeys();
+    automationManager.visibleKeys = screenKeys;
   }
 
   @override

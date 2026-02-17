@@ -18,12 +18,15 @@ final _log = Logger('dtd_manager');
 
 /// Manages a connection to the Dart Tooling Daemon.
 class DTDManager {
-  DTDManager() {
-    _automationManager = AutomationManager();
-    setGlobal(AutomationManager, _automationManager);
+  DTDManager({bool createAutomationManager = true}) {
+    print('CREATING DTD MANAGER');
+    if (createAutomationManager) {
+      _automationManager = AutomationManager();
+      setGlobal(AutomationManager, _automationManager!);
+    }
   }
 
-  late AutomationManager _automationManager;
+  AutomationManager? _automationManager;
 
   ValueListenable<DartToolingDaemon?> get connection => _connection;
   final _connection = ValueNotifier<DartToolingDaemon?>(null);
@@ -110,17 +113,80 @@ class DTDManager {
     } on RpcException catch (e) {
       if (e.code != RpcErrorCodes.kServiceAlreadyRegistered) rethrow;
     }
+
+    try {
+      await dtd.registerService(
+        'DartDevTools',
+        'getVisibleWidgets',
+        _handleGetVisibleWidgets,
+      );
+    } on RpcException catch (e) {
+      if (e.code != RpcErrorCodes.kServiceAlreadyRegistered) rethrow;
+    }
+
+    try {
+      await dtd.registerService(
+        'DartDevTools',
+        'highlightWidget',
+        _handleHighlightWidget,
+      );
+    } on RpcException catch (e) {
+      if (e.code != RpcErrorCodes.kServiceAlreadyRegistered) rethrow;
+    }
   }
 
   Future<Map<String, Object?>> _handleScreenSwitch(Parameters params) async {
-    final screenId = params['screenId'] as String?;
+    final automationManager = _automationManager;
+    if (automationManager == null) {
+      return {
+        'type': 'Success', // Type is required by DTD.
+      };
+    }
+
+    final paramMap = params.asMap.cast<String, Object?>();
+    final screenId = paramMap['screenId'] as String?;
 
     if (screenId != null) {
-      _automationManager.switchToScreen(screenId);
+      automationManager.switchToScreen(screenId);
     }
 
     return {
       'type': 'Success', // Type is required by DTD.
+    };
+  }
+
+  Future<Map<String, Object?>> _handleHighlightWidget(Parameters params) async {
+    final automationManager = _automationManager;
+    if (automationManager == null) {
+      return {
+        'type': 'Success', // Type is required by DTD.
+      };
+    }
+
+    final paramMap = params.asMap.cast<String, Object?>();
+    final widgetId = paramMap['widgetId'] as String?;
+
+    if (widgetId != null) {
+      automationManager.highlightWidget(widgetId);
+    }
+
+    return {
+      'type': 'Success', // Type is required by DTD.
+    };
+  }
+
+  Future<Map<String, Object?>> _handleGetVisibleWidgets(Parameters _) async {
+    final automationManager = _automationManager;
+    if (automationManager == null) {
+      return {
+        'type': 'Success', // Type is required by DTD.
+        'widgets': [],
+      };
+    }
+    print('returning widget list ${automationManager.getVisibleWidgets()}');
+    return {
+      'type': 'Success', // Type is required by DTD.
+      'widgets': automationManager.getVisibleWidgets(),
     };
   }
 

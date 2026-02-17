@@ -311,6 +311,7 @@ class ManuallyCallServiceState extends State<ManuallyCallService> {
         try {
           params = (jsonDecode(paramsController.text) as Map)
               .cast<String, Object?>();
+          print('params are $params');
         } catch (e) {
           notificationService.push(
             'Failed to JSON decode parameters: "${paramsController.text}"',

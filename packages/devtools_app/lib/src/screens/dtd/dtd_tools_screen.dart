@@ -114,7 +114,13 @@ class _DtdConnectedViewState extends State<DtdConnectedView> {
       ..cancelStreamSubscriptions()
       ..dtd = widget.dtd
       ..init();
-    knownDtdStreams.forEach(widget.dtd.streamListen);
+    for (final stream in knownDtdStreams) {
+      unawaited(
+        widget.dtd
+            .streamListen(stream)
+            .catchError((e) => print('Failed to listen to stream $stream: $e')),
+      );
+    }
   }
 
   @override

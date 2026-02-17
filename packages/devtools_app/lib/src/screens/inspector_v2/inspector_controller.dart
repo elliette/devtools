@@ -150,20 +150,20 @@ class InspectorController extends DisposableController
     }
 
     // TODO(elliette): Remove.
-    safeUnawaited(_switchScreenAndHighlight());
+    //  safeUnawaited(_switchScreenAndHighlight());
   }
 
   // TODO(elliette): Remove.
-  Future<void> _switchScreenAndHighlight() async {
-    await Future.delayed(const Duration(seconds: 3), () {
-      automationManager.switchToScreen(DebuggerScreen.id);
-    });
-    await Future.delayed(const Duration(seconds: 1), () {
-      final keys = automationManager.visibleWidgetKeyIds;
-      final widgetKey = keys.first;
-      automationManager.highlightWidget(widgetKey);
-    });
-  }
+  // Future<void> _switchScreenAndHighlight() async {
+  //   await Future.delayed(const Duration(seconds: 3), () {
+  //     automationManager.switchToScreen(DebuggerScreen.id);
+  //   });
+  //   await Future.delayed(const Duration(seconds: 1), () {
+  //     final keys = automationManager.visibleWidgetKeyIds;
+  //     final widgetKey = keys.first;
+  //     automationManager.highlightWidget(widgetKey);
+  //   });
+  // }
 
   void _handleConnectionStart() {
     // Clear any existing badge/errors for older errors that were collected.

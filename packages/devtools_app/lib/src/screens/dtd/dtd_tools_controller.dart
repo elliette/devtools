@@ -34,7 +34,7 @@ class DTDToolsController extends DevToolsScreenController
       useGlobalDtd ? globals.dtdManager : _localDtdManager;
   DTDManager get localDtdManager => _localDtdManager;
 
-  final _localDtdManager = DTDManager();
+  final _localDtdManager = DTDManager(createAutomationManager: false);
 
   @override
   Future<void> init() async {
