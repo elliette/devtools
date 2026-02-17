@@ -114,7 +114,6 @@ extension FrameworkCore on Never {
     setGlobal(ExtensionService, ExtensionService());
     setGlobal(IdeTheme, getIdeTheme());
     setGlobal(DTDManager, DTDManager());
-    setGlobal(AutomationManager, AutomationManager());
   }
 
   static bool vmServiceInitializationInProgress = false;

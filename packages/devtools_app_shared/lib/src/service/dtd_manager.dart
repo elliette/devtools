@@ -10,12 +10,21 @@ import 'package:flutter/foundation.dart';
 import 'package:json_rpc_2/json_rpc_2.dart';
 import 'package:logging/logging.dart';
 
+import '../utils/globals.dart';
+import 'automation_manager.dart';
 import 'dtd_manager_connection_state.dart';
 
 final _log = Logger('dtd_manager');
 
 /// Manages a connection to the Dart Tooling Daemon.
 class DTDManager {
+  DTDManager() {
+    _automationManager = AutomationManager();
+    setGlobal(AutomationManager, _automationManager);
+  }
+
+  late AutomationManager _automationManager;
+
   ValueListenable<DartToolingDaemon?> get connection => _connection;
   final _connection = ValueNotifier<DartToolingDaemon?>(null);
 
@@ -86,6 +95,7 @@ class DTDManager {
       }
     });
 
+    unawaited(_registerServices(dtd).catchError((error) => print(error)));
     return dtd;
   }
 
@@ -106,7 +116,7 @@ class DTDManager {
     final screenId = params['screenId'] as String?;
 
     if (screenId != null) {
-      // TODO(elliette): Implement screen switching logic.
+      _automationManager.switchToScreen(screenId);
     }
 
     return {
