@@ -129,6 +129,19 @@ class DevToolsScaffoldState extends State<DevToolsScaffold>
     autoDisposeStreamSubscription(
       frameworkController.onShowPageId.listen(_showPageById),
     );
+    autoDisposeStreamSubscription(
+      automationManager.switchToScreenBroadcastStream.listen((screenId) {
+        final newIndex = widget.screens.indexWhere(
+          (screen) => screen.screenId == screenId,
+        );
+        if (newIndex != -1) {
+          final screen = widget.screens[newIndex];
+          final screenKeys = screen.keys;
+          automationManager.visibleKeys = screenKeys;
+          _switchToScreen(widget.screens[newIndex]);
+        }
+      }),
+    );
   }
 
   @override
@@ -198,24 +211,7 @@ class DevToolsScaffoldState extends State<DevToolsScaffold>
       final screen = widget.screens[_tabController!.index];
 
       if (_currentScreen != screen) {
-        setState(() {
-          _currentScreen = screen;
-        });
-
-        // Send the page change info to the framework controller (it can then
-        // send it on to the devtools server, if one is connected).
-        frameworkController.notifyPageChange(
-          PageChangeEvent(screen.screenId, widget.embedMode),
-        );
-
-        // Clear error count when navigating to a screen.
-        serviceConnection.errorBadgeManager.clearErrorCount(screen.screenId);
-
-        // Update routing with the change.
-        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-          final routerDelegate = DevToolsRouterDelegate.of(context);
-          routerDelegate.navigateIfNotCurrent(screen.screenId);
-        });
+        _switchToScreen(screen);
       }
     });
 
@@ -239,6 +235,29 @@ class DevToolsScaffoldState extends State<DevToolsScaffold>
     frameworkController.notifyPageChange(
       PageChangeEvent(_currentScreen.screenId, widget.embedMode),
     );
+  }
+
+  void _switchToScreen(Screen screen) {
+    if (_currentScreen != screen) {
+      setState(() {
+        _currentScreen = screen;
+      });
+
+      // Send the page change info to the framework controller (it can then
+      // send it on to the devtools server, if one is connected).
+      frameworkController.notifyPageChange(
+        PageChangeEvent(screen.screenId, widget.embedMode),
+      );
+
+      // Clear error count when navigating to a screen.
+      serviceConnection.errorBadgeManager.clearErrorCount(screen.screenId);
+
+      // Update routing with the change.
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        final routerDelegate = DevToolsRouterDelegate.of(context);
+        routerDelegate.navigateIfNotCurrent(screen.screenId);
+      });
+    }
   }
 
   /// Switch to the given page ID. This request usually comes from the server API

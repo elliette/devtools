@@ -466,6 +466,8 @@ abstract class Screen {
   /// This method must be implemented by subclasses.
   Widget buildScreenBody(BuildContext context);
 
+  List<Key> get keys => [];
+
   /// Builds the body to display for this screen when in a disconnected state,
   /// if this differs from the default body provided by [buildScreenBody].
   ///

@@ -10,6 +10,7 @@ import 'package:devtools_app_shared/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
+import '../globals.dart';
 import '../primitives/utils.dart';
 
 /// Returns a [TextSpan] that only includes the first [length] characters of
@@ -299,4 +300,19 @@ final class ScreenSize {
       orElse: () => MediaSize.xl,
     );
   }
+}
+
+Widget highlightableWidget(Widget widget, {required Key widgetKey}) {
+  return ValueListenableBuilder<Key?>(
+    valueListenable: automationManager.highlightedWidget,
+    builder: (context, highlightedWidgetKey, _) {
+      if (highlightedWidgetKey != widgetKey) {
+        return widget;
+      }
+      return Container(
+        decoration: BoxDecoration(border: Border.all(color: Colors.blue)),
+        child: widget,
+      );
+    },
+  );
 }

@@ -36,6 +36,7 @@ import '../../shared/managers/notifications.dart';
 import '../../shared/primitives/query_parameters.dart';
 import '../../shared/primitives/utils.dart';
 import '../../shared/utils/utils.dart';
+import '../debugger/debugger_screen.dart';
 import '../inspector_shared/inspector_screen.dart';
 import 'inspector_data_models.dart';
 import 'inspector_tree_controller.dart';
@@ -147,6 +148,21 @@ class InspectorController extends DisposableController
         vmService.onExtensionEvent.listen(_maybeAutoRefreshInspector),
       );
     }
+
+    // TODO(elliette): Remove.
+    safeUnawaited(_switchScreenAndHighlight());
+  }
+
+  // TODO(elliette): Remove.
+  Future<void> _switchScreenAndHighlight() async {
+    await Future.delayed(const Duration(seconds: 3), () {
+      automationManager.switchToScreen(DebuggerScreen.id);
+    });
+    await Future.delayed(const Duration(seconds: 1), () {
+      final keys = automationManager.visibleWidgetKeyIds;
+      final widgetKey = keys.first;
+      automationManager.highlightWidget(widgetKey);
+    });
   }
 
   void _handleConnectionStart() {

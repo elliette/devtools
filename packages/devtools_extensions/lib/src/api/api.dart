@@ -49,6 +49,10 @@ enum DevToolsExtensionEventType {
   /// within their IDE.
   copyToClipboard(ExtensionEventDirection.toDevTools),
 
+  /// An event that an extension can send to DevTools asking DevTools to
+  /// navigate to a specific screen.
+  switchToScreen(ExtensionEventDirection.toDevTools),
+
   /// Any unrecognized event that is not one of the above supported event types.
   unknown(ExtensionEventDirection.bidirectional);
 
@@ -109,6 +113,10 @@ abstract class ExtensionEventParameters {
   /// The parameter name for the vm service uri value that is optionally sent
   /// with the [DevToolsExtensionEventType.vmServiceConnection] event.
   static const vmServiceConnectionUri = 'uri';
+
+  /// The parameter name for the screen id value that is sent with the
+  /// [DevToolsExtensionEventType.switchToScreen] event.
+  static const screenId = 'screenId';
 }
 
 /// Interface that a DevTools extension host should implement.

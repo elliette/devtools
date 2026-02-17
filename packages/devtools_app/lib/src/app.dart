@@ -473,22 +473,26 @@ class DevToolsAppState extends State<DevToolsApp> with AutoDisposeMixin {
             message: 'Uh-oh, something went wrong. Please refresh the page.',
           );
         }
-        return MultiProvider(
-          providers: [
-            Provider<AnalyticsController>.value(
-              value: widget.analyticsController,
-            ),
-            Provider<HoverCardController>.value(value: hoverCardController),
-            Provider<ReleaseNotesController>.value(
-              value: releaseNotesController,
-            ),
-          ],
-          child: NotificationsView(
-            child: ReleaseNotesViewer(
-              controller: releaseNotesController,
-              child: DisconnectObserver(
-                routerDelegate: routerDelegate,
-                child: child,
+        return Listener(
+          onPointerDown: (_) => automationManager.clearHighlight(),
+          behavior: HitTestBehavior.translucent,
+          child: MultiProvider(
+            providers: [
+              Provider<AnalyticsController>.value(
+                value: widget.analyticsController,
+              ),
+              Provider<HoverCardController>.value(value: hoverCardController),
+              Provider<ReleaseNotesController>.value(
+                value: releaseNotesController,
+              ),
+            ],
+            child: NotificationsView(
+              child: ReleaseNotesViewer(
+                controller: releaseNotesController,
+                child: DisconnectObserver(
+                  routerDelegate: routerDelegate,
+                  child: child,
+                ),
               ),
             ),
           ),

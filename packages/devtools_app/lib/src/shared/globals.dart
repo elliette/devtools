@@ -28,6 +28,9 @@ bool get isExternalBuild => _isExternalBuild;
 bool _isExternalBuild = true;
 void setInternalBuild() => _isExternalBuild = false;
 
+AutomationManager get automationManager =>
+    globals[AutomationManager] as AutomationManager;
+
 ScreenControllers get screenControllers =>
     globals[ScreenControllers] as ScreenControllers;
 

@@ -7,6 +7,7 @@ import 'dart:math' as math;
 
 import 'package:dtd/dtd.dart';
 import 'package:flutter/foundation.dart';
+import 'package:json_rpc_2/json_rpc_2.dart';
 import 'package:logging/logging.dart';
 
 import 'dtd_manager_connection_state.dart';
@@ -86,6 +87,31 @@ class DTDManager {
     });
 
     return dtd;
+  }
+
+  /// Registers all MCP server-provided services on the connected DTD instance.
+  Future<void> _registerServices(DartToolingDaemon dtd) async {
+    try {
+      await dtd.registerService(
+        'DartDevTools',
+        'switchScreen',
+        _handleScreenSwitch,
+      );
+    } on RpcException catch (e) {
+      if (e.code != RpcErrorCodes.kServiceAlreadyRegistered) rethrow;
+    }
+  }
+
+  Future<Map<String, Object?>> _handleScreenSwitch(Parameters params) async {
+    final screenId = params['screenId'] as String?;
+
+    if (screenId != null) {
+      // TODO(elliette): Implement screen switching logic.
+    }
+
+    return {
+      'type': 'Success', // Type is required by DTD.
+    };
   }
 
   /// Triggers a reconnect to the last connected URI if the current state is

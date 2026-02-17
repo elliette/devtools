@@ -22,6 +22,7 @@ import '../../shared/managers/banner_messages.dart';
 import '../../shared/primitives/listenable.dart';
 import '../../shared/primitives/utils.dart';
 import '../../shared/ui/common_widgets.dart';
+import '../../shared/ui/utils.dart';
 import 'breakpoints.dart';
 import 'call_stack.dart';
 import 'codeview.dart';
@@ -42,6 +43,8 @@ class DebuggerScreen extends Screen {
       );
 
   static final id = ScreenMetaData.debugger.id;
+
+  static const debuggerCodeViewKey = Key('debuggerCodeViewKey');
 
   @override
   bool showConsole(EmbedMode embedMode) => true;
@@ -74,6 +77,9 @@ class DebuggerScreen extends Screen {
   @override
   Widget buildScreenBody(BuildContext context) =>
       const _DebuggerScreenBodyWrapper();
+
+  @override
+  List<Key> get keys => [DebuggerScreen.debuggerCodeViewKey];
 
   @override
   Widget buildStatus(BuildContext context) {
@@ -316,14 +322,18 @@ class DebuggerSourceAndControls extends StatelessWidget {
                   setShownFirstScript(true);
                 }
 
-                return CodeView(
-                  codeViewController: codeViewController,
-                  debuggerController: controller,
-                  scriptRef: scriptRef,
-                  parsedScript: parsedScript,
-                  onSelected: (script, line) => unawaited(
-                    breakpointManager.toggleBreakpoint(script, line),
+                return highlightableWidget(
+                  CodeView(
+                    key: DebuggerScreen.debuggerCodeViewKey,
+                    codeViewController: codeViewController,
+                    debuggerController: controller,
+                    scriptRef: scriptRef,
+                    parsedScript: parsedScript,
+                    onSelected: (script, line) => unawaited(
+                      breakpointManager.toggleBreakpoint(script, line),
+                    ),
                   ),
+                  widgetKey: DebuggerScreen.debuggerCodeViewKey,
                 );
               },
             ),

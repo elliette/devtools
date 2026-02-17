@@ -121,6 +121,8 @@ class ExtensionManager {
         break;
       case DevToolsExtensionEventType.forceReload:
         window.location.reload();
+      case DevToolsExtensionEventType.switchToScreen:
+      // TODO.
       default:
         _log.warning(
           'Unrecognized event received by extension: '
@@ -311,6 +313,16 @@ class ExtensionManager {
         content: content,
         successMessage: successMessage,
       ),
+    );
+  }
+
+  /// Switch to the specified DevTools screen.
+  ///
+  /// The [screenId] must be a valid screen id for a DevTools screen (e.g.
+  /// 'inspector', 'performance', 'memory', etc.).
+  void switchToScreen(String screenId) {
+    postMessageToDevTools(
+      SwitchToScreenExtensionEvent(screenId: screenId),
     );
   }
 }

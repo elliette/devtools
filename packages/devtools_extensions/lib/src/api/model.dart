@@ -179,6 +179,27 @@ class CopyToClipboardExtensionEvent extends DevToolsExtensionEvent {
   String get successMessage => data![_successMessageKey] as String;
 }
 
+/// An extension event of type [DevToolsExtensionEventType.switchToScreen]
+/// that is sent from an extension to DevTools asking DevTools to navigate to
+/// the specified screen.
+class SwitchToScreenExtensionEvent extends DevToolsExtensionEvent {
+  SwitchToScreenExtensionEvent({required String screenId})
+      : super(
+          DevToolsExtensionEventType.switchToScreen,
+          data: {ExtensionEventParameters.screenId: screenId},
+        );
+
+  factory SwitchToScreenExtensionEvent.from(DevToolsExtensionEvent event) {
+    assert(event.type == DevToolsExtensionEventType.switchToScreen);
+    final screenId =
+        event.data!.checkValid<String>(ExtensionEventParameters.screenId);
+    return SwitchToScreenExtensionEvent(screenId: screenId);
+  }
+
+  String get screenId =>
+      data![ExtensionEventParameters.screenId] as String;
+}
+
 extension ParseExtension on Map<String, Object?> {
   T checkValid<T>(String key) {
     final element = this[key];
