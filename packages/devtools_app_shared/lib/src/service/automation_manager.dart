@@ -5,20 +5,33 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:screenshot/screenshot.dart';
 
 /// TODO(elliiottbrooks): This is very hacky, should not be committed. Just for demo purposes.
 class AutomationManager {
   AutomationManager() {
-    print('automation manager created');
+    screenshotController = ScreenshotController();
   }
+
+  late ScreenshotController screenshotController;
 
   Stream<String> get switchToScreenBroadcastStream =>
       _switchToScreenBroadcastStreamController.stream;
   final _switchToScreenBroadcastStreamController =
       StreamController<String>.broadcast();
 
+  //   Stream<String> get captureScreenshotBroadcastStream =>
+  //     _captureScreenshotBroadcastStreamController.stream;
+  // final _captureScreenshotBroadcastStreamController =
+  //     StreamController<String>.broadcast();
+
   void switchToScreen(String screenId) {
     _switchToScreenBroadcastStreamController.add(screenId);
+  }
+
+  Future<Uint8List?> captureScreenshot() async {
+    final rawImage = await screenshotController.capture();
+    return rawImage;
   }
 
   ValueListenable<Key?> get highlightedWidget => _highlightedWidget;
@@ -26,23 +39,18 @@ class AutomationManager {
 
   set visibleKeys(List<Key> keys) {
     for (final key in keys) {
-      print('adding $key');
       final id = _generateId();
       _visibleKeys.putIfAbsent(id, () => key);
     }
-    print('visibleKeys: $_visibleKeys');
   }
 
   void clearVisibleKeys() {
-    print('clearing visible keys');
     _visibleKeys.clear();
   }
 
   final _visibleKeys = <String, Key>{};
 
   List<String> getVisibleWidgets() {
-    print('CALLING GET VISIBLE WIDGETS');
-    print('.  visible widgets: $_visibleKeys');
     return _visibleKeys.keys.toList();
   }
 

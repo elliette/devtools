@@ -7,6 +7,7 @@ import 'package:devtools_app_shared/ui.dart';
 import 'package:devtools_app_shared/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:screenshot/screenshot.dart';
 
 import '../../app.dart';
 import '../../extensions/extension_settings.dart';
@@ -361,61 +362,64 @@ class DevToolsScaffoldState extends State<DevToolsScaffold>
           handleDrop: _importController.importData,
           child: KeyboardShortcuts(
             keyboardShortcuts: _currentScreen.buildKeyboardShortcuts(context),
-            child: Scaffold(
-              appBar: showAppBar
-                  ? PreferredSize(
-                      preferredSize: const Size.fromHeight(
-                        defaultToolbarHeight,
-                      ),
-                      // Place the AppBar inside of a Hero widget to keep it the same across
-                      // route transitions.
-                      child: Hero(
-                        tag: _appBarTag,
-                        child: DevToolsAppBar(
-                          tabController: _tabController,
-                          screens: widget.screens,
-                          actions: widget.actions,
+            child: Screenshot(
+              controller: automationManager.screenshotController,
+              child: Scaffold(
+                appBar: showAppBar
+                    ? PreferredSize(
+                        preferredSize: const Size.fromHeight(
+                          defaultToolbarHeight,
                         ),
-                      ),
-                    )
-                  : null,
-              body: OutlineDecoration.onlyTop(
-                child: Padding(
-                  padding: widget.appPadding,
-                  child: showBottomPane
-                      ? SplitPane(
-                          axis: Axis.vertical,
-                          initialFractions: const [0.8, 0.2],
-                          splitters: const [
-                            DefaultSplitter(
-                              key: BottomPane.splitterKey,
-                              isHorizontal: false,
-                            ),
-                          ],
-                          children: [
-                            content,
-                            BottomPane(
-                              screenId: _currentScreen.screenId,
-                              tabs: [
-                                if (showConsole) const ConsolePane(),
-                                if (showAiAssistant) const AiAssistantPane(),
-                              ],
-                            ),
-                          ],
-                        )
-                      : content,
+                        // Place the AppBar inside of a Hero widget to keep it the same across
+                        // route transitions.
+                        child: Hero(
+                          tag: _appBarTag,
+                          child: DevToolsAppBar(
+                            tabController: _tabController,
+                            screens: widget.screens,
+                            actions: widget.actions,
+                          ),
+                        ),
+                      )
+                    : null,
+                body: OutlineDecoration.onlyTop(
+                  child: Padding(
+                    padding: widget.appPadding,
+                    child: showBottomPane
+                        ? SplitPane(
+                            axis: Axis.vertical,
+                            initialFractions: const [0.8, 0.2],
+                            splitters: const [
+                              DefaultSplitter(
+                                key: BottomPane.splitterKey,
+                                isHorizontal: false,
+                              ),
+                            ],
+                            children: [
+                              content,
+                              BottomPane(
+                                screenId: _currentScreen.screenId,
+                                tabs: [
+                                  if (showConsole) const ConsolePane(),
+                                  if (showAiAssistant) const AiAssistantPane(),
+                                ],
+                              ),
+                            ],
+                          )
+                        : content,
+                  ),
                 ),
-              ),
-              bottomNavigationBar: StatusLine(
-                currentScreen: _currentScreen,
-                isEmbedded: widget.embedMode.embedded,
-                isConnected:
-                    serviceConnection
-                        .serviceManager
-                        .connectedState
-                        .value
-                        .connected &&
-                    serviceConnection.serviceManager.connectedAppInitialized,
+                bottomNavigationBar: StatusLine(
+                  currentScreen: _currentScreen,
+                  isEmbedded: widget.embedMode.embedded,
+                  isConnected:
+                      serviceConnection
+                          .serviceManager
+                          .connectedState
+                          .value
+                          .connected &&
+                      serviceConnection.serviceManager.connectedAppInitialized,
+                ),
               ),
             ),
           ),

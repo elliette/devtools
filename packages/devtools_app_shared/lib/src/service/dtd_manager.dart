@@ -133,6 +133,16 @@ class DTDManager {
     } on RpcException catch (e) {
       if (e.code != RpcErrorCodes.kServiceAlreadyRegistered) rethrow;
     }
+
+    try {
+      await dtd.registerService(
+        'DartDevTools',
+        'captureScreenshot',
+        _handleCaptureScreenshot,
+      );
+    } on RpcException catch (e) {
+      if (e.code != RpcErrorCodes.kServiceAlreadyRegistered) rethrow;
+    }
   }
 
   Future<Map<String, Object?>> _handleScreenSwitch(Parameters params) async {
@@ -187,6 +197,21 @@ class DTDManager {
     return {
       'type': 'Success', // Type is required by DTD.
       'widgets': automationManager.getVisibleWidgets(),
+    };
+  }
+
+  Future<Map<String, Object?>> _handleCaptureScreenshot(Parameters _) async {
+    final automationManager = _automationManager;
+    if (automationManager == null) {
+      return {
+        'type': 'Success', // Type is required by DTD.
+        'rawImage': null,
+      };
+    }
+    final rawImage = await automationManager.captureScreenshot();
+    return {
+      'type': 'Success', // Type is required by DTD.
+      'rawImage': rawImage,
     };
   }
 
