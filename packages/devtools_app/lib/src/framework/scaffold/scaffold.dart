@@ -362,9 +362,7 @@ class DevToolsScaffoldState extends State<DevToolsScaffold>
           handleDrop: _importController.importData,
           child: KeyboardShortcuts(
             keyboardShortcuts: _currentScreen.buildKeyboardShortcuts(context),
-            child: Screenshot(
-              controller: automationManager.screenshotController,
-              child: Scaffold(
+            child: Scaffold(
                 appBar: showAppBar
                     ? PreferredSize(
                         preferredSize: const Size.fromHeight(
@@ -421,7 +419,6 @@ class DevToolsScaffoldState extends State<DevToolsScaffold>
                       serviceConnection.serviceManager.connectedAppInitialized,
                 ),
               ),
-            ),
           ),
         );
       },

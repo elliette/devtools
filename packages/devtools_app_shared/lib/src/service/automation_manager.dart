@@ -9,28 +9,33 @@ import 'package:screenshot/screenshot.dart';
 
 /// TODO(elliiottbrooks): This is very hacky, should not be committed. Just for demo purposes.
 class AutomationManager {
-  AutomationManager() {
-    screenshotController = ScreenshotController();
-  }
 
-  late ScreenshotController screenshotController;
+  final _screenIdToScreenshotController = <String, ScreenshotController>{};
+
+
+  ScreenshotController getScreenshotControllerForScreen(String screenId) {
+    if (_screenIdToScreenshotController.containsKey(screenId)) {
+      print('returning existing screenshot controller for $screenId');
+      return _screenIdToScreenshotController[screenId]!;
+    } else {
+      final screenshotController = ScreenshotController();
+      _screenIdToScreenshotController[screenId] = screenshotController;
+      print('created new screenshot controller for $screenId');
+      return screenshotController;
+    }
+  }
 
   Stream<String> get switchToScreenBroadcastStream =>
       _switchToScreenBroadcastStreamController.stream;
   final _switchToScreenBroadcastStreamController =
       StreamController<String>.broadcast();
 
-  //   Stream<String> get captureScreenshotBroadcastStream =>
-  //     _captureScreenshotBroadcastStreamController.stream;
-  // final _captureScreenshotBroadcastStreamController =
-  //     StreamController<String>.broadcast();
-
   void switchToScreen(String screenId) {
     _switchToScreenBroadcastStreamController.add(screenId);
   }
 
-  Future<Uint8List?> captureScreenshot() async {
-    final rawImage = await screenshotController.capture();
+  Future<Uint8List?> captureScreenshot(String screenId) async {
+    final rawImage = await getScreenshotControllerForScreen(screenId).capture();
     return rawImage;
   }
 

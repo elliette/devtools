@@ -10,6 +10,7 @@ import 'package:flutter/foundation.dart';
 import 'package:json_rpc_2/json_rpc_2.dart';
 import 'package:logging/logging.dart';
 
+import '../../ui.dart';
 import '../utils/globals.dart';
 import 'automation_manager.dart';
 import 'dtd_manager_connection_state.dart';
@@ -19,7 +20,6 @@ final _log = Logger('dtd_manager');
 /// Manages a connection to the Dart Tooling Daemon.
 class DTDManager {
   DTDManager({bool createAutomationManager = true}) {
-    print('CREATING DTD MANAGER');
     if (createAutomationManager) {
       _automationManager = AutomationManager();
       setGlobal(AutomationManager, _automationManager!);
@@ -104,44 +104,56 @@ class DTDManager {
 
   /// Registers all MCP server-provided services on the connected DTD instance.
   Future<void> _registerServices(DartToolingDaemon dtd) async {
-    try {
-      await dtd.registerService(
-        'DartDevTools',
-        'switchScreen',
-        _handleScreenSwitch,
-      );
-    } on RpcException catch (e) {
-      if (e.code != RpcErrorCodes.kServiceAlreadyRegistered) rethrow;
-    }
+    if (!isEmbedded()) {
+      try {
+        await dtd.registerService(
+          'DartDevTools',
+          'switchScreen',
+          _handleScreenSwitch,
+        );
+      } on RpcException catch (e) {
+        if (e.code != RpcErrorCodes.kServiceAlreadyRegistered) rethrow;
+      }
 
-    try {
-      await dtd.registerService(
-        'DartDevTools',
-        'getVisibleWidgets',
-        _handleGetVisibleWidgets,
-      );
-    } on RpcException catch (e) {
-      if (e.code != RpcErrorCodes.kServiceAlreadyRegistered) rethrow;
-    }
+      try {
+        await dtd.registerService(
+          'DartDevTools',
+          'getVisibleWidgets',
+          _handleGetVisibleWidgets,
+        );
+      } on RpcException catch (e) {
+        if (e.code != RpcErrorCodes.kServiceAlreadyRegistered) rethrow;
+      }
 
-    try {
-      await dtd.registerService(
-        'DartDevTools',
-        'highlightWidget',
-        _handleHighlightWidget,
-      );
-    } on RpcException catch (e) {
-      if (e.code != RpcErrorCodes.kServiceAlreadyRegistered) rethrow;
-    }
+      try {
+        await dtd.registerService(
+          'DartDevTools',
+          'highlightWidget',
+          _handleHighlightWidget,
+        );
+      } on RpcException catch (e) {
+        if (e.code != RpcErrorCodes.kServiceAlreadyRegistered) rethrow;
+      }
 
-    try {
-      await dtd.registerService(
-        'DartDevTools',
-        'captureScreenshot',
-        _handleCaptureScreenshot,
-      );
-    } on RpcException catch (e) {
-      if (e.code != RpcErrorCodes.kServiceAlreadyRegistered) rethrow;
+      try {
+        await dtd.registerService(
+          'DartDevTools',
+          'getVisibleScreens',
+          _handleGetVisibleScreens,
+        );
+      } on RpcException catch (e) {
+        if (e.code != RpcErrorCodes.kServiceAlreadyRegistered) rethrow;
+      }
+
+      try {
+        await dtd.registerService(
+          'DartDevTools',
+          'captureScreenshot',
+          _handleCaptureScreenshot,
+        );
+      } on RpcException catch (e) {
+        if (e.code != RpcErrorCodes.kServiceAlreadyRegistered) rethrow;
+      }
     }
   }
 
@@ -200,7 +212,30 @@ class DTDManager {
     };
   }
 
-  Future<Map<String, Object?>> _handleCaptureScreenshot(Parameters _) async {
+  Future<Map<String, Object?>> _handleGetVisibleScreens(Parameters _) async {
+    final automationManager = _automationManager;
+    if (automationManager == null) {
+      return {
+        'type': 'Success', // Type is required by DTD.
+        'screens': [],
+      };
+    }
+
+    return {
+      'type': 'Success', // Type is required by DTD.
+      'screens': [
+        'inspector',
+        'performance',
+        'cpu-profiler',
+        'memory',
+        'network',
+        'logging'
+      ],
+    };
+  }
+
+  Future<Map<String, Object?>> _handleCaptureScreenshot(
+      Parameters params) async {
     final automationManager = _automationManager;
     if (automationManager == null) {
       return {
@@ -208,10 +243,23 @@ class DTDManager {
         'rawImage': null,
       };
     }
-    final rawImage = await automationManager.captureScreenshot();
+
+    final paramMap = params.asMap.cast<String, Object?>();
+    final screenId = paramMap['screenId'] as String?;
+
+    if (screenId != null) {
+      automationManager.switchToScreen(screenId);
+      await Future.delayed(const Duration(seconds: 3));
+      final rawImage = await automationManager.captureScreenshot(screenId);
+      return {
+        'type': 'Success', // Type is required by DTD.
+        'rawImage': rawImage,
+      };
+    }
+
     return {
       'type': 'Success', // Type is required by DTD.
-      'rawImage': rawImage,
+      'rawImage': null,
     };
   }
 

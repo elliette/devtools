@@ -14,6 +14,7 @@ import 'package:devtools_app_shared/ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
+import 'package:screenshot/screenshot.dart';
 
 import '../globals.dart';
 import '../primitives/listenable.dart';
@@ -458,7 +459,10 @@ abstract class Screen {
         if (disconnectedBody != null) return disconnectedBody;
       }
     }
-    return buildScreenBody(context);
+    return Screenshot(
+      controller: automationManager.getScreenshotControllerForScreen(screenId),
+      child: buildScreenBody(context),
+    );
   }
 
   /// Builds the default body to display for this screen.
