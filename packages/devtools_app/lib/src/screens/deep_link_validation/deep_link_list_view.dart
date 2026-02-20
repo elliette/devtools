@@ -13,8 +13,10 @@ import '../../shared/table/table_data.dart';
 import '../../shared/ui/colors.dart';
 import '../../shared/ui/common_widgets.dart';
 import '../../shared/ui/tab.dart';
+import '../../shared/ui/utils.dart';
 import 'deep_links_controller.dart';
 import 'deep_links_model.dart';
+import 'deep_links_screen.dart';
 import 'validation_details_view.dart';
 
 const _kNotificationCardSize = Size(475, 132);
@@ -45,12 +47,16 @@ class _DeepLinkListViewState extends State<DeepLinkListView> {
   Widget build(BuildContext context) {
     return DefaultTabController(
       length: TableViewType.values.length,
-      child: const RoundedOutlinedBorder(
+      child: RoundedOutlinedBorder(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _DeepLinkListViewTopPanel(),
-            Expanded(child: _DeepLinkListViewMainPanel()),
+            highlightableWidget(
+              child: const _DeepLinkListViewTopPanel(
+                key: DeepLinksScreen.deepLinkListTopPanelKey,
+              ),
+            ),
+            const Expanded(child: _DeepLinkListViewMainPanel()),
           ],
         ),
       ),
@@ -144,17 +150,26 @@ class _ValidatedDeepLinksView extends StatelessWidget {
                   valueListenable: controller.selectedLink,
                   builder: (context, _, _) => TabBarView(
                     children: [
-                      ValidationDetailView(
-                        controller: controller,
-                        viewType: TableViewType.domainView,
+                      highlightableWidget(
+                        child: ValidationDetailView(
+                          key: DeepLinksScreen.deepLinkDomainDetailKey,
+                          controller: controller,
+                          viewType: TableViewType.domainView,
+                        ),
                       ),
-                      ValidationDetailView(
-                        controller: controller,
-                        viewType: TableViewType.pathView,
+                      highlightableWidget(
+                        child: ValidationDetailView(
+                          key: DeepLinksScreen.deepLinkPathDetailKey,
+                          controller: controller,
+                          viewType: TableViewType.pathView,
+                        ),
                       ),
-                      ValidationDetailView(
-                        controller: controller,
-                        viewType: TableViewType.singleUrlView,
+                      highlightableWidget(
+                        child: ValidationDetailView(
+                          key: DeepLinksScreen.deepLinkSingleUrlDetailKey,
+                          controller: controller,
+                          viewType: TableViewType.singleUrlView,
+                        ),
                       ),
                     ],
                   ),
@@ -184,6 +199,7 @@ class _DataTable extends StatelessWidget {
     required this.linkDatas,
     required this.viewType,
     required this.controller,
+    super.key,
   });
   final List<LinkData> linkDatas;
   final TableViewType viewType;
@@ -238,7 +254,7 @@ class _DataTable extends StatelessWidget {
 }
 
 class _DeepLinkListViewTopPanel extends StatelessWidget {
-  const _DeepLinkListViewTopPanel();
+  const _DeepLinkListViewTopPanel({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -255,31 +271,40 @@ class _DeepLinkListViewTopPanel extends StatelessWidget {
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const Spacer(),
-          _ConfigurationDropdown(
-            title: 'Android Variant:',
-            valueListenable: controller.selectedAndroidVariantIndex,
-            configurations: controller.selectedProject.value!.androidVariants,
-            onChanged: controller.updateSelectedAndroidVariantIndex,
+          highlightableWidget(
+            child: _ConfigurationDropdown(
+              key: DeepLinksScreen.deepLinkAndroidVariantDropdownKey,
+              title: 'Android Variant:',
+              valueListenable: controller.selectedAndroidVariantIndex,
+              configurations: controller.selectedProject.value!.androidVariants,
+              onChanged: controller.updateSelectedAndroidVariantIndex,
+            ),
           ),
 
           const SizedBox(width: denseSpacing),
-          _ConfigurationDropdown(
-            title: 'iOS Configuration:',
-            valueListenable: controller.selectedIosConfigurationIndex,
-            configurations: controller
-                .selectedProject
-                .value!
-                .iosBuildOptions
-                .configurations,
-            onChanged: controller.updateSelectedIosConfigurationIndex,
+          highlightableWidget(
+            child: _ConfigurationDropdown(
+              key: DeepLinksScreen.deepLinkIosConfigurationDropdownKey,
+              title: 'iOS Configuration:',
+              valueListenable: controller.selectedIosConfigurationIndex,
+              configurations: controller
+                  .selectedProject
+                  .value!
+                  .iosBuildOptions
+                  .configurations,
+              onChanged: controller.updateSelectedIosConfigurationIndex,
+            ),
           ),
           const SizedBox(width: denseSpacing),
-          _ConfigurationDropdown(
-            title: 'iOS Target:',
-            valueListenable: controller.selectedIosTargetIndex,
-            configurations:
-                controller.selectedProject.value!.iosBuildOptions.targets,
-            onChanged: controller.updateSelectedIosTargetIndex,
+          highlightableWidget(
+            child: _ConfigurationDropdown(
+              key: DeepLinksScreen.deepLinkIosTargetDropdownKey,
+              title: 'iOS Target:',
+              valueListenable: controller.selectedIosTargetIndex,
+              configurations:
+                  controller.selectedProject.value!.iosBuildOptions.targets,
+              onChanged: controller.updateSelectedIosTargetIndex,
+            ),
           ),
         ],
       ),
@@ -293,6 +318,7 @@ class _ConfigurationDropdown extends StatelessWidget {
     required this.configurations,
     required this.title,
     required this.onChanged,
+    super.key,
   });
   final ValueListenable valueListenable;
   final List<String> configurations;
@@ -357,14 +383,17 @@ class _AllDeepLinkDataTable extends StatelessWidget {
                     width: controller.displayOptions.showSplitScreen
                         ? _kSearchFieldSplitScreenWidth
                         : _kSearchFieldFullWidth,
-                    child: DevToolsClearableTextField(
-                      labelText: '',
-                      hintText: 'Search a URL, domain or path',
-                      prefixIcon: const Icon(Icons.search),
-                      onChanged: (value) {
-                        controller.searchContent = value;
-                      },
-                      controller: controller.textEditingController,
+                    child: highlightableWidget(
+                      child: DevToolsClearableTextField(
+                        key: DeepLinksScreen.deepLinkSearchFieldKey,
+                        labelText: '',
+                        hintText: 'Search a URL, domain or path',
+                        prefixIcon: const Icon(Icons.search),
+                        onChanged: (value) {
+                          controller.searchContent = value;
+                        },
+                        controller: controller.textEditingController,
+                      ),
                     ),
                   ),
                 ),
@@ -392,20 +421,29 @@ class _AllDeepLinkDataTable extends StatelessWidget {
             valueListenable: controller.displayLinkDatasNotifier,
             builder: (context, linkDatas, _) => TabBarView(
               children: [
-                _DataTable(
-                  viewType: TableViewType.domainView,
-                  linkDatas: linkDatas.byDomain,
-                  controller: controller,
+                highlightableWidget(
+                  child: _DataTable(
+                    key: DeepLinksScreen.deepLinkDomainTableKey,
+                    viewType: TableViewType.domainView,
+                    linkDatas: linkDatas.byDomain,
+                    controller: controller,
+                  ),
                 ),
-                _DataTable(
-                  viewType: TableViewType.pathView,
-                  linkDatas: linkDatas.byPath,
-                  controller: controller,
+                highlightableWidget(
+                  child: _DataTable(
+                    key: DeepLinksScreen.deepLinkPathTableKey,
+                    viewType: TableViewType.pathView,
+                    linkDatas: linkDatas.byPath,
+                    controller: controller,
+                  ),
                 ),
-                _DataTable(
-                  viewType: TableViewType.singleUrlView,
-                  linkDatas: linkDatas.all,
-                  controller: controller,
+                highlightableWidget(
+                  child: _DataTable(
+                    key: DeepLinksScreen.deepLinkSingleUrlTableKey,
+                    viewType: TableViewType.singleUrlView,
+                    linkDatas: linkDatas.all,
+                    controller: controller,
+                  ),
                 ),
               ],
             ),

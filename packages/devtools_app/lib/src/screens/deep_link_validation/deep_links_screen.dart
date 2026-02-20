@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file or at https://developers.google.com/open-source/licenses/bsd.
 
+import 'package:devtools_app_shared/service.dart';
 import 'package:flutter/material.dart';
 
 import '../../shared/analytics/analytics.dart' as ga;
@@ -17,6 +18,66 @@ class DeepLinksScreen extends Screen {
   DeepLinksScreen() : super.fromMetaData(ScreenMetaData.deepLinks);
 
   static final id = ScreenMetaData.deepLinks.id;
+
+  static const deepLinkListTopPanelKey = PublicDevToolsKey(
+    'deepLinkListTopPanelKey',
+    'Deep Link List Top Panel',
+  );
+  static const deepLinkAndroidVariantDropdownKey = PublicDevToolsKey(
+    'deepLinkAndroidVariantDropdownKey',
+    'Deep Link Android Variant Dropdown',
+  );
+  static const deepLinkIosConfigurationDropdownKey = PublicDevToolsKey(
+    'deepLinkIosConfigurationDropdownKey',
+    'Deep Link iOS Configuration Dropdown',
+  );
+  static const deepLinkIosTargetDropdownKey = PublicDevToolsKey(
+    'deepLinkIosTargetDropdownKey',
+    'Deep Link iOS Target Dropdown',
+  );
+  static const deepLinkSearchFieldKey = PublicDevToolsKey(
+    'deepLinkSearchFieldKey',
+    'Deep Link Search Field',
+  );
+  static const deepLinkDomainTableKey = PublicDevToolsKey(
+    'deepLinkDomainTableKey',
+    'Deep Link Domain Table',
+  );
+  static const deepLinkPathTableKey = PublicDevToolsKey(
+    'deepLinkPathTableKey',
+    'Deep Link Path Table',
+  );
+  static const deepLinkSingleUrlTableKey = PublicDevToolsKey(
+    'deepLinkSingleUrlTableKey',
+    'Deep Link Single URL Table',
+  );
+  static const deepLinkDomainDetailKey = PublicDevToolsKey(
+    'deepLinkDomainDetailKey',
+    'Deep Link Domain Detail',
+  );
+  static const deepLinkPathDetailKey = PublicDevToolsKey(
+    'deepLinkPathDetailKey',
+    'Deep Link Path Detail',
+  );
+  static const deepLinkSingleUrlDetailKey = PublicDevToolsKey(
+    'deepLinkSingleUrlDetailKey',
+    'Deep Link Single URL Detail',
+  );
+
+  @override
+  List<PublicDevToolsKey> get keys => [
+    deepLinkListTopPanelKey,
+    deepLinkAndroidVariantDropdownKey,
+    deepLinkIosConfigurationDropdownKey,
+    deepLinkIosTargetDropdownKey,
+    deepLinkSearchFieldKey,
+    deepLinkDomainTableKey,
+    deepLinkPathTableKey,
+    deepLinkSingleUrlTableKey,
+    deepLinkDomainDetailKey,
+    deepLinkPathDetailKey,
+    deepLinkSingleUrlDetailKey,
+  ];
 
   // TODO(https://github.com/flutter/devtools/issues/6013): write documentation.
   // @override

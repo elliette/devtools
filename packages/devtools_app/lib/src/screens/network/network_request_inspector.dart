@@ -9,9 +9,11 @@ import '../../shared/analytics/constants.dart' as gac;
 import '../../shared/globals.dart';
 import '../../shared/http/http_request_data.dart';
 import '../../shared/ui/tab.dart';
+import '../../shared/ui/utils.dart';
 import 'network_controller.dart';
 import 'network_model.dart';
 import 'network_request_inspector_views.dart';
+import 'network_screen.dart';
 
 /// A [Widget] which displays information about a network request.
 class NetworkRequestInspector extends StatelessWidget {
@@ -65,29 +67,44 @@ class NetworkRequestInspector extends StatelessWidget {
   List<({DevToolsTab tab, Widget tabView})> _generateTabs(NetworkRequest data) {
     final tabs = [
       (
-        tab: _buildTab(tabName: NetworkRequestInspector._overviewTabTitle),
-        tabView: NetworkRequestOverviewView(data),
+        tab: _buildTab(tabName: _overviewTabTitle),
+        tabView: highlightableWidget(
+          child: NetworkRequestOverviewView(
+            data,
+            key: NetworkScreen.networkRequestOverviewKey,
+          ),
+        ),
       ),
       if (data is DartIOHttpRequestData) ...[
         (
-          tab: _buildTab(tabName: NetworkRequestInspector._headersTabTitle),
-          tabView: HttpRequestHeadersView(data),
+          tab: _buildTab(tabName: _headersTabTitle),
+          tabView: highlightableWidget(
+            child: HttpRequestHeadersView(
+              data,
+              key: NetworkScreen.networkRequestHeadersKey,
+            ),
+          ),
         ),
         if (data.requestBody != null)
           (
             tab: _buildTab(
-              tabName: NetworkRequestInspector._requestTabTitle,
+              tabName: _requestTabTitle,
               trailing: HttpViewTrailingCopyButton(
                 data,
                 (data) => data.requestBody,
               ),
             ),
-            tabView: HttpRequestView(data),
+            tabView: highlightableWidget(
+              child: HttpRequestView(
+                data,
+                key: NetworkScreen.networkRequestBodyKey,
+              ),
+            ),
           ),
         if (data.responseBody != null)
           (
             tab: _buildTab(
-              tabName: NetworkRequestInspector._responseTabTitle,
+              tabName: _responseTabTitle,
               trailing: Row(
                 children: [
                   HttpResponseTrailingDropDown(
@@ -100,15 +117,23 @@ class NetworkRequestInspector extends StatelessWidget {
                 ],
               ),
             ),
-            tabView: HttpResponseView(
-              data,
-              currentResponseViewType: controller.currentResponseViewType,
+            tabView: highlightableWidget(
+              child: HttpResponseView(
+                data,
+                currentResponseViewType: controller.currentResponseViewType,
+                key: NetworkScreen.networkResponseBodyKey,
+              ),
             ),
           ),
         if (data.hasCookies)
           (
-            tab: _buildTab(tabName: NetworkRequestInspector._cookiesTabTitle),
-            tabView: HttpRequestCookiesView(data),
+            tab: _buildTab(tabName: _cookiesTabTitle),
+            tabView: highlightableWidget(
+              child: HttpRequestCookiesView(
+                data,
+                key: NetworkScreen.networkRequestCookiesKey,
+              ),
+            ),
           ),
       ],
     ];

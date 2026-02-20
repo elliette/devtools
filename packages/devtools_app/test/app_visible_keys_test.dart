@@ -5,21 +5,19 @@
 import 'dart:io';
 
 import 'package:devtools_app/devtools_app.dart';
-import 'package:devtools_app/src/shared/framework/screen.dart';
-import 'package:devtools_app/src/shared/framework/screen_controllers.dart';
-import 'package:devtools_app/src/shared/framework/framework_controller.dart';
-import 'package:devtools_app/src/shared/managers/survey.dart';
-import 'package:devtools_app/src/extensions/extension_service.dart';
-import 'package:devtools_app/src/shared/managers/script_manager.dart';
 import 'package:devtools_app/src/screens/debugger/breakpoint_manager.dart';
 import 'package:devtools_app/src/shared/console/eval/eval_service.dart';
+import 'package:devtools_app/src/shared/framework/framework_controller.dart';
+import 'package:devtools_app/src/shared/framework/screen.dart';
+import 'package:devtools_app/src/shared/framework/screen_controllers.dart';
+import 'package:devtools_app/src/shared/managers/script_manager.dart';
+import 'package:devtools_app/src/shared/managers/survey.dart';
 import 'package:devtools_app/src/shared/preferences/preferences.dart';
+import 'package:devtools_app/src/shared/primitives/message_bus.dart';
 import 'package:devtools_app_shared/service.dart';
-import 'package:devtools_app_shared/shared.dart';
 import 'package:devtools_app_shared/ui.dart';
 import 'package:devtools_app_shared/utils.dart';
 import 'package:devtools_shared/devtools_extensions.dart';
-import 'package:devtools_shared/devtools_shared.dart';
 import 'package:devtools_test/devtools_test.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -38,8 +36,7 @@ void main() {
     };
 
     mockServiceConnection = createMockServiceConnectionWithDefaults();
-    final mockServiceManager =
-        mockServiceConnection.serviceManager as MockServiceManager;
+    final mockServiceManager = mockServiceConnection.serviceManager;
     when(mockServiceManager.service).thenReturn(null);
     when(mockServiceManager.connectedAppInitialized).thenReturn(false);
     when(mockServiceManager.manuallyDisconnect()).thenAnswer((_) async {});
@@ -74,7 +71,7 @@ void main() {
     setGlobal(ScriptManager, ScriptManager());
     setGlobal(BreakpointManager, BreakpointManager());
     setGlobal(EvalService, EvalService());
-    setGlobal(DTDManager, DTDManager());
+    setGlobal(DTDManager, DTDManager(createAutomationManager: false));
     setGlobal(PreferencesController, PreferencesController());
   });
 
@@ -137,8 +134,24 @@ class MockAutomationManager extends Mock implements AutomationManager {
   set visibleKeys(Map<String, List<PublicDevToolsKey>>? keys) {
     stderr.writeln('MockAutomationManager.visibleKeys set: $keys');
     super.noSuchMethod(
-      Invocation.setter(#visibleKeys, keys),
+      Invocation.setter(const Symbol('visibleKeys='), keys),
       returnValueForMissingStub: null,
+    );
+  }
+
+  @override
+  dynamic noSuchMethod(
+    Invocation invocation, {
+    Object? returnValue,
+    Object? returnValueForMissingStub,
+  }) {
+    stderr.writeln(
+      'MockAutomationManager.noSuchMethod: ${invocation.memberName}',
+    );
+    return super.noSuchMethod(
+      invocation,
+      returnValue: returnValue,
+      returnValueForMissingStub: returnValueForMissingStub,
     );
   }
 }
@@ -157,6 +170,9 @@ class TestExtensionService extends Fake implements ExtensionService {
 
   @override
   final ValueNotifier<bool> refreshInProgress = ValueNotifier(false);
+  
+  @override
+  void dispose() {}
 }
 
 class _TestScreen extends Screen {

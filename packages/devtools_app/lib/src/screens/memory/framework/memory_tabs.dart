@@ -11,6 +11,9 @@ import '../panes/diff/diff_pane.dart';
 import '../panes/profile/profile_view.dart';
 import '../panes/tracing/tracing_view.dart';
 import 'memory_controller.dart';
+import 'memory_screen.dart';
+
+import '../../../shared/ui/utils.dart';
 
 @visibleForTesting
 class MemoryScreenKeys {
@@ -44,7 +47,14 @@ class MemoryTabView extends StatelessWidget {
       gaPrefix: _gaPrefix,
       tabName: 'Diff Snapshots',
     ),
-    tabView: KeepAliveWrapper(child: DiffPane(diffController: controller.diff)),
+    tabView: KeepAliveWrapper(
+      child: highlightableWidget(
+        child: DiffPane(
+          key: MemoryScreen.memoryDiffPaneKey,
+          diffController: controller.diff,
+        ),
+      ),
+    ),
   );
 
   TabAndView _profile() => (
@@ -54,7 +64,12 @@ class MemoryTabView extends StatelessWidget {
       gaPrefix: _gaPrefix,
     ),
     tabView: KeepAliveWrapper(
-      child: AllocationProfileTableView(controller: controller.profile!),
+      child: highlightableWidget(
+        child: AllocationProfileTableView(
+          key: MemoryScreen.memoryProfilePaneKey,
+          controller: controller.profile!,
+        ),
+      ),
     ),
   );
 
@@ -65,7 +80,12 @@ class MemoryTabView extends StatelessWidget {
       gaPrefix: _gaPrefix,
     ),
     tabView: KeepAliveWrapper(
-      child: TracingPane(controller: controller.trace!),
+      child: highlightableWidget(
+        child: TracingPane(
+          key: MemoryScreen.memoryTracingPaneKey,
+          controller: controller.trace!,
+        ),
+      ),
     ),
   );
 }

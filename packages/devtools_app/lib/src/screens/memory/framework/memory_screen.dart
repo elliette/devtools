@@ -3,6 +3,7 @@
 // found in the LICENSE file or at https://developers.google.com/open-source/licenses/bsd.
 
 import 'package:devtools_app_shared/shared.dart';
+import 'package:devtools_app_shared/service.dart';
 import 'package:devtools_app_shared/ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -18,6 +19,61 @@ class MemoryScreen extends Screen {
   MemoryScreen() : super.fromMetaData(ScreenMetaData.memory);
 
   static final id = ScreenMetaData.memory.id;
+
+  static const memoryControlsKey = PublicDevToolsKey(
+    'memoryControlsKey',
+    'Memory Controls',
+  );
+  static const memoryRecordingButtonKey = PublicDevToolsKey(
+    'memoryRecordingButtonKey',
+    'Memory Recording Button',
+  );
+  static const memoryClearButtonKey = PublicDevToolsKey(
+    'memoryClearButtonKey',
+    'Memory Clear Button',
+  );
+  static const memoryChartKey = PublicDevToolsKey(
+    'memoryChartKey',
+    'Memory Chart',
+  );
+  static const memoryTabViewKey = PublicDevToolsKey(
+    'memoryTabViewKey',
+    'Memory Tab View',
+  );
+  static const memoryProfilePaneKey = PublicDevToolsKey(
+    'memoryProfilePaneKey',
+    'Memory Profile Pane',
+  );
+  static const memoryDiffPaneKey = PublicDevToolsKey(
+    'memoryDiffPaneKey',
+    'Memory Diff Pane',
+  );
+  static const memoryTracingPaneKey = PublicDevToolsKey(
+    'memoryTracingPaneKey',
+    'Memory Tracing Pane',
+  );
+  static const memoryLeaksPaneKey = PublicDevToolsKey(
+    'memoryLeaksPaneKey',
+    'Memory Leaks Pane',
+  );
+  static const memorySearchFieldKey = PublicDevToolsKey(
+    'memorySearchFieldKey',
+    'Memory Search Field',
+  );
+
+  @override
+  List<PublicDevToolsKey> get keys => [
+    memoryControlsKey,
+    memoryRecordingButtonKey,
+    memoryClearButtonKey,
+    memoryChartKey,
+    memoryTabViewKey,
+    memoryProfilePaneKey,
+    memoryDiffPaneKey,
+    memoryTracingPaneKey,
+    memoryLeaksPaneKey,
+    memorySearchFieldKey,
+  ];
 
   @override
   ValueListenable<bool> get showIsolateSelector =>

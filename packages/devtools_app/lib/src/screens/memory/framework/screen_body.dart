@@ -6,6 +6,8 @@ import 'package:devtools_app_shared/ui.dart';
 import 'package:devtools_app_shared/utils.dart';
 import 'package:flutter/material.dart';
 
+import '../../../shared/ui/utils.dart';
+
 import '../../../shared/framework/screen.dart';
 import '../../../shared/globals.dart';
 import '../../../shared/http/http_service.dart' as http_service;
@@ -14,6 +16,7 @@ import '../../../shared/ui/common_widgets.dart';
 import '../panes/chart/widgets/chart_pane.dart';
 import '../panes/control/widgets/control_pane.dart';
 import 'memory_controller.dart';
+import 'memory_screen.dart';
 import 'memory_tabs.dart';
 
 class ConnectedMemoryBody extends StatefulWidget {
@@ -62,14 +65,30 @@ class _ConnectedMemoryBodyState extends State<ConnectedMemoryBody>
         return Column(
           key: MemoryChartPane.hoverKey,
           children: [
-            MemoryControlPane(
-              isGcing: controller.isGcing,
-              onGc: controller.gc,
-              onSave: controller.exportData,
+            highlightableWidget(
+              child: MemoryControlPane(
+                key: MemoryScreen.memoryControlsKey,
+                isGcing: controller.isGcing,
+                onGc: controller.gc,
+                onSave: controller.exportData,
+              ),
             ),
             const SizedBox(height: intermediateSpacing),
-            MemoryChartPane(chart: controller.chart, keyFocusNode: _focusNode),
-            Expanded(child: MemoryTabView(controller)),
+            highlightableWidget(
+              child: MemoryChartPane(
+                key: MemoryScreen.memoryChartKey,
+                chart: controller.chart,
+                keyFocusNode: _focusNode,
+              ),
+            ),
+            Expanded(
+              child: highlightableWidget(
+                child: MemoryTabView(
+                  controller,
+                  key: MemoryScreen.memoryTabViewKey,
+                ),
+              ),
+            ),
           ],
         );
       },

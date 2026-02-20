@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file or at https://developers.google.com/open-source/licenses/bsd.
 
+import 'package:devtools_app_shared/service.dart';
 import 'package:devtools_app_shared/ui.dart';
 import 'package:devtools_app_shared/utils.dart';
 import 'package:flutter/foundation.dart';
@@ -18,6 +19,7 @@ import '../../shared/managers/banner_messages.dart';
 import '../../shared/primitives/listenable.dart';
 import '../../shared/ui/common_widgets.dart';
 import '../../shared/ui/file_import.dart';
+import '../../shared/ui/utils.dart';
 import 'cpu_profile_model.dart';
 import 'cpu_profiler.dart';
 import 'cpu_profiler_controller.dart';
@@ -29,6 +31,61 @@ class ProfilerScreen extends Screen {
   ProfilerScreen() : super.fromMetaData(ScreenMetaData.cpuProfiler);
 
   static final id = ScreenMetaData.cpuProfiler.id;
+
+  static const profilerControlsKey = PublicDevToolsKey(
+    'profilerControlsKey',
+    'Profiler Controls',
+  );
+  static const profilerRecordingButtonKey = PublicDevToolsKey(
+    'profilerRecordingButtonKey',
+    'Profiler Recording Button',
+  );
+  static const profilerClearButtonKey = PublicDevToolsKey(
+    'profilerClearButtonKey',
+    'Profiler Clear Button',
+  );
+  static const cpuProfilerKey = PublicDevToolsKey(
+    'cpuProfilerKey',
+    'CPU Profiler',
+  );
+  static const cpuBottomUpTableKey = PublicDevToolsKey(
+    'cpuBottomUpTableKey',
+    'CPU Bottom Up Table',
+  );
+  static const cpuCallTreeTableKey = PublicDevToolsKey(
+    'cpuCallTreeTableKey',
+    'CPU Call Tree Table',
+  );
+  static const cpuMethodTableKey = PublicDevToolsKey(
+    'cpuMethodTableKey',
+    'CPU Method Table',
+  );
+  static const cpuFlameChartKey = PublicDevToolsKey(
+    'cpuFlameChartKey',
+    'CPU Flame Chart',
+  );
+  static const profilerUserTagDropdownKey = PublicDevToolsKey(
+    'profilerUserTagDropdownKey',
+    'Profiler User Tag Dropdown',
+  );
+  static const profilerModeDropdownKey = PublicDevToolsKey(
+    'profilerModeDropdownKey',
+    'Profiler Mode Dropdown',
+  );
+
+  @override
+  List<PublicDevToolsKey> get keys => [
+    profilerControlsKey,
+    profilerRecordingButtonKey,
+    profilerClearButtonKey,
+    cpuProfilerKey,
+    cpuBottomUpTableKey,
+    cpuCallTreeTableKey,
+    cpuMethodTableKey,
+    cpuFlameChartKey,
+    profilerUserTagDropdownKey,
+    profilerModeDropdownKey,
+  ];
 
   @override
   String get docPageId => id;
@@ -138,11 +195,14 @@ class _ProfilerScreenBodyState extends State<ProfilerScreenBody>
             : null;
         return Column(
           children: [
-            ProfilerScreenControls(
-              controller: controller,
-              recording: recording,
-              processing: profilerBusy,
-              offline: offlineDataController.showingOfflineData.value,
+            highlightableWidget(
+              child: ProfilerScreenControls(
+                key: ProfilerScreen.profilerControlsKey,
+                controller: controller,
+                recording: recording,
+                processing: profilerBusy,
+                offline: offlineDataController.showingOfflineData.value,
+              ),
             ),
             const SizedBox(height: intermediateSpacing),
             Expanded(
@@ -165,9 +225,12 @@ class _ProfilerScreenBodyState extends State<ProfilerScreenBody>
                           !controller.cpuProfilerController.isFilterActive) {
                         return const EmptyProfileView();
                       }
-                      return CpuProfiler(
-                        data: cpuProfileData,
-                        controller: controller.cpuProfilerController,
+                      return highlightableWidget(
+                        child: CpuProfiler(
+                          key: ProfilerScreen.cpuProfilerKey,
+                          data: cpuProfileData,
+                          controller: controller.cpuProfilerController,
+                        ),
                       );
                     },
                   ),

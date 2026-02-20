@@ -22,6 +22,9 @@ import 'cpu_profile_model.dart';
 import 'cpu_profiler_controller.dart';
 import 'panes/bottom_up.dart';
 import 'panes/call_tree.dart';
+import 'profiler_screen.dart';
+
+import '../../shared/ui/utils.dart';
 import 'panes/controls/cpu_profiler_controls.dart';
 import 'panes/cpu_flame_chart.dart';
 import 'panes/method_table/method_table.dart';
@@ -165,7 +168,12 @@ class _CpuProfilerState extends State<CpuProfiler>
                 currentTab.key != ProfilerTab.methodTable.key) ...[
               const SizedBox(width: denseSpacing),
             ],
-            UserTagDropdown(widget.controller),
+            highlightableWidget(
+              child: UserTagDropdown(
+                widget.controller,
+                key: ProfilerScreen.profilerUserTagDropdownKey,
+              ),
+            ),
             const SizedBox(width: denseSpacing),
             ValueListenableBuilder<bool>(
               valueListenable: preferences.advancedDeveloperModeEnabled,
@@ -175,7 +183,12 @@ class _CpuProfilerState extends State<CpuProfiler>
                 }
                 return Padding(
                   padding: const EdgeInsets.only(right: denseSpacing),
-                  child: ModeDropdown(widget.controller),
+                  child: highlightableWidget(
+                    child: ModeDropdown(
+                      widget.controller,
+                      key: ProfilerScreen.profilerModeDropdownKey,
+                    ),
+                  ),
                 );
               },
             ),
@@ -289,27 +302,44 @@ class _CpuProfilerState extends State<CpuProfiler>
 
   List<Widget> _buildProfilerViews() {
     final bottomUp = KeepAliveWrapper(
-      child: CpuBottomUpTable(bottomUpRoots: widget.bottomUpRoots),
+      child: highlightableWidget(
+        child: CpuBottomUpTable(
+          key: ProfilerScreen.cpuBottomUpTableKey,
+          bottomUpRoots: widget.bottomUpRoots,
+        ),
+      ),
     );
     final callTree = KeepAliveWrapper(
-      child: CpuCallTreeTable(dataRoots: widget.callTreeRoots),
+      child: highlightableWidget(
+        child: CpuCallTreeTable(
+          key: ProfilerScreen.cpuCallTreeTableKey,
+          dataRoots: widget.callTreeRoots,
+        ),
+      ),
     );
     final methodTable = KeepAliveWrapper(
-      child: CpuMethodTable(
-        methodTableController: widget.controller.methodTableController,
+      child: highlightableWidget(
+        child: CpuMethodTable(
+          key: ProfilerScreen.cpuMethodTableKey,
+          methodTableController: widget.controller.methodTableController,
+        ),
       ),
     );
     final cpuFlameChart = KeepAliveWrapper(
       child: LayoutBuilder(
         builder: (context, constraints) {
-          return CpuProfileFlameChart(
-            data: data,
-            width: constraints.maxWidth,
-            height: constraints.maxHeight,
-            selectionNotifier: widget.controller.selectedCpuStackFrameNotifier,
-            searchMatchesNotifier: widget.controller.searchMatches,
-            activeSearchMatchNotifier: widget.controller.activeSearchMatch,
-            onDataSelected: (sf) => widget.controller.selectCpuStackFrame(sf),
+          return highlightableWidget(
+            child: CpuProfileFlameChart(
+              key: ProfilerScreen.cpuFlameChartKey,
+              data: data,
+              width: constraints.maxWidth,
+              height: constraints.maxHeight,
+              selectionNotifier:
+                  widget.controller.selectedCpuStackFrameNotifier,
+              searchMatchesNotifier: widget.controller.searchMatches,
+              activeSearchMatchNotifier: widget.controller.activeSearchMatch,
+              onDataSelected: (sf) => widget.controller.selectCpuStackFrame(sf),
+            ),
           );
         },
       ),

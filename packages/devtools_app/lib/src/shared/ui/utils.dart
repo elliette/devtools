@@ -312,7 +312,7 @@ Widget highlightableWidget({required Widget child}) {
         return child;
       }
       return Container(
-        decoration: BoxDecoration(border: Border.all(color: Colors.blue)),
+        decoration: BoxDecoration(border: Border.all(color: Colors.yellow)),
         child: child,
       );
     },

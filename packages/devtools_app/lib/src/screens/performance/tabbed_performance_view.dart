@@ -12,15 +12,30 @@ import '../../shared/analytics/constants.dart' as gac;
 import '../../shared/globals.dart';
 import '../../shared/ui/common_widgets.dart';
 import '../../shared/ui/tab.dart';
+import '../../shared/ui/utils.dart';
 import 'panes/flutter_frames/flutter_frame_model.dart';
 import 'panes/flutter_frames/flutter_frames_controller.dart';
 import 'panes/frame_analysis/frame_analysis.dart';
 import 'panes/rebuild_stats/rebuild_stats.dart';
 import 'panes/timeline_events/timeline_events_view.dart';
 import 'performance_controller.dart';
+import 'package:devtools_app_shared/service.dart';
 
 class TabbedPerformanceView extends StatefulWidget {
   const TabbedPerformanceView({super.key});
+
+  static const frameAnalysisViewKey = PublicDevToolsKey(
+    'frameAnalysisViewKey',
+    'Frame Analysis View',
+  );
+  static const rebuildStatsViewKey = PublicDevToolsKey(
+    'rebuildStatsViewKey',
+    'Rebuild Stats View',
+  );
+  static const timelineEventsViewKey = PublicDevToolsKey(
+    'timelineEventsViewKey',
+    'Timeline Events View',
+  );
 
   @override
   State<TabbedPerformanceView> createState() => _TabbedPerformanceViewState();
@@ -125,18 +140,22 @@ class _TabbedPerformanceViewState extends State<TabbedPerformanceView>
         (
           tab: _buildTab(tabName: 'Frame Analysis'),
           tabView: KeepAliveWrapper(
-            child: _selectedFlutterFrame != null
-                ? FlutterFrameAnalysisView(
-                    frame: _selectedFlutterFrame!,
-                    enhanceTracingController:
-                        controller.enhanceTracingController,
-                    rebuildCountModel: controller.rebuildCountModel,
-                    displayRefreshRateNotifier:
-                        controller.flutterFramesController.displayRefreshRate,
-                  )
-                : const CenteredMessage(
-                    message: 'Select a frame above to view analysis data.',
-                  ),
+            child: highlightableWidget(
+              child: _selectedFlutterFrame != null
+                  ? FlutterFrameAnalysisView(
+                      key: TabbedPerformanceView.frameAnalysisViewKey,
+                      frame: _selectedFlutterFrame!,
+                      enhanceTracingController:
+                          controller.enhanceTracingController,
+                      rebuildCountModel: controller.rebuildCountModel,
+                      displayRefreshRateNotifier:
+                          controller.flutterFramesController.displayRefreshRate,
+                    )
+                  : const CenteredMessage(
+                      key: TabbedPerformanceView.frameAnalysisViewKey,
+                      message: 'Select a frame above to view analysis data.',
+                    ),
+            ),
           ),
           featureController: null,
         ),
@@ -144,9 +163,12 @@ class _TabbedPerformanceViewState extends State<TabbedPerformanceView>
         (
           tab: _buildTab(tabName: 'Rebuild Stats'),
           tabView: KeepAliveWrapper(
-            child: RebuildStatsView(
-              model: controller.rebuildCountModel,
-              selectedFrame: controller.flutterFramesController.selectedFrame,
+            child: highlightableWidget(
+              child: RebuildStatsView(
+                key: TabbedPerformanceView.rebuildStatsViewKey,
+                model: controller.rebuildCountModel,
+                selectedFrame: controller.flutterFramesController.selectedFrame,
+              ),
             ),
           ),
           featureController: controller.rebuildStatsController,
@@ -158,8 +180,11 @@ class _TabbedPerformanceViewState extends State<TabbedPerformanceView>
             controller: controller.timelineEventsController,
           ),
         ),
-        tabView: TimelineEventsTabView(
-          controller: controller.timelineEventsController,
+        tabView: highlightableWidget(
+          child: TimelineEventsTabView(
+            key: TabbedPerformanceView.timelineEventsViewKey,
+            controller: controller.timelineEventsController,
+          ),
         ),
         featureController: controller.timelineEventsController,
       ),

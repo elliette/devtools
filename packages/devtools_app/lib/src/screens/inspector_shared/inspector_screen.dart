@@ -3,6 +3,7 @@
 // found in the LICENSE file or at https://developers.google.com/open-source/licenses/bsd.
 
 import 'package:devtools_app_shared/shared.dart';
+import 'package:devtools_app_shared/service.dart';
 import 'package:devtools_app_shared/utils.dart';
 import 'package:flutter/material.dart';
 
@@ -19,6 +20,51 @@ class InspectorScreen extends Screen {
   static const minScreenWidthForText = 900.0;
 
   static final id = ScreenMetaData.inspector.id;
+  
+  static const inspectorTreeKey = PublicDevToolsKey(
+    'inspectorTreeKey',
+    'Inspector Tree',
+  );
+  static const widgetDetailsKey = PublicDevToolsKey(
+    'widgetDetailsKey',
+    'Inspector Widget Details',
+  );
+  static const layoutExplorerKey = PublicDevToolsKey(
+    'layoutExplorerKey',
+    'Inspector Layout Explorer',
+  );
+  static const inspectorControlsKey = PublicDevToolsKey(
+    'inspectorControlsKey',
+    'Inspector Controls',
+  );
+  static const inspectorTreeControlsKey = PublicDevToolsKey(
+    'inspectorTreeControlsKey',
+    'Inspector Tree Controls',
+  );
+  static const inspectorSearchFieldKey = PublicDevToolsKey(
+    'inspectorSearchFieldKey',
+    'Inspector Search Field',
+  );
+  static const inspectorRefreshButtonKey = PublicDevToolsKey(
+    'inspectorRefreshButtonKey',
+    'Inspector Refresh Button',
+  );
+  static const inspectorPropertiesViewKey = PublicDevToolsKey(
+    'inspectorPropertiesViewKey',
+    'Inspector Properties View',
+  );
+
+  @override
+  List<PublicDevToolsKey> get keys => [
+    inspectorTreeKey,
+    widgetDetailsKey,
+    layoutExplorerKey,
+    inspectorControlsKey,
+    inspectorTreeControlsKey,
+    inspectorSearchFieldKey,
+    inspectorRefreshButtonKey,
+    inspectorPropertiesViewKey,
+  ];
 
   // There is not enough room to safely show the console in the embed view of
   // the DevTools and IDEs have their own consoles.

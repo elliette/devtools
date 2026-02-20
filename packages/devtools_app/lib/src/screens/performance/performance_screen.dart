@@ -4,6 +4,7 @@
 
 import 'dart:async';
 
+import 'package:devtools_app_shared/service.dart';
 import 'package:devtools_app_shared/ui.dart';
 import 'package:devtools_app_shared/utils.dart';
 import 'package:flutter/material.dart';
@@ -18,6 +19,7 @@ import '../../shared/globals.dart';
 import '../../shared/managers/banner_messages.dart';
 import '../../shared/ui/common_widgets.dart';
 import '../../shared/ui/file_import.dart';
+import '../../shared/ui/utils.dart';
 import '../../shared/utils/utils.dart';
 import 'panes/controls/performance_controls.dart';
 import 'panes/flutter_frames/flutter_frames_chart.dart';
@@ -31,6 +33,29 @@ class PerformanceScreen extends Screen {
   PerformanceScreen() : super.fromMetaData(ScreenMetaData.performance);
 
   static final id = ScreenMetaData.performance.id;
+
+  static const performanceControlsKey = PublicDevToolsKey(
+    'performanceControlsKey',
+    'Performance Controls',
+  );
+  static const flutterFramesChartKey = PublicDevToolsKey(
+    'flutterFramesChartKey',
+    'Flutter Frames Chart',
+  );
+  static const performanceTabbedViewKey = PublicDevToolsKey(
+    'performanceTabbedViewKey',
+    'Performance Tabbed View',
+  );
+
+  @override
+  List<PublicDevToolsKey> get keys => [
+    performanceControlsKey,
+    flutterFramesChartKey,
+    performanceTabbedViewKey,
+    TabbedPerformanceView.timelineEventsViewKey,
+    TabbedPerformanceView.frameAnalysisViewKey,
+    TabbedPerformanceView.rebuildStatsViewKey,
+  ];
 
   @override
   String get docPageId => id;
@@ -97,9 +122,12 @@ class PerformanceScreenBodyState extends State<PerformanceScreenBody>
             controller.offlinePerformanceData!.frames.isNotEmpty;
         return Column(
           children: [
-            PerformanceControls(
-              controller: controller,
-              onClear: () => setState(() {}),
+            highlightableWidget(
+              child: PerformanceControls(
+                key: PerformanceScreen.performanceControlsKey,
+                controller: controller,
+                onClear: () => setState(() {}),
+              ),
             ),
             const SizedBox(height: intermediateSpacing),
             if (isOfflineFlutterApp ||
@@ -108,12 +136,21 @@ class PerformanceScreenBodyState extends State<PerformanceScreenBody>
                         .serviceManager
                         .connectedApp!
                         .isFlutterAppNow!))
-              FlutterFramesChart(
-                controller.flutterFramesController,
-                showingOfflineData: showingOfflineData,
-                impellerEnabled: controller.impellerEnabled,
+              highlightableWidget(
+                child: FlutterFramesChart(
+                  controller.flutterFramesController,
+                  key: PerformanceScreen.flutterFramesChartKey,
+                  showingOfflineData: showingOfflineData,
+                  impellerEnabled: controller.impellerEnabled,
+                ),
               ),
-            const Expanded(child: TabbedPerformanceView()),
+            Expanded(
+              child: highlightableWidget(
+                child: const TabbedPerformanceView(
+                  key: PerformanceScreen.performanceTabbedViewKey,
+                ),
+              ),
+            ),
           ],
         );
       },

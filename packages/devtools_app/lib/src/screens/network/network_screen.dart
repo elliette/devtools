@@ -4,6 +4,7 @@
 
 import 'dart:async';
 
+import 'package:devtools_app_shared/service.dart';
 import 'package:devtools_app_shared/ui.dart';
 import 'package:devtools_app_shared/utils.dart';
 import 'package:flutter/foundation.dart';
@@ -35,6 +36,71 @@ class NetworkScreen extends Screen {
   NetworkScreen() : super.fromMetaData(ScreenMetaData.network);
 
   static final id = ScreenMetaData.network.id;
+  
+  static const networkRequestsKey = PublicDevToolsKey(
+    'networkRequestsKey',
+    'Network Requests Table',
+  );
+  static const networkControlsKey = PublicDevToolsKey(
+    'networkControlsKey',
+    'Network Controls',
+  );
+  static const networkRecordingButtonKey = PublicDevToolsKey(
+    'networkRecordingButtonKey',
+    'Network Recording Button',
+  );
+  static const networkClearButtonKey = PublicDevToolsKey(
+    'networkClearButtonKey',
+    'Network Clear Button',
+  );
+  static const networkSearchFieldKey = PublicDevToolsKey(
+    'networkSearchFieldKey',
+    'Network Search Field',
+  );
+  static const networkFilterFieldKey = PublicDevToolsKey(
+    'networkFilterFieldKey',
+    'Network Filter Field',
+  );
+  static const networkRequestInspectorKey = PublicDevToolsKey(
+    'networkRequestInspectorKey',
+    'Network Request Inspector',
+  );
+  static const networkRequestOverviewKey = PublicDevToolsKey(
+    'networkRequestOverviewKey',
+    'Network Request Overview',
+  );
+  static const networkRequestHeadersKey = PublicDevToolsKey(
+    'networkRequestHeadersKey',
+    'Network Request Headers',
+  );
+  static const networkRequestBodyKey = PublicDevToolsKey(
+    'networkRequestBodyKey',
+    'Network Request Body',
+  );
+  static const networkResponseBodyKey = PublicDevToolsKey(
+    'networkResponseBodyKey',
+    'Network Request Response',
+  );
+  static const networkRequestCookiesKey = PublicDevToolsKey(
+    'networkRequestCookiesKey',
+    'Network Request Cookies',
+  );
+
+  @override
+  List<PublicDevToolsKey> get keys => [
+    networkRequestsKey,
+    networkControlsKey,
+    networkRecordingButtonKey,
+    networkClearButtonKey,
+    networkSearchFieldKey,
+    networkFilterFieldKey,
+    networkRequestInspectorKey,
+    networkRequestOverviewKey,
+    networkRequestHeadersKey,
+    networkRequestBodyKey,
+    networkResponseBodyKey,
+    networkRequestCookiesKey,
+  ];
 
   @override
   String get docPageId => screenId;
@@ -155,10 +221,13 @@ class _NetworkScreenBodyState extends State<NetworkScreenBody>
   Widget build(BuildContext context) {
     return Column(
       children: [
-        OfflineAwareControls(
-          controlsBuilder: (offline) =>
-              _NetworkProfilerControls(offline: offline),
-          gaScreen: gac.network,
+        highlightableWidget(
+          child: OfflineAwareControls(
+            key: NetworkScreen.networkControlsKey,
+            controlsBuilder: (offline) =>
+                _NetworkProfilerControls(offline: offline),
+            gaScreen: gac.network,
+          ),
         ),
         const SizedBox(height: intermediateSpacing),
         const Expanded(child: _NetworkProfilerBody()),
@@ -213,40 +282,53 @@ class _NetworkProfilerControlsState extends State<_NetworkProfilerControls>
       children: [
         Row(
           children: [
-            StartStopRecordingButton(
-              recording: _recording,
-              onPressed: () async =>
-                  await controller.togglePolling(!_recording),
-              tooltipOverride: _recording
-                  ? 'Stop recording network traffic'
-                  : 'Resume recording network traffic',
-              minScreenWidthForText: double.infinity,
-              gaScreen: gac.network,
-              gaSelection: _recording ? gac.pause : gac.resume,
+            highlightableWidget(
+              child: StartStopRecordingButton(
+                key: NetworkScreen.networkRecordingButtonKey,
+                recording: _recording,
+                onPressed: () async =>
+                    await controller.togglePolling(!_recording),
+                tooltipOverride: _recording
+                    ? 'Stop recording network traffic'
+                    : 'Resume recording network traffic',
+                minScreenWidthForText: double.infinity,
+                gaScreen: gac.network,
+                gaSelection: _recording ? gac.pause : gac.resume,
+              ),
             ),
             const SizedBox(width: denseSpacing),
-            ClearButton(
-              minScreenWidthForText: _NetworkProfilerControls._includeTextWidth,
-              gaScreen: gac.network,
-              gaSelection: gac.clear,
-              onPressed: controller.clear,
+            highlightableWidget(
+              child: ClearButton(
+                key: NetworkScreen.networkClearButtonKey,
+                minScreenWidthForText:
+                    _NetworkProfilerControls._includeTextWidth,
+                gaScreen: gac.network,
+                gaSelection: gac.clear,
+                onPressed: controller.clear,
+              ),
             ),
             const SizedBox(width: denseSpacing),
             // TODO(kenz): fix focus issue when state is refreshed
             Expanded(
-              child: SearchField<NetworkController>(
-                searchController: controller,
-                searchFieldEnabled: hasRequests,
-                searchFieldWidth: screenWidth <= MediaSize.xs
-                    ? defaultSearchFieldWidth
-                    : wideSearchFieldWidth,
+              child: highlightableWidget(
+                child: SearchField<NetworkController>(
+                  key: NetworkScreen.networkSearchFieldKey,
+                  searchController: controller,
+                  searchFieldEnabled: hasRequests,
+                  searchFieldWidth: screenWidth <= MediaSize.xs
+                      ? defaultSearchFieldWidth
+                      : wideSearchFieldWidth,
+                ),
               ),
             ),
             const SizedBox(width: denseSpacing),
             Expanded(
-              child: StandaloneFilterField<NetworkRequest>(
-                controller: controller,
-                filteredItem: 'request',
+              child: highlightableWidget(
+                child: StandaloneFilterField<NetworkRequest>(
+                  key: NetworkScreen.networkFilterFieldKey,
+                  controller: controller,
+                  filteredItem: 'request',
+                ),
               ),
             ),
             const SizedBox(width: denseSpacing),
@@ -337,14 +419,21 @@ class _NetworkProfilerBody extends StatelessWidget {
         ValueListenableBuilder<List<NetworkRequest>>(
           valueListenable: controller.filteredData,
           builder: (context, filteredRequests, _) {
-            return NetworkRequestsTable(
-              requests: filteredRequests,
-              searchMatchesNotifier: controller.searchMatches,
-              activeSearchMatchNotifier: controller.activeSearchMatch,
+            return highlightableWidget(
+              child: NetworkRequestsTable(
+                key: NetworkScreen.networkRequestsKey,
+                requests: filteredRequests,
+                searchMatchesNotifier: controller.searchMatches,
+                activeSearchMatchNotifier: controller.activeSearchMatch,
+              ),
             );
           },
         ),
-        const NetworkRequestInspector(),
+        highlightableWidget(
+          child: const NetworkRequestInspector(
+            key: NetworkScreen.networkRequestInspectorKey,
+          ),
+        ),
       ],
     );
   }

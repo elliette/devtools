@@ -14,7 +14,9 @@ import '../../shared/primitives/utils.dart';
 import '../../shared/ui/common_widgets.dart';
 import '../../shared/ui/filter.dart';
 import '../../shared/ui/search.dart';
+import '../../shared/ui/utils.dart';
 import 'logging_controller.dart';
+import 'logging_screen.dart';
 
 const _loggingMinVerboseWidth = 650.0;
 
@@ -26,54 +28,69 @@ class LoggingControls extends StatelessWidget {
     final controller = screenControllers.lookup<LoggingController>();
     return Row(
       children: [
-        ClearButton(
-          onPressed: controller.clear,
-          gaScreen: gac.logging,
-          gaSelection: gac.clear,
-          minScreenWidthForText: _loggingMinVerboseWidth,
+        highlightableWidget(
+          child: ClearButton(
+            key: LoggingScreen.loggingClearButtonKey,
+            onPressed: controller.clear,
+            gaScreen: gac.logging,
+            gaSelection: gac.clear,
+            minScreenWidthForText: _loggingMinVerboseWidth,
+          ),
         ),
         const SizedBox(width: denseSpacing),
         Expanded(
           // TODO(kenz): fix focus issue when state is refreshed
           child: ValueListenableBuilder(
             valueListenable: controller.filteredData,
-            builder: (context, _, _) => SearchField<LoggingController>(
-              searchFieldWidth:
-                  isScreenWiderThan(context, _loggingMinVerboseWidth)
-                  ? wideSearchFieldWidth
-                  : defaultSearchFieldWidth,
-              searchController: controller,
-              searchFieldEnabled: controller.filteredData.value.isNotEmpty,
+            builder: (context, _, _) => highlightableWidget(
+              child: SearchField<LoggingController>(
+                key: LoggingScreen.loggingSearchFieldKey,
+                searchFieldWidth:
+                    isScreenWiderThan(context, _loggingMinVerboseWidth)
+                    ? wideSearchFieldWidth
+                    : defaultSearchFieldWidth,
+                searchController: controller,
+                searchFieldEnabled: controller.filteredData.value.isNotEmpty,
+              ),
             ),
           ),
         ),
         const SizedBox(width: denseSpacing),
         Expanded(
-          child: StandaloneFilterField<LogData>(
-            controller: controller,
-            filteredItem: 'log',
+          child: highlightableWidget(
+            child: StandaloneFilterField<LogData>(
+              key: LoggingScreen.loggingFilterFieldKey,
+              controller: controller,
+              filteredItem: 'log',
+            ),
           ),
         ),
         const SizedBox(width: denseSpacing),
-        CopyToClipboardControl(
-          dataProvider: () => controller.filteredData.value
-              .map((e) => '${e.timestamp} [${e.kind}] ${e.prettyPrinted()}')
-              .joinWithTrailing('\n'),
-          tooltip: 'Copy filtered logs',
+        highlightableWidget(
+          child: CopyToClipboardControl(
+            key: LoggingScreen.loggingCopyButtonKey,
+            dataProvider: () => controller.filteredData.value
+                .map((e) => '${e.timestamp} [${e.kind}] ${e.prettyPrinted()}')
+                .joinWithTrailing('\n'),
+            tooltip: 'Copy filtered logs',
+          ),
         ),
         const SizedBox(width: denseSpacing),
-        SettingsOutlinedButton(
-          gaScreen: gac.logging,
-          gaSelection: gac.loggingSettings,
-          tooltip: 'Logging Settings',
-          onPressed: () {
-            unawaited(
-              showDialog(
-                context: context,
-                builder: (context) => const LoggingSettingsDialog(),
-              ),
-            );
-          },
+        highlightableWidget(
+          child: SettingsOutlinedButton(
+            key: LoggingScreen.loggingSettingsButtonKey,
+            gaScreen: gac.logging,
+            gaSelection: gac.loggingSettings,
+            tooltip: 'Logging Settings',
+            onPressed: () {
+              unawaited(
+                showDialog(
+                  context: context,
+                  builder: (context) => const LoggingSettingsDialog(),
+                ),
+              );
+            },
+          ),
         ),
       ],
     );

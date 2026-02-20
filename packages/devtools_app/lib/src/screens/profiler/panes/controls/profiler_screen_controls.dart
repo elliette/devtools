@@ -10,7 +10,9 @@ import '../../../../shared/framework/screen.dart';
 import '../../../../shared/ui/common_widgets.dart';
 import '../../../../shared/ui/file_import.dart';
 import '../../../../shared/ui/vm_flag_widgets.dart';
+import '../../profiler_screen.dart';
 import '../../profiler_screen_controller.dart';
+import '../../../../shared/ui/utils.dart';
 
 class ProfilerScreenControls extends StatelessWidget {
   const ProfilerScreenControls({
@@ -64,21 +66,27 @@ class _PrimaryControls extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        StartStopRecordingButton(
-          recording: recording,
-          gaScreen: gac.cpuProfiler,
-          gaSelection: recording ? gac.stop : gac.record,
-          minScreenWidthForText: _primaryControlsMinIncludeTextWidth,
-          onPressed: recording
-              ? controller.stopRecording
-              : controller.startRecording,
+        highlightableWidget(
+          child: StartStopRecordingButton(
+            key: ProfilerScreen.profilerRecordingButtonKey,
+            recording: recording,
+            gaScreen: gac.cpuProfiler,
+            gaSelection: recording ? gac.stop : gac.record,
+            minScreenWidthForText: _primaryControlsMinIncludeTextWidth,
+            onPressed: recording
+                ? controller.stopRecording
+                : controller.startRecording,
+          ),
         ),
         const SizedBox(width: denseSpacing),
-        ClearButton(
-          gaScreen: gac.cpuProfiler,
-          gaSelection: gac.clear,
-          minScreenWidthForText: _primaryControlsMinIncludeTextWidth,
-          onPressed: recording ? null : controller.clear,
+        highlightableWidget(
+          child: ClearButton(
+            key: ProfilerScreen.profilerClearButtonKey,
+            gaScreen: gac.cpuProfiler,
+            gaSelection: gac.clear,
+            minScreenWidthForText: _primaryControlsMinIncludeTextWidth,
+            onPressed: recording ? null : controller.clear,
+          ),
         ),
       ],
     );

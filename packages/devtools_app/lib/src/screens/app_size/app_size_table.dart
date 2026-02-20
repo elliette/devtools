@@ -14,6 +14,7 @@ import 'app_size_controller.dart';
 
 class AppSizeAnalysisTable extends StatelessWidget {
   factory AppSizeAnalysisTable({
+    Key? key,
     required TreemapNode rootNode,
     required AppSizeController controller,
   }) {
@@ -34,6 +35,7 @@ class AppSizeAnalysisTable extends StatelessWidget {
     ]);
 
     return AppSizeAnalysisTable._(
+      key: key,
       rootNode,
       treeColumn,
       sizeColumn,
@@ -47,8 +49,9 @@ class AppSizeAnalysisTable extends StatelessWidget {
     this.treeColumn,
     this.sortColumn,
     this.columns,
-    this.controller,
-  );
+    this.controller, {
+    super.key,
+  });
 
   final TreemapNode rootNode;
 
@@ -145,7 +148,7 @@ class _SizePercentageColumn extends ColumnData<TreemapNode> {
 }
 
 class AppSizeDiffTable extends StatelessWidget {
-  factory AppSizeDiffTable({required TreemapNode rootNode}) {
+  factory AppSizeDiffTable({Key? key, required TreemapNode rootNode}) {
     final treeColumn = _NameColumn(currentRootLevel: rootNode.level);
     const diffColumn = _DiffColumn();
     final columns = List<ColumnData<TreemapNode>>.unmodifiable([
@@ -153,15 +156,22 @@ class AppSizeDiffTable extends StatelessWidget {
       diffColumn,
     ]);
 
-    return AppSizeDiffTable._(rootNode, treeColumn, diffColumn, columns);
+    return AppSizeDiffTable._(
+      key: key,
+      rootNode,
+      treeColumn,
+      diffColumn,
+      columns,
+    );
   }
 
   const AppSizeDiffTable._(
     this.rootNode,
     this.treeColumn,
     this.sortColumn,
-    this.columns,
-  );
+    this.columns, {
+    super.key,
+  });
 
   final TreemapNode rootNode;
 

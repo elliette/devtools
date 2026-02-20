@@ -18,6 +18,7 @@ import '../../shared/managers/error_badge_manager.dart';
 import '../../shared/primitives/blocking_action_mixin.dart';
 import '../../shared/ui/common_widgets.dart';
 import '../../shared/ui/search.dart';
+import '../../shared/ui/utils.dart';
 import '../../shared/utils/utils.dart';
 import '../inspector_shared/inspector_controls.dart';
 import '../inspector_shared/inspector_screen.dart';
@@ -52,7 +53,7 @@ class InspectorScreenBodyState extends State<InspectorScreenBody>
 
   SearchTargetType searchTarget = SearchTargetType.widget;
 
-  static const inspectorTreeKey = Key('Inspector Tree');
+
   static const minScreenWidthForText = 900.0;
 
   @override
@@ -116,12 +117,22 @@ class InspectorScreenBodyState extends State<InspectorScreenBody>
       initialFractions: const [0.33, 0.67],
       children: [
         inspectorTree,
-        WidgetDetails(controller: controller),
+        highlightableWidget(
+          child: WidgetDetails(
+            key: InspectorScreen.widgetDetailsKey,
+            controller: controller,
+          ),
+        ),
       ],
     );
     return Column(
       children: <Widget>[
-        InspectorControls(controller: controller),
+        highlightableWidget(
+          child: InspectorControls(
+            key: InspectorScreen.inspectorControlsKey,
+            controller: controller,
+          ),
+        ),
         const SizedBox(height: intermediateSpacing),
         Expanded(child: widgetTrees),
       ],
@@ -134,19 +145,25 @@ class InspectorScreenBodyState extends State<InspectorScreenBody>
         return RoundedOutlinedBorder(
           child: Column(
             children: [
-              InspectorTreeControls(
-                isSearchVisible: searchVisible,
-                constraints: constraints,
-                onRefreshInspectorPressed: _manualInspectorRefresh,
-                onSearchVisibleToggle: _onSearchVisibleToggle,
-                searchFieldBuilder: () =>
-                    StatelessSearchField<InspectorTreeRow>(
+              highlightableWidget(
+                child: InspectorTreeControls(
+                  key: InspectorScreen.inspectorTreeControlsKey,
+                  isSearchVisible: searchVisible,
+                  constraints: constraints,
+                  onRefreshInspectorPressed: _manualInspectorRefresh,
+                  onSearchVisibleToggle: _onSearchVisibleToggle,
+                  searchFieldBuilder: () =>
+                      highlightableWidget(
+                    child: StatelessSearchField<InspectorTreeRow>(
+                      key: InspectorScreen.inspectorSearchFieldKey,
                       controller: _inspectorTreeController,
                       searchFieldEnabled: true,
                       shouldRequestFocus: searchVisible,
                       supportsNavigation: true,
                       onClose: _onSearchVisibleToggle,
                     ),
+                  ),
+                ),
               ),
               Expanded(
                 child: ValueListenableBuilder(
@@ -163,12 +180,14 @@ class InspectorScreenBodyState extends State<InspectorScreenBody>
                             as LinkedHashMap<String, InspectableWidgetError>;
                     return Stack(
                       children: [
-                        InspectorTree(
-                          key: inspectorTreeKey,
-                          controller: controller,
-                          treeController: _inspectorTreeController,
-                          widgetErrors: inspectableErrors,
-                          screenId: InspectorScreen.id,
+                        highlightableWidget(
+                          child: InspectorTree(
+                            key: InspectorScreen.inspectorTreeKey,
+                            controller: controller,
+                            treeController: _inspectorTreeController,
+                            widgetErrors: inspectableErrors,
+                            screenId: InspectorScreen.id,
+                          ),
                         ),
                         if (errors.isNotEmpty)
                           ValueListenableBuilder<int?>(

@@ -13,9 +13,11 @@ import '../../../shared/diagnostics/diagnostics_node.dart';
 import '../../../shared/primitives/utils.dart';
 import '../../../shared/ui/tab.dart';
 import '../inspector_controller.dart';
+import '../../inspector_shared/inspector_screen.dart';
 import '../inspector_data_models.dart';
 import '../layout_explorer/box/box.dart';
 import '../layout_explorer/flex/flex.dart';
+import '../../../shared/ui/utils.dart';
 
 /// Table for the widget's properties, along with its render object and a
 /// flex layout explorer if the widget is part of a flex layout.
@@ -107,11 +109,14 @@ class _DetailsTableState extends State<DetailsTable> {
           tabs: [
             (
               tab: _widgetPropertiesTab,
-              tabView: PropertiesView(
-                properties: widgetProperties,
-                layoutProperties: layoutProperties,
-                controller: widget.controller,
-                scrollController: _widgetPropertiesScrollController,
+              tabView: highlightableWidget(
+                child: PropertiesView(
+                  key: InspectorScreen.inspectorPropertiesViewKey,
+                  properties: widgetProperties,
+                  layoutProperties: layoutProperties,
+                  controller: widget.controller,
+                  scrollController: _widgetPropertiesScrollController,
+                ),
               ),
             ),
             if (renderTabExists)
@@ -125,7 +130,12 @@ class _DetailsTableState extends State<DetailsTable> {
             if (flexExplorerTabExists)
               (
                 tab: _flexExplorerTab,
-                tabView: FlexLayoutExplorerWidget(widget.controller),
+                tabView: highlightableWidget(
+                  child: FlexLayoutExplorerWidget(
+                    widget.controller,
+                    key: InspectorScreen.layoutExplorerKey,
+                  ),
+                ),
               ),
           ],
         );

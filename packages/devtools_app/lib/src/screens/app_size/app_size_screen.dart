@@ -4,6 +4,7 @@
 
 import 'dart:async';
 
+import 'package:devtools_app_shared/service.dart';
 import 'package:devtools_app_shared/ui.dart';
 import 'package:devtools_app_shared/utils.dart';
 import 'package:flutter/material.dart';
@@ -21,6 +22,7 @@ import '../../shared/server/server.dart' as server;
 import '../../shared/ui/common_widgets.dart';
 import '../../shared/ui/file_import.dart';
 import '../../shared/ui/tab.dart';
+import '../../shared/ui/utils.dart';
 import 'app_size_controller.dart';
 import 'app_size_table.dart';
 import 'code_size_attribution.dart';
@@ -43,10 +45,63 @@ class AppSizeScreen extends Screen {
   static const appUnitDropdownKey = Key('App Segment Dropdown');
 
   @visibleForTesting
-  static const analysisViewTreemapKey = Key('Analysis View Treemap');
+  static const analysisViewTreemapKey = PublicDevToolsKey(
+    'appSizeAnalysisViewTreemapKey',
+    'Analysis View Treemap',
+  );
 
   @visibleForTesting
-  static const diffViewTreemapKey = Key('Diff View Treemap');
+  static const diffViewTreemapKey = PublicDevToolsKey(
+    'appSizeDiffViewTreemapKey',
+    'Diff View Treemap',
+  );
+
+  static const appSizeAppUnitDropdownKey = PublicDevToolsKey(
+    'appSizeAppUnitDropdownKey',
+    'App Unit Dropdown',
+  );
+  static const appSizeDiffTypeDropdownKey = PublicDevToolsKey(
+    'appSizeDiffTypeDropdownKey',
+    'Diff Type Dropdown',
+  );
+  static const appSizeClearButtonKey = PublicDevToolsKey(
+    'appSizeClearButtonKey',
+    'App Size Clear Button',
+  );
+  static const appSizeAnalysisViewKey = PublicDevToolsKey(
+    'appSizeAnalysisViewKey',
+    'App Size Analysis View',
+  );
+  static const appSizeDiffViewKey = PublicDevToolsKey(
+    'appSizeDiffViewKey',
+    'App Size Diff View',
+  );
+  static const appSizeAnalysisTableKey = PublicDevToolsKey(
+    'appSizeAnalysisTableKey',
+    'App Size Analysis Table',
+  );
+  static const appSizeDiffTableKey = PublicDevToolsKey(
+    'appSizeDiffTableKey',
+    'App Size Diff Table',
+  );
+  static const appSizeCallGraphKey = PublicDevToolsKey(
+    'appSizeCallGraphKey',
+    'App Size Call Graph',
+  );
+
+  @override
+  List<PublicDevToolsKey> get keys => [
+    analysisViewTreemapKey,
+    diffViewTreemapKey,
+    appSizeAppUnitDropdownKey,
+    appSizeDiffTypeDropdownKey,
+    appSizeClearButtonKey,
+    appSizeAnalysisViewKey,
+    appSizeDiffViewKey,
+    appSizeAnalysisTableKey,
+    appSizeDiffTableKey,
+    appSizeCallGraphKey,
+  ];
 
   static const loadingMessage =
       'Loading data...\nPlease do not refresh or leave this page.';
@@ -191,31 +246,38 @@ class _AppSizeBodyState extends State<AppSizeBody>
                 ),
                 actions: [
                   if (isDeferredApp)
-                    AppUnitDropdown(
-                      value: controller.selectedAppUnit.value,
-                      onChanged: (newAppUnit) {
-                        setState(() {
-                          controller.changeSelectedAppUnit(
-                            newAppUnit!,
-                            currentTab.key!,
-                          );
-                        });
-                      },
+                    highlightableWidget(
+                      child: AppUnitDropdown(
+                        value: controller.selectedAppUnit.value,
+                        onChanged: (newAppUnit) {
+                          setState(() {
+                            controller.changeSelectedAppUnit(
+                              newAppUnit!,
+                              currentTab.key!,
+                            );
+                          });
+                        },
+                      ),
                     ),
                   if (currentTab.key == AppSizeScreen.diffTabKey) ...[
                     const SizedBox(width: defaultSpacing),
-                    DiffTreeTypeDropdown(
-                      value: controller.activeDiffTreeType.value,
-                      onChanged: (newDiffTreeType) {
-                        controller.changeActiveDiffTreeType(newDiffTreeType!);
-                      },
+                    highlightableWidget(
+                      child: DiffTreeTypeDropdown(
+                        value: controller.activeDiffTreeType.value,
+                        onChanged: (newDiffTreeType) {
+                          controller.changeActiveDiffTreeType(newDiffTreeType!);
+                        },
+                      ),
                     ),
                   ],
                   const SizedBox(width: defaultSpacing),
-                  ClearButton(
-                    gaScreen: gac.appSize,
-                    gaSelection: gac.clear,
-                    onPressed: () => controller.clear(currentTab.key!),
+                  highlightableWidget(
+                    child: ClearButton(
+                      key: AppSizeScreen.appSizeClearButtonKey,
+                      gaScreen: gac.appSize,
+                      gaSelection: gac.clear,
+                      onPressed: () => controller.clear(currentTab.key!),
+                    ),
                   ),
                 ],
               ),
@@ -223,7 +285,18 @@ class _AppSizeBodyState extends State<AppSizeBody>
                 child: TabBarView(
                   physics: defaultTabBarViewPhysics,
                   controller: _tabController,
-                  children: const [AnalysisView(), DiffView()],
+                  children: [
+                    highlightableWidget(
+                      child: const AnalysisView(
+                        key: AppSizeScreen.appSizeAnalysisViewKey,
+                      ),
+                    ),
+                    highlightableWidget(
+                      child: const DiffView(
+                        key: AppSizeScreen.appSizeDiffViewKey,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -352,9 +425,12 @@ class _AnalysisViewState extends State<AnalysisView> with AutoDisposeMixin {
                   treemapKey: AppSizeScreen.analysisViewTreemapKey,
                   treemapRoot: analysisRootLocal,
                   onRootChangedCallback: controller.changeAnalysisRoot,
-                  analysisTable: AppSizeAnalysisTable(
-                    rootNode: analysisRootLocal.root,
-                    controller: controller,
+                  analysisTable: highlightableWidget(
+                    child: AppSizeAnalysisTable(
+                      key: AppSizeScreen.appSizeAnalysisTableKey,
+                      rootNode: analysisRootLocal.root,
+                      controller: controller,
+                    ),
                   ),
                   callGraphRoot: controller.analysisCallGraphRoot.value,
                 ),
@@ -456,7 +532,12 @@ class _DiffViewState extends State<DiffView> with AutoDisposeMixin {
                   treemapKey: AppSizeScreen.diffViewTreemapKey,
                   treemapRoot: diffRootLocal,
                   onRootChangedCallback: controller.changeDiffRoot,
-                  analysisTable: AppSizeDiffTable(rootNode: diffRootLocal),
+                  analysisTable: highlightableWidget(
+                    child: AppSizeDiffTable(
+                      key: AppSizeScreen.appSizeDiffTableKey,
+                      rootNode: diffRootLocal,
+                    ),
+                  ),
                   callGraphRoot: controller.diffCallGraphRoot.value,
                 ),
         ),
@@ -560,13 +641,15 @@ class _AppSizeView extends StatelessWidget {
                   LayoutBuilder(
                     key: treemapKey,
                     builder: (context, constraints) {
-                      return Treemap.fromRoot(
-                        rootNode: treemapRoot,
-                        levelsVisible: 2,
-                        isOutermostLevel: true,
-                        width: constraints.maxWidth,
-                        height: constraints.maxHeight,
-                        onRootChangedCallback: onRootChangedCallback,
+                      return highlightableWidget(
+                        child: Treemap.fromRoot(
+                          rootNode: treemapRoot,
+                          levelsVisible: 2,
+                          isOutermostLevel: true,
+                          width: constraints.maxWidth,
+                          height: constraints.maxHeight,
+                          onRootChangedCallback: onRootChangedCallback,
+                        ),
                       );
                     },
                   ),
@@ -577,8 +660,11 @@ class _AppSizeView extends StatelessWidget {
                         if (callGraphRoot != null)
                           Flexible(
                             child: OutlineDecoration.onlyLeft(
-                              child: CallGraphWithDominators(
-                                callGraphRoot: callGraphRoot!,
+                              child: highlightableWidget(
+                                child: CallGraphWithDominators(
+                                  key: AppSizeScreen.appSizeCallGraphKey,
+                                  callGraphRoot: callGraphRoot!,
+                                ),
                               ),
                             ),
                           ),
