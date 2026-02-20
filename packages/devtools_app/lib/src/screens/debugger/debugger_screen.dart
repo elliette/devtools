@@ -50,6 +50,31 @@ class DebuggerScreen extends Screen {
     'Debugger Code View',
   );
 
+  static const debuggerControlsKey = PublicDevToolsKey(
+    'debuggerControlsKey',
+    'Debugger Controls',
+  );
+
+  static const debuggerProgramExplorerKey = PublicDevToolsKey(
+    'debuggerProgramExplorerKey',
+    'Debugger Program Explorer',
+  );
+
+  static const debuggerCallStackKey = PublicDevToolsKey(
+    'debuggerCallStackKey',
+    'Debugger Call Stack',
+  );
+
+  static const debuggerVariablesKey = PublicDevToolsKey(
+    'debuggerVariablesKey',
+    'Debugger Variables',
+  );
+
+  static const debuggerBreakpointsKey = PublicDevToolsKey(
+    'debuggerBreakpointsKey',
+    'Debugger Breakpoints',
+  );
+
   @override
   bool showConsole(EmbedMode embedMode) => true;
 
@@ -83,7 +108,15 @@ class DebuggerScreen extends Screen {
       const _DebuggerScreenBodyWrapper();
 
   @override
-  List<PublicDevToolsKey> get keys => [DebuggerScreen.debuggerCodeViewKey];
+  @override
+  List<PublicDevToolsKey> get keys => [
+    DebuggerScreen.debuggerCodeViewKey,
+    DebuggerScreen.debuggerControlsKey,
+    DebuggerScreen.debuggerProgramExplorerKey,
+    DebuggerScreen.debuggerCallStackKey,
+    DebuggerScreen.debuggerVariablesKey,
+    DebuggerScreen.debuggerBreakpointsKey,
+  ];
 
   @override
   Widget buildStatus(BuildContext context) {
@@ -223,7 +256,19 @@ class DebuggerWindows extends StatelessWidget {
               roundedTopBorder: false,
             ),
           ],
-          children: const [CallStack(), Variables(), Breakpoints()],
+          children: [
+            highlightableWidget(
+              child: const CallStack(key: DebuggerScreen.debuggerCallStackKey),
+            ),
+            highlightableWidget(
+              child: const Variables(key: DebuggerScreen.debuggerVariablesKey),
+            ),
+            highlightableWidget(
+              child: const Breakpoints(
+                key: DebuggerScreen.debuggerBreakpointsKey,
+              ),
+            ),
+          ],
         );
       },
     );
@@ -275,7 +320,11 @@ class DebuggerSourceAndControls extends StatelessWidget {
     final codeViewController = controller.codeViewController;
     return Column(
       children: [
-        const DebuggingControls(),
+        highlightableWidget(
+          child: const DebuggingControls(
+            key: DebuggerScreen.debuggerControlsKey,
+          ),
+        ),
         const SizedBox(height: intermediateSpacing),
         Expanded(
           child: ValueListenableBuilder<bool>(
@@ -292,11 +341,14 @@ class DebuggerSourceAndControls extends StatelessWidget {
                     child!,
                     RoundedOutlinedBorder(
                       clip: true,
-                      child: ProgramExplorer(
-                        controller:
-                            codeViewController.programExplorerController,
-                        onNodeSelected: (node) =>
-                            _onNodeSelected(context, node),
+                      child: highlightableWidget(
+                        child: ProgramExplorer(
+                          key: DebuggerScreen.debuggerProgramExplorerKey,
+                          controller:
+                              codeViewController.programExplorerController,
+                          onNodeSelected: (node) =>
+                              _onNodeSelected(context, node),
+                        ),
                       ),
                     ),
                   ],
