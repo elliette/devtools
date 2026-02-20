@@ -209,7 +209,7 @@ class DevToolsScaffoldState extends State<DevToolsScaffold>
     }
 
     _currentScreen = widget.screens[_tabController!.index];
-    _updateVisibleKeys(_currentScreen);
+    // _updateVisibleKeys(_currentScreen);
     _tabController!.addListener(() {
       final screen = widget.screens[_tabController!.index];
 
@@ -246,7 +246,7 @@ class DevToolsScaffoldState extends State<DevToolsScaffold>
         _currentScreen = screen;
       });
 
-      _updateVisibleKeys(screen);
+      // _updateVisibleKeys(screen);
 
       // Send the page change info to the framework controller (it can then
       // send it on to the devtools server, if one is connected).
@@ -299,11 +299,11 @@ class DevToolsScaffoldState extends State<DevToolsScaffold>
     }
   }
 
-  void _updateVisibleKeys(Screen screen) {
-    final screenKeys = screen.keys;
-    automationManager.clearVisibleKeys();
-    automationManager.visibleKeys = screenKeys;
-  }
+  // void _updateVisibleKeys(Map<String, List<Key>> screenKeys) {
+
+  //   automationManager.clearVisibleKeys();
+  //   automationManager.visibleKeys = screenKeys;
+  // }
 
   @override
   Widget build(BuildContext context) {

@@ -187,9 +187,12 @@ class DTDManager {
 
     final paramMap = params.asMap.cast<String, Object?>();
     final widgetId = paramMap['widgetId'] as String?;
+    final screenId = paramMap['screenId'] as String?;
 
-    if (widgetId != null) {
-      automationManager.highlightWidget(widgetId);
+    if (screenId != null && widgetId != null) {
+      automationManager.switchToScreen(screenId);
+      await Future.delayed(const Duration(seconds: 2));
+      automationManager.highlightWidget(screenId, widgetId);
     }
 
     return {
@@ -197,7 +200,8 @@ class DTDManager {
     };
   }
 
-  Future<Map<String, Object?>> _handleGetVisibleWidgets(Parameters _) async {
+  Future<Map<String, Object?>> _handleGetVisibleWidgets(
+      Parameters params) async {
     final automationManager = _automationManager;
     if (automationManager == null) {
       return {
@@ -205,10 +209,22 @@ class DTDManager {
         'widgets': [],
       };
     }
-    print('returning widget list ${automationManager.getVisibleWidgets()}');
+
+    final paramMap = params.asMap.cast<String, Object?>();
+    final screenId = paramMap['screenId'] as String?;
+
+    if (screenId != null) {
+      print(
+          'returning widget list ${automationManager.getVisibleWidgets(screenId)}');
+      return {
+        'type': 'Success', // Type is required by DTD.
+        'widgets': automationManager.getVisibleWidgets(screenId),
+      };
+    }
+
     return {
       'type': 'Success', // Type is required by DTD.
-      'widgets': automationManager.getVisibleWidgets(),
+      'widgets': [],
     };
   }
 
@@ -249,7 +265,7 @@ class DTDManager {
 
     if (screenId != null) {
       automationManager.switchToScreen(screenId);
-      await Future.delayed(const Duration(seconds: 3));
+      await Future.delayed(const Duration(seconds: 2));
       final rawImage = await automationManager.captureScreenshot(screenId);
       return {
         'type': 'Success', // Type is required by DTD.

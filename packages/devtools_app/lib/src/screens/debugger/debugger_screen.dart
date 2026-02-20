@@ -4,6 +4,7 @@
 
 import 'dart:async';
 
+import 'package:devtools_app_shared/service.dart';
 import 'package:devtools_app_shared/shared.dart';
 import 'package:devtools_app_shared/ui.dart';
 import 'package:devtools_app_shared/utils.dart';
@@ -44,7 +45,10 @@ class DebuggerScreen extends Screen {
 
   static final id = ScreenMetaData.debugger.id;
 
-  static const debuggerCodeViewKey = Key('debuggerCodeViewKey');
+  static const debuggerCodeViewKey = PublicDevToolsKey(
+    'debuggerCodeViewKey',
+    'Debugger Code View',
+  );
 
   @override
   bool showConsole(EmbedMode embedMode) => true;
@@ -79,7 +83,7 @@ class DebuggerScreen extends Screen {
       const _DebuggerScreenBodyWrapper();
 
   @override
-  List<Key> get keys => [DebuggerScreen.debuggerCodeViewKey];
+  List<PublicDevToolsKey> get keys => [DebuggerScreen.debuggerCodeViewKey];
 
   @override
   Widget buildStatus(BuildContext context) {
@@ -323,7 +327,7 @@ class DebuggerSourceAndControls extends StatelessWidget {
                 }
 
                 return highlightableWidget(
-                  CodeView(
+                  child: CodeView(
                     key: DebuggerScreen.debuggerCodeViewKey,
                     codeViewController: codeViewController,
                     debuggerController: controller,
@@ -333,7 +337,6 @@ class DebuggerSourceAndControls extends StatelessWidget {
                       breakpointManager.toggleBreakpoint(script, line),
                     ),
                   ),
-                  widgetKey: DebuggerScreen.debuggerCodeViewKey,
                 );
               },
             ),

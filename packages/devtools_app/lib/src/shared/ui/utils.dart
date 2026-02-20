@@ -5,6 +5,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:devtools_app_shared/service.dart';
 import 'package:devtools_app_shared/ui.dart';
 import 'package:devtools_app_shared/utils.dart';
 import 'package:flutter/material.dart';
@@ -302,16 +303,17 @@ final class ScreenSize {
   }
 }
 
-Widget highlightableWidget(Widget widget, {required Key widgetKey}) {
-  return ValueListenableBuilder<Key?>(
+Widget highlightableWidget({required Widget child}) {
+  assert(child.key is PublicDevToolsKey);
+  return ValueListenableBuilder<PublicDevToolsKey?>(
     valueListenable: automationManager.highlightedWidget,
     builder: (context, highlightedWidgetKey, _) {
-      if (highlightedWidgetKey != widgetKey) {
-        return widget;
+      if (highlightedWidgetKey != child.key) {
+        return child;
       }
       return Container(
         decoration: BoxDecoration(border: Border.all(color: Colors.blue)),
-        child: widget,
+        child: child,
       );
     },
   );

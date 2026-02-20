@@ -8,6 +8,7 @@ library;
 import 'dart:async';
 
 import 'package:collection/collection.dart';
+import 'package:devtools_app_shared/service.dart';
 import 'package:devtools_app_shared/shared.dart';
 import 'package:devtools_app_shared/ui.dart';
 import 'package:devtools_app_shared/utils.dart';
@@ -60,6 +61,7 @@ import 'shared/primitives/query_parameters.dart';
 import 'shared/primitives/utils.dart';
 import 'shared/ui/common_widgets.dart';
 import 'shared/ui/hover.dart';
+import 'shared/ui/utils.dart';
 import 'shared/utils/focus_utils.dart';
 import 'shared/utils/utils.dart';
 import 'standalone_ui/standalone_screen.dart';
@@ -122,6 +124,7 @@ class DevToolsAppState extends State<DevToolsApp> with AutoDisposeMixin {
 
   @override
   void initState() {
+    debugPrint('init app state!');
     super.initState();
     setGlobal(GlobalKey<NavigatorState>, routerDelegate.navigatorKey);
 
@@ -161,6 +164,7 @@ class DevToolsAppState extends State<DevToolsApp> with AutoDisposeMixin {
       // the connected state.
       screenControllers.disposeConnectedControllers();
       _initScreenControllers(connected: connectionState.connected);
+      _updateVisibleKeys();
     });
 
     // TODO(https://github.com/flutter/devtools/issues/6018): Once
@@ -195,6 +199,19 @@ class DevToolsAppState extends State<DevToolsApp> with AutoDisposeMixin {
 
     // Workaround for https://github.com/flutter/flutter/issues/155265.
     setUpTextFieldFocusFixHandler();
+
+
+
+    _updateVisibleKeys();
+  }
+
+  void _updateVisibleKeys() {
+    final screenKeys = <String, List<PublicDevToolsKey>>{};
+    _visibleScreens().forEach((screen) {
+      screenKeys[screen.screenId] = screen.keys;
+    });
+    debugPrint('setting visible keys: $screenKeys');
+    automationManager.visibleKeys = screenKeys;
   }
 
   @override

@@ -39,29 +39,29 @@ class AutomationManager {
     return rawImage;
   }
 
-  ValueListenable<Key?> get highlightedWidget => _highlightedWidget;
-  final _highlightedWidget = ValueNotifier<Key?>(null);
+  ValueListenable<PublicDevToolsKey?> get highlightedWidget =>
+      _highlightedWidget;
+  final _highlightedWidget = ValueNotifier<PublicDevToolsKey?>(null);
 
-  set visibleKeys(List<Key> keys) {
-    for (final key in keys) {
-      final id = _generateId();
-      _visibleKeys.putIfAbsent(id, () => key);
-    }
+  set visibleKeys(Map<String, List<PublicDevToolsKey>> keys) {
+    _visibleKeys.clear();
+    _visibleKeys.addAll(keys);
   }
 
   void clearVisibleKeys() {
     _visibleKeys.clear();
   }
 
-  final _visibleKeys = <String, Key>{};
+  final _visibleKeys = <String, List<PublicDevToolsKey>>{};
 
-  List<String> getVisibleWidgets() {
-    return _visibleKeys.keys.toList();
+  List<String> getVisibleWidgets(String screenId) {
+    return _visibleKeys[screenId]?.map((k) => k.publicName).toList() ?? [];
   }
 
-  void highlightWidget(String keyId) {
-    final key = _visibleKeys[keyId];
-    if (key != null) {
+  void highlightWidget(String screenId, String keyName) {
+    final keys = _visibleKeys[screenId];
+    if (keys != null) {
+      final key = keys.firstWhere((k) => k.publicName == keyName);
       _highlightedWidget.value = key;
     }
   }
@@ -69,8 +69,37 @@ class AutomationManager {
   void clearHighlight() {
     _highlightedWidget.value = null;
   }
+}
 
-  String _generateId() {
-    return DateTime.now().millisecondsSinceEpoch.toString();
+/// A key that exposes a [publicName] in addition to a [value].
+class PublicDevToolsKey extends LocalKey {
+  /// Creates a key that delegates its [operator==] to the given [value] and [publicName].
+  const PublicDevToolsKey(this.value, this.publicName);
+
+  /// The value of the key.
+  final String value;
+
+  /// The public name of the key.
+  final String publicName;
+
+  /// Returns the [publicName].
+  String get name => publicName;
+
+  @override
+  bool operator ==(Object other) {
+    if (other.runtimeType != runtimeType) {
+      return false;
+    }
+    return other is PublicDevToolsKey &&
+        other.value == value &&
+        other.publicName == publicName;
+  }
+
+  @override
+  int get hashCode => Object.hash(value, publicName);
+
+  @override
+  String toString() {
+    return 'PublicDevToolsKey($value, $publicName)';
   }
 }
