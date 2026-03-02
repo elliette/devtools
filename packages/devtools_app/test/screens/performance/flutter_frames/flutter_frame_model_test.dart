@@ -47,5 +47,20 @@ void main() {
         isFalse,
       );
     });
+
+    group('json', () {
+      test('includes timeline events when requested', () {
+        final json = testFrameWithShaderJank.json(includeTimelineEvents: true);
+        expect(json['timelineEvents'], isNotNull);
+        final timelineEvents = json['timelineEvents'] as Map<String, Object?>;
+        expect(timelineEvents['ui'], isNotNull);
+        expect(timelineEvents['raster'], isNotNull);
+      });
+
+      test('excludes timeline events by default', () {
+        final json = testFrameWithShaderJank.json();
+        expect(json['timelineEvents'], isNull);
+      });
+    });
   });
 }

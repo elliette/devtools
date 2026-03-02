@@ -119,6 +119,18 @@ class PerformanceController extends DevToolsScreenController
 
   Future<void> _initHelper() async {
     await _applyToFeatureControllersAsync((c) => c.init());
+
+    final automationManager = globals[AutomationManager] as AutomationManager?;
+    automationManager?.registerPerformanceDataProvider(({
+      bool includePerfettoTrace = true,
+      bool onlyJank = false,
+    }) async {
+      return _preparePerformanceData(
+        includePerfettoTrace: includePerfettoTrace,
+        onlyJank: onlyJank,
+      );
+    });
+
     if (!offlineDataController.showingOfflineData.value) {
       await serviceConnection.serviceManager.onServiceAvailable;
 
@@ -276,16 +288,47 @@ class PerformanceController extends DevToolsScreenController
     super.dispose();
   }
 
-  @override
-  OfflineScreenData prepareOfflineScreenData() => OfflineScreenData(
-    screenId: PerformanceScreen.id,
-    data: OfflinePerformanceData(
-      perfettoTraceBinary: timelineEventsController.fullPerfettoTrace,
-      frames: flutterFramesController.flutterFrames.value,
+  Map<String, Object?> _preparePerformanceData({
+    bool includePerfettoTrace = true,
+    bool onlyJank = false,
+  }) {
+    var frames = flutterFramesController.flutterFrames.value;
+    if (onlyJank) {
+      final jankyFrames = <FlutterFrame>[];
+      for (int i = 0; i < frames.length; i++) {
+        final frame = frames[i];
+        if (frame.isJanky(flutterFramesController.displayRefreshRate.value)) {
+          jankyFrames.add(frame);
+          // Add context frames (before and after)
+          if (i > 0) jankyFrames.add(frames[i - 1]);
+          if (i < frames.length - 1) jankyFrames.add(frames[i + 1]);
+        }
+      }
+      // Deduplicate and sort frames
+      final uniqueFrames = jankyFrames.toSet().toList()
+        ..sort((a, b) => a.id.compareTo(b.id));
+      frames = uniqueFrames;
+    }
+
+    final offlineData = OfflinePerformanceData(
+      perfettoTraceBinary: includePerfettoTrace
+          ? timelineEventsController.fullPerfettoTrace
+          : null,
+      frames: frames,
       selectedFrame: flutterFramesController.selectedFrame.value,
       rebuildCountModel: rebuildCountModel,
       displayRefreshRate: flutterFramesController.displayRefreshRate.value,
-    ).toJson(),
+    );
+
+    return offlineData.toJson(
+      includeTimelineEvents: !includePerfettoTrace || onlyJank,
+    );
+  }
+
+  @override
+  OfflineScreenData prepareOfflineScreenData() => OfflineScreenData(
+    screenId: PerformanceScreen.id,
+    data: _preparePerformanceData(onlyJank: true, includePerfettoTrace: false),
   );
 
   @override

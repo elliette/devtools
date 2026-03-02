@@ -59,7 +59,6 @@ class PerfettoTrackDescriptorEvent extends _PerfettoTracePacket {
 /// A data class to represent a [TrackEvent] event received a perfetto [Trace].
 class PerfettoTrackEvent extends _PerfettoTracePacket
     implements Comparable<PerfettoTrackEvent> {
-  PerfettoTrackEvent._(this.event, this.timestampMicros) : super();
 
   factory PerfettoTrackEvent.fromPacket(TracePacket tracePacket) {
     assert(tracePacket.hasTrackEvent());
@@ -70,8 +69,61 @@ class PerfettoTrackEvent extends _PerfettoTracePacket
     // around 100 days, so it is improbable for protos sent by the VM
     // Service to contain values larger than 2^52 nanoseconds.
     final timestampMicros = tracePacket.timestamp.toInt() ~/ 1000;
-    return PerfettoTrackEvent._(tracePacket.trackEvent, timestampMicros);
+    final event = tracePacket.trackEvent;
+    final args = Map<String, Object?>.fromEntries(
+      <MapEntry<String, Object?>?>[
+        ...event.debugAnnotations.map((a) {
+          final hasStringValue = a.hasStringValue();
+          if (hasStringValue || a.hasLegacyJsonValue()) {
+            return MapEntry(
+              a.name,
+              hasStringValue ? a.stringValue : a.legacyJsonValue,
+            );
+          }
+          return null;
+        }),
+      ].nonNulls,
+    );
+    return PerfettoTrackEvent._(
+      event: event,
+      timestampMicros: timestampMicros,
+      name: event.name,
+      type: PerfettoEventType.from(event.type),
+      args: args,
+      categories: event.categories,
+      trackId: event.trackUuid,
+    );
   }
+
+  @visibleForTesting
+  factory PerfettoTrackEvent.test({
+    required String name,
+    required int timestampMicros,
+    PerfettoEventType? type,
+    Map<String, Object?> args = const {},
+    List<String> categories = const [],
+    Int64? trackId,
+  }) {
+    return PerfettoTrackEvent._(
+      event: TrackEvent(),
+      timestampMicros: timestampMicros,
+      name: name,
+      type: type,
+      args: args,
+      categories: categories,
+      trackId: trackId ?? Int64.ZERO,
+    );
+  }
+
+  PerfettoTrackEvent._({
+    required this.event,
+    required this.timestampMicros,
+    required this.name,
+    required this.type,
+    required this.args,
+    required this.categories,
+    required this.trackId,
+  }) : super();
 
   static const devtoolsTagArg = 'devtoolsTag';
   static const frameNumberArg = 'frame_number';
@@ -84,31 +136,18 @@ class PerfettoTrackEvent extends _PerfettoTracePacket
   /// received in.
   final int timestampMicros;
 
-  String get name => event.name;
+  final String name;
 
-  late final args = Map<String, Object?>.fromEntries(
-    <MapEntry<String, Object?>?>[
-      ...event.debugAnnotations.map((a) {
-        final hasStringValue = a.hasStringValue();
-        if (hasStringValue || a.hasLegacyJsonValue()) {
-          return MapEntry(
-            a.name,
-            hasStringValue ? a.stringValue : a.legacyJsonValue,
-          );
-        }
-        return null;
-      }),
-    ].nonNulls,
-  );
+  final Map<String, Object?> args;
 
-  List<String> get categories => event.categories;
+  final List<String> categories;
 
   /// The id of the Perfetto track that this event is included in.
-  Int64 get trackId => event.trackUuid;
+  final Int64 trackId;
 
   /// Describes the type of this track event as defined by the Perfetto tracing
   /// API (slice begin, slice end, or instant).
-  PerfettoEventType? get type => PerfettoEventType.from(event.type);
+  final PerfettoEventType? type;
 
   /// The inferred [TimelineEventType] for this track event, as defined by
   /// values that are relevant for Flutter timeline events in DevTools
@@ -147,6 +186,14 @@ class PerfettoTrackEvent extends _PerfettoTracePacket
     final compare = timestampMicros.compareTo(other.timestampMicros);
     return compare != 0 ? compare : _creationId.compareTo(other._creationId);
   }
+
+  Map<String, Object?> toJson() => {
+    'name': name,
+    'timestampMicros': timestampMicros,
+    'trackId': trackId.toString(),
+    'type': type?.name,
+    'args': args,
+  };
 
   @override
   String toString() =>

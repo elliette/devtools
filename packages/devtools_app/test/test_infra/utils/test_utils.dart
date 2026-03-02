@@ -7,10 +7,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:devtools_app/devtools_app.dart';
-import 'package:devtools_test/devtools_test.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/mockito.dart';
 
 /// Creates a [FlutterTimelineEvent] for testing that mocks the
 /// contained [PerfettoTrackEvent]s.
@@ -22,28 +20,31 @@ FlutterTimelineEvent testTimelineEvent({
   required Map<String, Object?> args,
   required Map<String, Object?> endArgs,
 }) {
-  final mockFirstTrackEvent = MockPerfettoTrackEvent();
-  when(mockFirstTrackEvent.name).thenReturn(name);
-  when(mockFirstTrackEvent.timelineEventType).thenReturn(type);
-  when(mockFirstTrackEvent.args).thenReturn(args);
-  when(mockFirstTrackEvent.timestampMicros).thenReturn(startMicros);
-  final frameNumberAsString =
-      args[PerfettoTrackEvent.frameNumberArg] as String?;
-  final frameNumber = frameNumberAsString != null
-      ? int.tryParse(frameNumberAsString)
-      : null;
-  when(mockFirstTrackEvent.flutterFrameNumber).thenReturn(frameNumber);
-  final devToolsTag = args[PerfettoTrackEvent.devtoolsTagArg] as String?;
-  final isShaderEvent = devToolsTag == PerfettoTrackEvent.shadersArg;
-  when(mockFirstTrackEvent.isShaderEvent).thenReturn(isShaderEvent);
+  final firstTrackEvent = PerfettoTrackEvent.test(
+    name: name,
+    type: PerfettoEventType.sliceBegin,
+    timestampMicros: startMicros,
+    args: args,
+  );
+  // Manually set the inferred type since extracting it from args/name happens
+  // in the constructor only if we pass the real event, but we are passing dummy event.
+  // Wait, my `PerfettoTrackEvent.test` sets `this.type` passed in argument.
+  // But `timelineEventType` (Mutable? No, it's a field in `PerfettoTrackEvent` but it is not final in my Refactor?
+  // Let's check `PerfettoTrackEvent` definition again.
+  // `TimelineEventType? timelineEventType;` is a public field? Yes.
+  // So I can set it.
+  firstTrackEvent.timelineEventType = type;
 
-  final mockEndTrackEvent = MockPerfettoTrackEvent();
-  when(mockEndTrackEvent.timelineEventType).thenReturn(type);
-  when(mockEndTrackEvent.args).thenReturn(endArgs);
-  when(mockEndTrackEvent.timestampMicros).thenReturn(endMicros);
+  final endTrackEvent = PerfettoTrackEvent.test(
+    name: name,
+    type: PerfettoEventType.sliceEnd,
+    timestampMicros: endMicros,
+    args: endArgs,
+  );
+  endTrackEvent.timelineEventType = type;
 
-  return FlutterTimelineEvent(mockFirstTrackEvent)
-    ..addEndTrackEvent(mockEndTrackEvent);
+  return FlutterTimelineEvent(firstTrackEvent)..addEndTrackEvent(endTrackEvent);
+
 }
 
 /// Overrides the system's clipboard behaviour so that strings sent to the
