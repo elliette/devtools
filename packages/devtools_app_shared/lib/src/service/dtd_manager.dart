@@ -154,7 +154,40 @@ class DTDManager {
       } on RpcException catch (e) {
         if (e.code != RpcErrorCodes.kServiceAlreadyRegistered) rethrow;
       }
+
+      try {
+        await dtd.registerService(
+          'DartDevTools',
+          'getPerformanceData',
+          _handleGetPerformanceData,
+        );
+      } on RpcException catch (e) {
+        if (e.code != RpcErrorCodes.kServiceAlreadyRegistered) rethrow;
+      }
     }
+  }
+
+  Future<Map<String, Object?>> _handleGetPerformanceData(
+      Parameters params) async {
+    final automationManager = _automationManager;
+    if (automationManager == null) {
+      return {
+        'type': 'Success', // Type is required by DTD.
+        'data': {},
+      };
+    }
+
+    final includePerfettoTrace =
+        params.asMap['includePerfettoTrace'] as bool? ?? false;
+    final onlyJank = params.asMap['onlyJank'] as bool? ?? true;
+
+    return {
+      'type': 'Success', // Type is required by DTD.
+      'data': await automationManager.getPerformanceData(
+        includePerfettoTrace: includePerfettoTrace,
+        onlyJank: onlyJank,
+      ),
+    };
   }
 
   Future<Map<String, Object?>> _handleScreenSwitch(Parameters params) async {

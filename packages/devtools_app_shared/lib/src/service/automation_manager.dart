@@ -12,6 +12,33 @@ class AutomationManager {
 
   final _screenIdToScreenshotController = <String, ScreenshotController>{};
 
+  Future<Map<String, Object?>> Function({
+    bool includePerfettoTrace,
+    bool onlyJank,
+  })? _performanceDataProvider;
+
+  void registerPerformanceDataProvider(
+    Future<Map<String, Object?>> Function({
+      bool includePerfettoTrace,
+      bool onlyJank,
+    }) provider,
+  ) {
+    _performanceDataProvider = provider;
+  }
+
+  Future<Map<String, Object?>> getPerformanceData({
+    bool includePerfettoTrace = false,
+    bool onlyJank = true,
+  }) async {
+    if (_performanceDataProvider != null) {
+      return await _performanceDataProvider!(
+        includePerfettoTrace: includePerfettoTrace,
+        onlyJank: onlyJank,
+      );
+    }
+    return {};
+  }
+
 
   ScreenshotController getScreenshotControllerForScreen(String screenId) {
     if (_screenIdToScreenshotController.containsKey(screenId)) {
