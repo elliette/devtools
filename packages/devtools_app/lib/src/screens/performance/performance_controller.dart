@@ -285,7 +285,7 @@ class PerformanceController extends DevToolsScreenController
       selectedFrame: flutterFramesController.selectedFrame.value,
       rebuildCountModel: rebuildCountModel,
       displayRefreshRate: flutterFramesController.displayRefreshRate.value,
-    ).toJson(),
+    ).toJson(includeTimelineEvents: true),
   );
 
   @override

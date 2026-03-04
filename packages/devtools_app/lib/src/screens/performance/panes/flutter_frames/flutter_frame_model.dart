@@ -137,13 +137,19 @@ class FlutterFrame {
     return 1 / displayRefreshRate * 1000;
   }
 
-  Map<String, Object?> get json => {
+  Map<String, Object?> json({bool includeTimelineEvents = false}) => {
     numberKey: id,
     startTimeKey: timeFromFrameTiming.start,
     elapsedKey: timeFromFrameTiming.duration.inMicroseconds,
     buildKey: buildTime.inMicroseconds,
     rasterKey: rasterTime.inMicroseconds,
     vsyncOverheadKey: vsyncOverheadTime.inMicroseconds,
+    if (includeTimelineEvents) ...{
+      'timelineEvents': {
+        'ui': timelineEventData.uiEvent?.toJson(),
+        'raster': timelineEventData.rasterEvent?.toJson(),
+      },
+    },
   };
 
   @override
@@ -167,7 +173,7 @@ class FlutterFrame {
   }
 
   FlutterFrame shallowCopy() {
-    return FlutterFrame.fromJson(json);
+    return FlutterFrame.fromJson(json());
   }
 }
 

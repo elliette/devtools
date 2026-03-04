@@ -58,9 +58,13 @@ class OfflinePerformanceData {
 
   bool get isEmpty => perfettoTraceBinary == null;
 
-  Map<String, Object?> toJson() => {
+  Map<String, Object?> toJson({bool includeTimelineEvents = false}) => {
     traceBinaryKey: perfettoTraceBinary,
-    flutterFramesKey: frames.map((frame) => frame.json).toList(),
+    flutterFramesKey: frames
+        .map(
+          (frame) => frame.json(includeTimelineEvents: includeTimelineEvents),
+        )
+        .toList(),
     selectedFrameIdKey: selectedFrame?.id,
     displayRefreshRateKey: displayRefreshRate,
     rebuildCountModelKey: rebuildCountModel?.toJson(),
@@ -166,6 +170,14 @@ class FlutterTimelineEvent extends TreeNode<FlutterTimelineEvent> {
     format(buf, '  ');
     return buf.toString();
   }
+
+  Map<String, Object?> toJson() => {
+    'name': name,
+    'type': type?.name,
+    'time': {'start': time.start, 'end': time.end},
+    'trackEvents': trackEvents.map((event) => event.toJson()).toList(),
+    'children': children.map((child) => child.toJson()).toList(),
+  };
 
   void writeTrackEventsToBuffer(StringBuffer buf) {
     final begin = trackEvents.first;

@@ -140,6 +140,14 @@ class PerfettoTrackEvent extends _PerfettoTracePacket
   // Whether this track event is related to Shader compilation.
   bool get isShaderEvent => args[devtoolsTagArg] == shadersArg;
 
+  Map<String, Object?> toJson() => {
+    'name': name,
+    'timestampMicros': timestampMicros,
+    'trackId': trackId.toString(),
+    'type': type?.name,
+    'args': args,
+  };
+
   @override
   int compareTo(PerfettoTrackEvent other) {
     // Order events based on their timestamps. If the events share a timestamp,
