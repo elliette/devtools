@@ -279,13 +279,18 @@ class PerformanceController extends DevToolsScreenController
   @override
   OfflineScreenData prepareOfflineScreenData() => OfflineScreenData(
     screenId: PerformanceScreen.id,
-    data: OfflinePerformanceData(
-      perfettoTraceBinary: timelineEventsController.fullPerfettoTrace,
-      frames: flutterFramesController.flutterFrames.value,
-      selectedFrame: flutterFramesController.selectedFrame.value,
-      rebuildCountModel: rebuildCountModel,
-      displayRefreshRate: flutterFramesController.displayRefreshRate.value,
-    ).toJson(includeTimelineEvents: true),
+    data:
+        OfflinePerformanceData(
+          perfettoTraceBinary: timelineEventsController.fullPerfettoTrace,
+          frames: flutterFramesController.flutterFrames.value,
+          selectedFrame: flutterFramesController.selectedFrame.value,
+          rebuildCountModel: rebuildCountModel,
+          displayRefreshRate: flutterFramesController.displayRefreshRate.value,
+        ).toJson(
+          includeTimelineEvents: true,
+          includePerfettoTrace: false,
+          onlyJank: true,
+        ),
   );
 
   @override

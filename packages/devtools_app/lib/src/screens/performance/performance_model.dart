@@ -58,9 +58,14 @@ class OfflinePerformanceData {
 
   bool get isEmpty => perfettoTraceBinary == null;
 
-  Map<String, Object?> toJson({bool includeTimelineEvents = false}) => {
-    traceBinaryKey: perfettoTraceBinary,
+  Map<String, Object?> toJson({
+    bool includeTimelineEvents = false,
+    bool includePerfettoTrace = true,
+    bool onlyJank = false,
+  }) => {
+    traceBinaryKey: includePerfettoTrace ? perfettoTraceBinary : null,
     flutterFramesKey: frames
+        .where((frame) => !onlyJank || frame.isJanky(displayRefreshRate))
         .map(
           (frame) => frame.json(includeTimelineEvents: includeTimelineEvents),
         )
