@@ -62,17 +62,27 @@ class OfflinePerformanceData {
     bool includeTimelineEvents = false,
     bool includePerfettoTrace = true,
     bool onlyJank = false,
+    bool rebuildsForFrame = false,
   }) => {
     traceBinaryKey: includePerfettoTrace ? perfettoTraceBinary : null,
     flutterFramesKey: frames
         .where((frame) => !onlyJank || frame.isJanky(displayRefreshRate))
-        .map(
-          (frame) => frame.json(includeTimelineEvents: includeTimelineEvents),
-        )
+        .map((frame) {
+          final frameJson = frame.json(
+            includeTimelineEvents: includeTimelineEvents,
+          );
+          if (rebuildsForFrame) {
+            final rebuilds = rebuildCountModel?.rebuildsForFrame(frame.id);
+            if (rebuilds != null && rebuilds.isNotEmpty) {
+              frameJson['rebuilds'] = rebuilds.map((r) => r.json).toList();
+            }
+          }
+          return frameJson;
+        })
         .toList(),
     selectedFrameIdKey: selectedFrame?.id,
     displayRefreshRateKey: displayRefreshRate,
-    rebuildCountModelKey: rebuildCountModel?.toJson(),
+    rebuildCountModelKey: rebuildsForFrame ? null : rebuildCountModel?.toJson(),
   };
 }
 

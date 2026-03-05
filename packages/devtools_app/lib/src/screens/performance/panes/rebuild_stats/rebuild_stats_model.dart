@@ -312,6 +312,12 @@ class RebuildLocation {
   RebuildLocation(this.location, {this.buildCount = 0});
   final Location location;
   int buildCount;
+
+  Map<String, Object?> get json => {
+    'name': location.name,
+    'location': '${location.fileUriString}:${location.line}',
+    'buildCount': buildCount,
+  };
 }
 
 /// Helper class to merge together rebuild stats from multiple sources.

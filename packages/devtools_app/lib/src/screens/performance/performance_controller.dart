@@ -290,6 +290,7 @@ class PerformanceController extends DevToolsScreenController
           includeTimelineEvents: true,
           includePerfettoTrace: false,
           onlyJank: true,
+          rebuildsForFrame: true,
         ),
   );
 
