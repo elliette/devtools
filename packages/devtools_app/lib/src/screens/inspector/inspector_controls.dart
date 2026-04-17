@@ -13,14 +13,14 @@ import '../../shared/analytics/constants.dart' as gac;
 import '../../shared/feature_flags.dart';
 import '../../shared/globals.dart';
 import '../../shared/ui/common_widgets.dart';
-import '../inspector_shared/inspector_settings_dialog.dart';
-import '../inspector_v2/inspector_controller.dart' as v2;
+import 'inspector_controller.dart';
+import 'inspector_settings_dialog.dart';
 
 /// Control buttons for the inspector panel.
 class InspectorControls extends StatelessWidget {
   const InspectorControls({super.key, this.controller});
 
-  final v2.InspectorController? controller;
+  final InspectorController? controller;
 
   static const minScreenWidthForTextBeforeTruncating = 800.0;
   static const minScreenWidthForText = 550.0;
@@ -30,8 +30,7 @@ class InspectorControls extends StatelessWidget {
     final activeButtonColor = Theme.of(
       context,
     ).colorScheme.activeToggleButtonColor;
-    final isInspectorV2 =
-        controller != null && FeatureFlags.inspectorV2.isEnabled;
+    final isInspector = controller != null && FeatureFlags.inspector.isEnabled;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -49,13 +48,13 @@ class InspectorControls extends StatelessWidget {
                     : extensions.toggleOnDeviceWidgetInspector,
               ],
               minScreenWidthForText: minScreenWidthForText,
-              minScreenWidthForTextBeforeTruncating: isInspectorV2
+              minScreenWidthForTextBeforeTruncating: isInspector
                   ? minScreenWidthForTextBeforeTruncating
                   : null,
             );
           },
         ),
-        if (isInspectorV2) ...[
+        if (isInspector) ...[
           const SizedBox(width: defaultSpacing),
           ShowImplementationWidgetsButton(controller: controller!),
         ],
@@ -113,7 +112,7 @@ class InspectorServiceExtensionButtonGroup extends StatelessWidget {
 class ShowImplementationWidgetsButton extends StatelessWidget {
   const ShowImplementationWidgetsButton({super.key, required this.controller});
 
-  final v2.InspectorController controller;
+  final InspectorController controller;
 
   @override
   Widget build(BuildContext context) {

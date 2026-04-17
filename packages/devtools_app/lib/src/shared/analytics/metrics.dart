@@ -67,12 +67,6 @@ class ProfilerScreenMetrics extends ScreenAnalyticsMetrics {
 }
 
 class InspectorScreenMetrics extends ScreenAnalyticsMetrics {
-  InspectorScreenMetrics.legacy({
-    this.rootSetCount,
-    this.rowCount,
-    this.inspectorTreeControllerId,
-  }) : isV2 = false;
-
   InspectorScreenMetrics.v2({
     this.rootSetCount,
     this.rowCount,
