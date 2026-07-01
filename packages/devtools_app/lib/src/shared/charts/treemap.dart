@@ -5,8 +5,8 @@
 import 'package:devtools_app_shared/ui.dart';
 import 'package:devtools_app_shared/utils.dart';
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../primitives/byte_utils.dart';
 import '../primitives/trees.dart';
