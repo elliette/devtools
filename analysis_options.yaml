@@ -18,6 +18,13 @@ analyzer:
     - '**/build/**'
     - '**.freezed.dart'
     - tool/flutter-sdk/
+    - build/**
+    - android/**
+    - ios/**
+    - web/**
+    - windows/**
+    - macos/**
+    - linux/**
 
 linter:
   rules:
